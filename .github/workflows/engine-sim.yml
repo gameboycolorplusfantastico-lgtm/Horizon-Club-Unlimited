@@ -1,0 +1,46 @@
+name: Atualizar audio de motor (Engine_Sim)
+# Baixa o codigo do Engine_Sim (MIT) para assets/engine-sim/ e regenera o index.html.
+# - Manual: aba Actions > "Atualizar audio de motor" > Run workflow (baixa de novo o Engine_Sim)
+# - Automatico: quando voce mexer em src/ (so refaz o index.html; so baixa o Engine_Sim se a pasta nao existir)
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch, tag ou commit do Engine_Sim'
+        default: 'main'
+  push:
+    paths:
+      - 'src/**'
+permissions:
+  contents: write
+jobs:
+  audio:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Baixar Engine_Sim
+        if: github.event_name == 'workflow_dispatch' || hashFiles('assets/engine-sim/engine-sim.js') == ''
+        uses: actions/checkout@v4
+        with:
+          repository: YigitSalihEmecen/Engine_Sim
+          ref: ${{ inputs.ref || 'main' }}
+          path: _engine_sim_tmp
+      - name: Copiar src/ do Engine_Sim para assets/engine-sim/
+        if: github.event_name == 'workflow_dispatch' || hashFiles('assets/engine-sim/engine-sim.js') == ''
+        run: |
+          rm -rf assets/engine-sim && mkdir -p assets/engine-sim
+          cp -r _engine_sim_tmp/src/. assets/engine-sim/
+          cp _engine_sim_tmp/LICENSE* assets/engine-sim/ 2>/dev/null || true
+          echo "Engine_Sim (MIT) - https://github.com/YigitSalihEmecen/Engine_Sim - commit $(git -C _engine_sim_tmp rev-parse HEAD)" > assets/engine-sim/ORIGEM.txt
+          rm -rf _engine_sim_tmp
+          test -f assets/engine-sim/engine-sim.js || { echo "ERRO: src/engine-sim.js nao encontrado no Engine_Sim"; exit 1; }
+      - name: Regenerar index.html
+        run: python3 tools/build.py
+      - name: Salvar no repositorio
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then echo "Nada para salvar"; exit 0; fi
+          git commit -m "Audio de motor (Engine_Sim) atualizado automaticamente"
+          git push
