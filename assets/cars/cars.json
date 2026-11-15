@@ -170,8 +170,8 @@
       "params": {
         "awd": true
       },
-      "bytes": 3268360,
-      "tris": 176211
+      "bytes": 3318012,
+      "tris": 178230
     },
     {
       "id": "1997-toyota-supra-rz",
@@ -217,6 +217,34 @@
       },
       "bytes": 4025668,
       "tris": 177605
+    },
+    {
+      "id": "1987-buick-grand-national-regal-gnx",
+      "name": "1987 Buick Grand National Regal Gnx",
+      "brand": "",
+      "class": "",
+      "dir": "1987-buick-grand-national-regal-gnx",
+      "scale": 1.2,
+      "specs": "",
+      "cyl": 6,
+      "params": {},
+      "bytes": 5537752,
+      "tris": 298206
+    },
+    {
+      "id": "2010-ford-f-150-svt-raptor-r",
+      "name": "2010 Ford F 150 Svt Raptor R",
+      "brand": "",
+      "class": "",
+      "dir": "2010-ford-f-150-svt-raptor-r",
+      "scale": 1.2,
+      "specs": "4x4",
+      "cyl": 6,
+      "params": {
+        "awd": true
+      },
+      "bytes": 4344298,
+      "tris": 212749
     }
   ]
 }
