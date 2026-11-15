@@ -35,10 +35,10 @@ const VS_MESH = `#version 300 es
 precision highp float;
 layout(location=0) in vec4 a_pos; layout(location=1) in vec4 a_nrm; layout(location=2) in vec2 a_uv0; layout(location=3) in vec2 a_uv1;
 uniform mat4 u_vp, u_model; uniform vec3 u_pmin, u_psize; uniform vec4 u_uvb0, u_uvb1;
-out vec3 v_wp; out vec3 v_n; out vec2 v_uv; out vec2 v_uv1;
+out vec3 v_wp; out vec3 v_n; out vec2 v_uv; out vec2 v_uv1; out float v_lz;
 void main(){
   vec3 p = u_pmin + a_pos.xyz * u_psize; vec4 wp = u_model * vec4(p, 1.);
-  v_wp = wp.xyz; v_n = mat3(u_model) * a_nrm.xyz;
+  v_lz = p.z; v_wp = wp.xyz; v_n = mat3(u_model) * a_nrm.xyz;
   v_uv = u_uvb0.xy + a_uv0 * (u_uvb0.zw - u_uvb0.xy); v_uv1 = u_uvb1.xy + a_uv1 * (u_uvb1.zw - u_uvb1.xy);
   gl_Position = u_vp * wp;
 }`;
@@ -68,8 +68,8 @@ void main(){
 }`;
 const FS_CAR = `#version 300 es
 precision highp float;
-in vec3 v_wp; in vec3 v_n; in vec2 v_uv; in vec2 v_uv1;
-uniform sampler2D u_tex; uniform vec4 u_color; uniform float u_hasTex, u_metal, u_rough, u_coat, u_emis;
+in vec3 v_wp; in vec3 v_n; in vec2 v_uv; in vec2 v_uv1; in float v_lz;
+uniform sampler2D u_tex; uniform vec4 u_color; uniform float u_hasTex, u_metal, u_rough, u_coat, u_emis, u_lamp, u_headE, u_tailE, u_len;
 out vec4 o;
 ${GLSL_COMMON}
 void main(){
@@ -89,6 +89,10 @@ void main(){
   vec3 col = diff + env * fres * mix(0.55, 1.0, 1. - u_rough) + spec;
   if (u_coat > 0.5) col += env * (0.04 + 0.96 * pow(1. - ndv, 5.)) * 0.55;
   col += u_emis * alb * 6.;
+  if (u_lamp > 0.5) { // material de luzes (atlas) com farol e lanterna juntos: frente acende branco, traseira acende vermelho
+    float fz = smoothstep(0.32 * u_len, 0.38 * u_len, v_lz), rz = smoothstep(0.32 * u_len, 0.38 * u_len, -v_lz);
+    col += alb * 6. * (fz * u_headE * vec3(1., 0.95, 0.82) + rz * u_tailE * vec3(1., 0.14, 0.09));
+  }
   col = applyFog(col, v_wp);
   o = vec4(tonemap(col), alpha);
 }`;
@@ -124,7 +128,7 @@ class Renderer {
     this.planes = new Float64Array(24); this.drawDist = 900; this.time = 0; this.stats = { calls: 0, prims: 0 };
     this.env = { sun: normalize3([-0.55, 0.52, 0.40]), sunCol: [2.5, 1.95, 1.4], zenith: [0.10, 0.26, 0.58], horizon: [0.55, 0.70, 0.88], ground: [0.16, 0.17, 0.19], ambSky: [0.38, 0.50, 0.72], ambGround: [0.24, 0.21, 0.18], exposure: 0.82 };
     this.progs.world = this.prog(VS_MESH, FS_WORLD, ['u_vp', 'u_model', 'u_pmin', 'u_psize', 'u_uvb0', 'u_uvb1', 'u_tex', 'u_ao', 'u_hasAo', 'u_alphaTest', 'u_water', 'u_time', 'u_aoStr']);
-    this.progs.car = this.prog(VS_MESH, FS_CAR, ['u_vp', 'u_model', 'u_pmin', 'u_psize', 'u_uvb0', 'u_uvb1', 'u_tex', 'u_color', 'u_hasTex', 'u_metal', 'u_rough', 'u_coat', 'u_emis']);
+    this.progs.car = this.prog(VS_MESH, FS_CAR, ['u_vp', 'u_model', 'u_pmin', 'u_psize', 'u_uvb0', 'u_uvb1', 'u_tex', 'u_color', 'u_hasTex', 'u_metal', 'u_rough', 'u_coat', 'u_emis', 'u_lamp', 'u_headE', 'u_tailE', 'u_len']);
     this.progs.sky = this.prog(VS_SKY, FS_SKY, ['u_right', 'u_up', 'u_fwd', 'u_tanH', 'u_asp']);
     this.progs.quad = this.prog(VS_QUAD, FS_QUAD, ['u_vp', 'u_c', 'u_r', 'u_f', 'u_s', 'u_a']);
     this.progs.part = this.prog(VS_PART, FS_PART, ['u_vp', 'u_px', 'u_col']);
@@ -198,9 +202,33 @@ class Renderer {
     man.groups = man.mats.map(() => []); for (const pr of man.prims) man.groups[pr.m].push(pr);
     man.order = man.mats.map((m, i) => i).sort((a, b) => ({ opaque: 0, mask: 1, blend: 2 })[man.mats[a].mode] - ({ opaque: 0, mask: 1, blend: 2 })[man.mats[b].mode]);
   }
+
+  // Descobre sozinho, pelos nomes dos materiais e pela posicao na carroceria, quais pecas sao luzes. Vale para QUALQUER carro novo.
+  //  brake = lanterna traseira (acende ao frear) | head = farol (aceso sempre) | lamp = material com farol e lanterna juntos (separa por frente/traseira no shader)
+  // Para mandar na mao, ponha no material do car.json "brake"/"head"/"lamp": true (ou "nolight": true), ou "lights": false no carro todo.
+  classifyLights(man) {
+    if (man.lightsDone) return; man.lightsDone = true; if (man.lights === false) return;
+    const L = man.length || 4.49, use = {};
+    for (const pr of man.body) { const u = use[pr.m] || (use[pr.m] = { z0: 1e9, z1: -1e9 }); u.z0 = Math.min(u.z0, pr.bb[2]); u.z1 = Math.max(u.z1, pr.bb[5]); }
+    const man2 = man.lightsMap || {}; // opcional: "lightsMap": {"Material.004": "brake", "Material.002": "head"} para carros com materiais sem nome
+    man.mats.forEach((m, mi) => {
+      const u = use[mi]; if (!u || m.brake || m.head || m.lamp || m.nolight) return;
+      const nm = (m.name || '').replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+      if (man2[m.name]) { m[man2[m.name]] = true; return; }
+      if (nm.indexOf('detailglassred') >= 0) { m.brake = true; return; }
+      const cz = (u.z0 + u.z1) / 2, rear = cz < -0.25 * L, front = cz > 0.25 * L, c = m.color || [1, 1, 1, 1];
+      const redTint = c[0] > 0.4 && c[1] < 0.12 && c[2] < 0.12 && c[3] < 1;
+      if (/mirror|windshield|windscreen|reverse|backup|reflector|indicator|blink|signal|orange|amber|ambas|ambar|badge|plate/.test(nm)) return;
+      if (/(tail|rear_?(light|lamp)|stop_?(light|lamp)|brake_?(light|lamp)|red_?(glass|light|lens)|(glass|light|lens)_?red)/.test(nm) || redTint) { if (rear || (!front && redTint)) m.brake = true; return; }
+      if (/(^|_)brakes?(_|$)/.test(nm)) { if (cz < -0.38 * L) m.brake = true; return; } // pacotes "LOD_A_BRAKES_LEFT": no traseiro sao as lanternas
+      if (/head_?(light|lamp)|headlamp|(^|_)hl(_|$)|fog_?(light|lamp)|front_?(light|lamp)/.test(nm)) { if (front) m.head = true; return; }
+      if (/glass|(^|_)g$/.test(nm)) return;
+      if (/(^|_)(lights?|lamps?|leds?)(_|$)|light[a-z]?_?(material|mat)(_|$|\d)|light_?bucket|light_?emissive|^emiss[a-z_]*light/.test(nm)) { if (rear) m.brake = true; else if (front) m.head = true; else m.lamp = true; }
+    });
+  }
   // carrega um carro (geometria + texturas) sem trocar o carro em uso; base = pasta do carro, ex.: 'assets/cars/bmw-m3-gtr/'
   async loadCar(man, buf, texScale, base) {
-    const vbo = this.uploadBin(buf); man.vbo = vbo;
+    const vbo = this.uploadBin(buf); man.vbo = vbo; this.classifyLights(man);
     for (const pr of man.body) this.prepPrim(vbo, pr);
     for (const k in man.wheels) for (const pr of man.wheels[k].prims) this.prepPrim(vbo, pr);
     for (const m of man.mats) if (m.tex) m.glTex = await this.loadTex((base || 'assets/') + m.tex, true, texScale);
@@ -313,7 +341,8 @@ class Renderer {
       for (const pr of prims) {
         const m = man.mats[pr.m]; if ((m.mode === 'blend') !== blendPass) continue;
         gl.uniform4f(p.u_color, m.color[0], m.color[1], m.color[2], m.color[3]); gl.uniform1f(p.u_metal, m.metal); gl.uniform1f(p.u_rough, m.rough); gl.uniform1f(p.u_coat, m.coat ? 1 : 0);
-        const emis = (m.brake || m.name.indexOf('detailglassred') >= 0) ? (c.brake > 0.1 ? 0.55 : 0.08) : 0; gl.uniform1f(p.u_emis, emis);
+        const emis = (m.brake || m.name.indexOf('detailglassred') >= 0) ? (c.brake > 0.1 ? 0.55 : 0.08) : (m.head ? 0.2 : 0); gl.uniform1f(p.u_emis, emis);
+        gl.uniform1f(p.u_lamp, m.lamp ? 1 : 0); if (m.lamp) { gl.uniform1f(p.u_headE, 0.2); gl.uniform1f(p.u_tailE, c.brake > 0.1 ? 0.55 : 0.08); gl.uniform1f(p.u_len, man.length || 4.49); }
         if (m.glTex) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, m.glTex); gl.uniform1f(p.u_hasTex, 1); } else gl.uniform1f(p.u_hasTex, 0);
         this.drawPrim(p, pr);
       }
