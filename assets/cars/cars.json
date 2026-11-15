@@ -14,108 +14,6 @@
       "tris": 190914
     },
     {
-      "id": "ford-f150-raptor",
-      "name": "Ford F-150 SVT Raptor",
-      "brand": "Ford",
-      "class": "Pickup",
-      "dir": "ford-f150-raptor",
-      "scale": 1.225,
-      "specs": "V8 6.2 · 411 cv · 4x4 · 2.650 kg",
-      "cyl": 8,
-      "params": {
-        "mass": 2650,
-        "awd": true,
-        "L0": 0.62,
-        "k": 73000,
-        "cBump": 4600,
-        "cReb": 6800,
-        "kArb": 24000,
-        "mu": 1.12,
-        "offroad": 1.18,
-        "cdA": 1.5,
-        "clA": 0.05,
-        "eff": 0.85,
-        "steerMax": 0.55,
-        "vMax": 50,
-        "gears": [
-          0,
-          4.17,
-          2.34,
-          1.52,
-          1.14,
-          0.87,
-          0.69
-        ],
-        "rev": 3.4,
-        "final": 4.1,
-        "idle": 700,
-        "rpmMax": 6300,
-        "rpmCut": 6100,
-        "launch": 2600,
-        "launchEnd": 2200,
-        "shiftUp": [
-          3600,
-          2200
-        ],
-        "shiftDn": [
-          1500,
-          1400
-        ],
-        "torque": [
-          [
-            0,
-            0
-          ],
-          [
-            700,
-            150
-          ],
-          [
-            1000,
-            230
-          ],
-          [
-            1500,
-            330
-          ],
-          [
-            2500,
-            470
-          ],
-          [
-            3500,
-            545
-          ],
-          [
-            4500,
-            588
-          ],
-          [
-            5000,
-            570
-          ],
-          [
-            5500,
-            530
-          ],
-          [
-            5900,
-            470
-          ],
-          [
-            6200,
-            300
-          ],
-          [
-            6500,
-            0
-          ]
-        ]
-      },
-      "bytes": 4250422,
-      "tris": 209298
-    },
-    {
       "id": "2001-bmw-m3-gtr-straenversion",
       "name": "2001 Bmw M3 Gtr Straenversion",
       "brand": "",
@@ -234,14 +132,27 @@
     {
       "id": "2010-ford-f-150-svt-raptor-r",
       "name": "2010 Ford F 150 Svt Raptor R",
-      "brand": "",
-      "class": "",
-      "dir": "2010-ford-f-150-svt-raptor-r",
-      "scale": 1.2,
-      "specs": "4x4",
-      "cyl": 6,
+      "brand": "Ford",
+      "class": "Pickup",
+      "dir": "ford-f150-raptor",
+      "scale": 1.225,
+      "specs": "V8 6.2 · 411 cv · 4x4 · 2.650 kg",
+      "cyl": 8,
       "params": {
-        "awd": true
+        "mass": 2650,
+        "awd": true,
+        "L0": 0.62,
+        "k": 73000,
+        "cBump": 4600,
+        "cReb": 6800,
+        "kArb": 24000,
+        "mu": 1.12,
+        "offroad": 1.18,
+        "cdA": 1.5,
+        "clA": 0.05,
+        "eff": 0.85,
+        "steerMax": 0.55,
+        "vMax": 50,
       },
       "bytes": 4344298,
       "tris": 212749
