@@ -10,6 +10,15 @@ on:
       - 'novos-carros/*.json'
       - 'tools/specs_manual.json'
   workflow_dispatch:
+    inputs:
+      atualizar:
+        description: 'Pesquisar de novo carros JA cadastrados: "todos" ou ids separados por virgula (deixe vazio para nao fazer nada)'
+        required: false
+        default: ''
+      simular:
+        description: 'Apenas simular (mostra o que mudaria, sem gravar)'
+        type: boolean
+        default: false
 permissions:
   contents: write
 concurrency:
@@ -26,8 +35,12 @@ jobs:
       - run: pip install numpy pillow
       - name: Empacotar carro e buscar dados reais
         env:
-          # opcional: cadastre o segredo ANTHROPIC_API_KEY (Settings > Secrets and variables > Actions) para busca mais precisa
+          # opcional (GRATIS): cadastre o segredo GEMINI_API_KEY (chave gratuita em aistudio.google.com) para a pesquisa ficar bem melhor
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # opcional (pago): ANTHROPIC_API_KEY
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ATUALIZAR: ${{ github.event.inputs.atualizar }}
+          SIMULAR: ${{ github.event.inputs.simular }}
         run: python3 tools/processar_novos_carros.py
       - name: Salvar no repositorio
         run: |
