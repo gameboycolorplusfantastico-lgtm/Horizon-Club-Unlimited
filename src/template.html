@@ -110,7 +110,7 @@ body.touch #toast { top: 74px; }
       <div id="rpm"><div id="rpmfill"></div></div>
     </div>
     <div id="toast" role="status"></div>
-    <div id="hint"><span><b>W A S D</b>dirigir</span><span><b>Espaço</b>freio de mão</span><span><b>C</b>câmera</span><span><b>R</b>desvirar</span><span><b>T</b>voltar à rua</span><span><b>Esc</b>pausa</span></div>
+    <div id="hint"><span><b>W A S D</b>dirigir</span><span><b>Espaço</b>freio de mão</span><span><b>C</b>câmera</span><span><b>R</b>desvirar</span><span><b>G</b>câmbio</span><span><b>E / Q</b>marcha</span><span><b>T</b>voltar à rua</span><span><b>Esc</b>pausa</span></div>
     <button id="b-pause" aria-label="Pausar"><svg viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg></button>
     <div id="tbtns"><button id="b-cam">CAM</button><button id="b-reset">DESV.</button></div>
     <div id="dbg"></div>
@@ -146,6 +146,7 @@ body.touch #toast { top: 74px; }
       <div class="row"><span>Estilo da câmera</span><div class="seg seg-cs"><button data-v="mlc">Midnight Club</button><button data-v="simple">Simples</button></div></div>
       <div class="row"><span>Efeito de velocidade</span><div class="seg seg-fx"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
       <div class="row"><span>Retrovisor</span><div class="seg seg-mr"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
+      <div class="row"><span>Câmbio</span><div class="seg seg-tr"><button data-v="auto">Automático</button><button data-v="manual">Manual</button></div></div>
       <div class="row"><span>Tela cheia ao começar</span><div class="seg seg-fa"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
       <div class="mlist"><button class="cta mitem" id="opts-back">Voltar</button></div>
     </div>
@@ -158,6 +159,7 @@ body.touch #toast { top: 74px; }
       <div class="row"><span>Estilo da câmera</span><div class="seg seg-cs"><button data-v="mlc">Midnight Club</button><button data-v="simple">Simples</button></div></div>
       <div class="row"><span>Efeito de velocidade</span><div class="seg seg-fx"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
       <div class="row"><span>Retrovisor</span><div class="seg seg-mr"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
+      <div class="row"><span>Câmbio</span><div class="seg seg-tr"><button data-v="auto">Automático</button><button data-v="manual">Manual</button></div></div>
       <div class="row"><span>Câmera atual: <b id="camname"></b></span><button class="ghost" id="cam-btn">Trocar câmera</button></div>
       <div class="grid2"><button class="ghost" id="garage-btn">Garagem</button><button class="ghost" id="reset-btn">Desvirar o carro</button><button class="ghost" id="home-btn">Voltar ao ponto inicial</button><button class="ghost" id="fs-btn" data-fs>Tela cheia</button><button class="cta" id="resume">Continuar</button></div>
     </div>

@@ -167,6 +167,7 @@ class Vehicle {
     for (const z of [-1.8, -0.9, 0, 0.9, 1.8]) for (const x of [-0.55, 0.55]) this.spheres.push([x * S, 0.05 * S, z * S, 0.38 * S]);
     this.spheres.push([0, 0.1 * S, 1.25 * S, 0.4 * S], [0, 0.1 * S, -1.25 * S, 0.4 * S], [0, 0.42 * S, -0.5 * S, 0.38 * S], [0, 0.42 * S, 0.55 * S, 0.38 * S]);
     this.invM = 1 / P.mass;
+    this.manual = false; this.shiftReq = 0; // câmbio manual (ligado pelo jogo) e pedido de troca pendente
     this.gear = 1; this.rpm = 900; this.shiftT = 0; this.shiftCut = 0; this.throttle = 0; this.brake = 0; this.hb = 0; this.steerIn = 0; this.steerA = 0;
     this.impact = 0; this.speed = 0; this.fwdSpeed = 0; this.onGround = 0; this.inWater = 0; this.safe = null; this.safeT = 0; this.airT = 0; this.flipT = 0; this.stuckT = 0;
     this.yawRate = 0; this.slipAngle = 0; this.drifting = 0; this.absOn = true; this.tcs = true; this.noInputT = 0; this.time = 0;
@@ -237,10 +238,27 @@ class Vehicle {
     if (wheelRpm < P.launchEnd && driveIn > 0.05) rpm = Math.max(rpm, P.idle + driveIn * P.launch * Math.min(1, 1.2 - wheelRpm / P.launchEnd + 0.4)); // embreagem patinando na saída
     rpm = Math.min(rpm, P.rpmMax); this.rpm += (rpm - this.rpm) * Math.min(1, 14 * dt);
     this.shiftCut = Math.max(0, this.shiftCut - dt); this.shiftT = Math.max(0, this.shiftT - dt);
-    if (!rev && this.shiftT <= 0) {
-      const up = P.shiftUp[0] + P.shiftUp[1] * driveIn, dn = P.shiftDn[0] + P.shiftDn[1] * driveIn;
-      if (this.gear < P.gears.length - 1 && wheelRpm > up) { this.gear++; this.shiftT = 0.45; this.shiftCut = 0.12; }
-      else if (this.gear > 1 && wheelRpm < dn && !(this.hb > 0.5)) { this.gear--; this.shiftT = 0.35; }
+    // ---- câmbio: automático (padrão) ou manual (this.manual + pedidos this.shiftReq = +1 sobe / -1 desce) ----
+    // Os pontos de troca são calculados a partir do limitador (rpmCut) de cada carro, assim funcionam em qualquer carro/params.
+    const topG = P.gears.length - 1, cutR = P.rpmCut, rq = this.shiftReq | 0; this.shiftReq = 0;
+    if (!rev) {
+      if (this.manual) {
+        if (rq && this.shiftT <= 0) {
+          if (rq > 0 && this.gear < topG) { this.gear++; this.shiftT = 0.35; this.shiftCut = 0.1; }
+          else if (rq < 0 && this.gear > 1 && wheelRpm * (P.gears[this.gear - 1] / P.gears[this.gear]) < P.rpmMax * 1.02) { this.gear--; this.shiftT = 0.3; } // não deixa reduzir passando do limite do motor
+        }
+        if (this.gear > 1 && Math.abs(fwdSpeed) < 1.0 && driveIn < 0.05) this.gear = 1; // parou: volta para a 1ª
+      } else if (this.shiftT <= 0) {
+        const up = cutR * (0.5 + 0.38 * driveIn); // leve no pedal: troca cedo; pé no fundo: troca perto do limitador
+        const spdRpm = Math.abs(fwdSpeed) / P.wr * ratio * P.final * 60 / TAU; // giro "de verdade", pela velocidade do carro (ignora roda patinando)
+        if (this.gear > 1 && Math.abs(fwdSpeed) < 1.0) { this.gear = 1; this.shiftT = 0.2; } // parou (ou preso na parede): volta para a 1ª
+        else if (this.gear < topG && wheelRpm > up && spdRpm > up * 0.75) { this.gear++; this.shiftT = 0.45; this.shiftCut = 0.12; }
+        else if (this.gear > 1 && !(this.hb > 0.5)) {
+          const r = P.gears[this.gear - 1] / P.gears[this.gear]; // quanto o giro sobe ao reduzir
+          const dn = Math.min(cutR * (0.24 + 0.14 * driveIn), 0.85 * up / r); // histerese: nunca reduz para logo subir de novo
+          if (wheelRpm < dn && wheelRpm * r < cutR * 0.94) { this.gear--; this.shiftT = 0.35; }
+        }
+      }
     }
     let eT = driveIn * P.torqueFn(rpm) * (rpm > P.rpmCut ? 0 : 1) * (this.shiftCut > 0 ? 0 : 1) * (P.vMax ? clamp((P.vMax - Math.abs(fwdSpeed)) / 3, 0, 1) : 1);
     if (driveIn < 0.05) eT = -50 * this.mk * (rpm / 6000); // freio-motor

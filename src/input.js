@@ -6,6 +6,7 @@ const Input = {
     addEventListener('keydown', (e) => {
       if (e.repeat) { if (this.isGameKey(e.code)) e.preventDefault(); return; }
       this.keys[e.code] = 1; this.lastDevice = 'kbd';
+      if (e.code === 'KeyE' || e.code === 'PageUp') this.edge.shUp = 1; if (e.code === 'KeyQ' || e.code === 'PageDown') this.edge.shDn = 1; if (e.code === 'KeyG') this.edge.trans = 1; // câmbio: E sobe, Q desce, G troca auto/manual
       if (e.code === 'KeyC') this.edge.cam = 1; if (e.code === 'KeyR') this.edge.reset = 1; if (e.code === 'KeyT') this.edge.respawn = 1;
       if (e.code === 'Escape' || e.code === 'KeyP' || e.code === 'Enter') this.edge.pause = 1; if (e.code === 'KeyM') this.edge.mute = 1; if (e.code === 'KeyH') this.edge.hud = 1;
       if (this.isGameKey(e.code)) e.preventDefault();
@@ -38,6 +39,7 @@ const Input = {
       if (this.lastDevice === 'pad') { thr = Math.max(thr, rt, up); brk = Math.max(brk, lt, down); hb = Math.max(hb, a > 0.5 || x > 0.5 ? 1 : 0); if (Math.abs(ax) > 0.001 || !(kL || kR)) st = ax; }
       const pb = this.prevBtn; const rise = (i, v) => (v > 0.5 && !(pb[i] > 0.5));
       if (rise(3, y)) this.edge.cam = 1; if (rise(1, b)) this.edge.reset = 1; if (rise(9, start)) this.edge.pause = 1; if (rise(8, back)) this.edge.respawn = 1; if (rise(0, a)) this.edge.padA = 1;
+      const lb = this.padBtn(g, 4), rb = this.padBtn(g, 5); if (rise(5, rb)) this.edge.shUp = 1; if (rise(4, lb)) this.edge.shDn = 1; pb[5] = rb; pb[4] = lb; // RB sobe, LB desce (câmbio manual)
       pb[3] = y; pb[1] = b; pb[9] = start; pb[8] = back; pb[0] = a;
       orbit = Math.abs(g.axes[2] || 0) > 0.2 ? g.axes[2] : 0;
       this.hasPad = true;

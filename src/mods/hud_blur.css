@@ -25,3 +25,17 @@ body.blurhud #speedo { display: none !important; }
 body.touch #mirror { width: clamp(180px, 34vw, 300px); } body.touch #rpmseg { top: calc(max(0px, env(safe-area-inset-top, 0px)) + clamp(180px, 34vw, 300px) / 4 + 24px); }
 body.touch #stats { top: 52px; transform: scale(.82); transform-origin: left top; } body.touch #bspeed { transform: scale(.85); transform-origin: right top; }
 body.touch #toast { top: calc(max(0px, env(safe-area-inset-top, 0px)) + clamp(180px, 34vw, 300px) / 4 + 60px) !important; }
+
+/* ===== câmbio: botões de marcha (aparecem só no modo manual) ===== */
+#bshift { position: absolute; right: 0; top: calc(max(0px, env(safe-area-inset-top, 0px)) + clamp(110px, 20vmin, 168px) + clamp(62px, 11vmin, 84px)); display: flex; gap: 6px; align-items: center; padding: 5px 10px; border-radius: 22px 10px 10px 22px; background: var(--bl2); border-left: 3px solid var(--gold); pointer-events: auto; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+#bshift button { font: 700 12px var(--display); letter-spacing: .1em; color: #fff; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.3); border-radius: 8px; padding: 6px 10px; cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; }
+#bshift button:hover { background: rgba(255,196,61,.25); border-color: var(--gold); }
+#b-up, #b-dn { display: none; min-width: 44px; min-height: 40px; font-size: 18px !important; color: var(--gold) !important; }
+#bshift.man #b-up, #bshift.man #b-dn { display: inline-block; }
+#bshift.man #b-trans { color: var(--gold); border-color: var(--gold); }
+#b-gear.shiftnow { animation: shiftBlink .22s steps(2) infinite; background: rgba(255,91,74,.85); color: #fff; border-color: #ff5b4a; }
+@keyframes shiftBlink { 50% { background: transparent; color: #ff5b4a; } }
+body.touch #bshift { transform: scale(.85); transform-origin: right top; }
+body.touch #bshift.man { top: auto; bottom: calc(clamp(120px, 26vh, 170px) + 12px); right: 0; flex-direction: row; border-radius: 14px 0 0 14px; transform: none; padding: 5px 6px; }
+body.touch #bshift.man #b-trans { display: none; }
+body.touch #bshift.man #b-up, body.touch #bshift.man #b-dn { min-width: 58px; min-height: 52px; font-size: 22px !important; }

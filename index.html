@@ -126,6 +126,20 @@ body.touch #mirror { width: clamp(180px, 34vw, 300px); } body.touch #rpmseg { to
 body.touch #stats { top: 52px; transform: scale(.82); transform-origin: left top; } body.touch #bspeed { transform: scale(.85); transform-origin: right top; }
 body.touch #toast { top: calc(max(0px, env(safe-area-inset-top, 0px)) + clamp(180px, 34vw, 300px) / 4 + 60px) !important; }
 
+/* ===== câmbio: botões de marcha (aparecem só no modo manual) ===== */
+#bshift { position: absolute; right: 0; top: calc(max(0px, env(safe-area-inset-top, 0px)) + clamp(110px, 20vmin, 168px) + clamp(62px, 11vmin, 84px)); display: flex; gap: 6px; align-items: center; padding: 5px 10px; border-radius: 22px 10px 10px 22px; background: var(--bl2); border-left: 3px solid var(--gold); pointer-events: auto; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+#bshift button { font: 700 12px var(--display); letter-spacing: .1em; color: #fff; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.3); border-radius: 8px; padding: 6px 10px; cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; }
+#bshift button:hover { background: rgba(255,196,61,.25); border-color: var(--gold); }
+#b-up, #b-dn { display: none; min-width: 44px; min-height: 40px; font-size: 18px !important; color: var(--gold) !important; }
+#bshift.man #b-up, #bshift.man #b-dn { display: inline-block; }
+#bshift.man #b-trans { color: var(--gold); border-color: var(--gold); }
+#b-gear.shiftnow { animation: shiftBlink .22s steps(2) infinite; background: rgba(255,91,74,.85); color: #fff; border-color: #ff5b4a; }
+@keyframes shiftBlink { 50% { background: transparent; color: #ff5b4a; } }
+body.touch #bshift { transform: scale(.85); transform-origin: right top; }
+body.touch #bshift.man { top: auto; bottom: calc(clamp(120px, 26vh, 170px) + 12px); right: 0; flex-direction: row; border-radius: 14px 0 0 14px; transform: none; padding: 5px 6px; }
+body.touch #bshift.man #b-trans { display: none; }
+body.touch #bshift.man #b-up, body.touch #bshift.man #b-dn { min-width: 58px; min-height: 52px; font-size: 22px !important; }
+
 /* ===== Menus estilo Forza Horizon 2 ===== */
 :root { --fy: #ffe21a; --fo: #ff5a1f; }
 #cars-start, #cars-pause { display: none !important; }
@@ -290,7 +304,7 @@ body.touch #p-start .keys div:not(:last-child) { display: none; }
       <div id="rpm"><div id="rpmfill"></div></div>
     </div>
     <div id="toast" role="status"></div>
-    <div id="hint"><span><b>W A S D</b>dirigir</span><span><b>Espaço</b>freio de mão</span><span><b>C</b>câmera</span><span><b>R</b>desvirar</span><span><b>T</b>voltar à rua</span><span><b>Esc</b>pausa</span></div>
+    <div id="hint"><span><b>W A S D</b>dirigir</span><span><b>Espaço</b>freio de mão</span><span><b>C</b>câmera</span><span><b>R</b>desvirar</span><span><b>G</b>câmbio</span><span><b>E / Q</b>marcha</span><span><b>T</b>voltar à rua</span><span><b>Esc</b>pausa</span></div>
     <button id="b-pause" aria-label="Pausar"><svg viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg></button>
     <div id="tbtns"><button id="b-cam">CAM</button><button id="b-reset">DESV.</button></div>
     <div id="dbg"></div>
@@ -326,6 +340,7 @@ body.touch #p-start .keys div:not(:last-child) { display: none; }
       <div class="row"><span>Estilo da câmera</span><div class="seg seg-cs"><button data-v="mlc">Midnight Club</button><button data-v="simple">Simples</button></div></div>
       <div class="row"><span>Efeito de velocidade</span><div class="seg seg-fx"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
       <div class="row"><span>Retrovisor</span><div class="seg seg-mr"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
+      <div class="row"><span>Câmbio</span><div class="seg seg-tr"><button data-v="auto">Automático</button><button data-v="manual">Manual</button></div></div>
       <div class="row"><span>Tela cheia ao começar</span><div class="seg seg-fa"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
       <div class="mlist"><button class="cta mitem" id="opts-back">Voltar</button></div>
     </div>
@@ -338,6 +353,7 @@ body.touch #p-start .keys div:not(:last-child) { display: none; }
       <div class="row"><span>Estilo da câmera</span><div class="seg seg-cs"><button data-v="mlc">Midnight Club</button><button data-v="simple">Simples</button></div></div>
       <div class="row"><span>Efeito de velocidade</span><div class="seg seg-fx"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
       <div class="row"><span>Retrovisor</span><div class="seg seg-mr"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
+      <div class="row"><span>Câmbio</span><div class="seg seg-tr"><button data-v="auto">Automático</button><button data-v="manual">Manual</button></div></div>
       <div class="row"><span>Câmera atual: <b id="camname"></b></span><button class="ghost" id="cam-btn">Trocar câmera</button></div>
       <div class="grid2"><button class="ghost" id="garage-btn">Garagem</button><button class="ghost" id="reset-btn">Desvirar o carro</button><button class="ghost" id="home-btn">Voltar ao ponto inicial</button><button class="ghost" id="fs-btn" data-fs>Tela cheia</button><button class="cta" id="resume">Continuar</button></div>
     </div>
@@ -515,6 +531,7 @@ class Vehicle {
     for (const z of [-1.8, -0.9, 0, 0.9, 1.8]) for (const x of [-0.55, 0.55]) this.spheres.push([x * S, 0.05 * S, z * S, 0.38 * S]);
     this.spheres.push([0, 0.1 * S, 1.25 * S, 0.4 * S], [0, 0.1 * S, -1.25 * S, 0.4 * S], [0, 0.42 * S, -0.5 * S, 0.38 * S], [0, 0.42 * S, 0.55 * S, 0.38 * S]);
     this.invM = 1 / P.mass;
+    this.manual = false; this.shiftReq = 0; // câmbio manual (ligado pelo jogo) e pedido de troca pendente
     this.gear = 1; this.rpm = 900; this.shiftT = 0; this.shiftCut = 0; this.throttle = 0; this.brake = 0; this.hb = 0; this.steerIn = 0; this.steerA = 0;
     this.impact = 0; this.speed = 0; this.fwdSpeed = 0; this.onGround = 0; this.inWater = 0; this.safe = null; this.safeT = 0; this.airT = 0; this.flipT = 0; this.stuckT = 0;
     this.yawRate = 0; this.slipAngle = 0; this.drifting = 0; this.absOn = true; this.tcs = true; this.noInputT = 0; this.time = 0;
@@ -585,10 +602,27 @@ class Vehicle {
     if (wheelRpm < P.launchEnd && driveIn > 0.05) rpm = Math.max(rpm, P.idle + driveIn * P.launch * Math.min(1, 1.2 - wheelRpm / P.launchEnd + 0.4)); // embreagem patinando na saída
     rpm = Math.min(rpm, P.rpmMax); this.rpm += (rpm - this.rpm) * Math.min(1, 14 * dt);
     this.shiftCut = Math.max(0, this.shiftCut - dt); this.shiftT = Math.max(0, this.shiftT - dt);
-    if (!rev && this.shiftT <= 0) {
-      const up = P.shiftUp[0] + P.shiftUp[1] * driveIn, dn = P.shiftDn[0] + P.shiftDn[1] * driveIn;
-      if (this.gear < P.gears.length - 1 && wheelRpm > up) { this.gear++; this.shiftT = 0.45; this.shiftCut = 0.12; }
-      else if (this.gear > 1 && wheelRpm < dn && !(this.hb > 0.5)) { this.gear--; this.shiftT = 0.35; }
+    // ---- câmbio: automático (padrão) ou manual (this.manual + pedidos this.shiftReq = +1 sobe / -1 desce) ----
+    // Os pontos de troca são calculados a partir do limitador (rpmCut) de cada carro, assim funcionam em qualquer carro/params.
+    const topG = P.gears.length - 1, cutR = P.rpmCut, rq = this.shiftReq | 0; this.shiftReq = 0;
+    if (!rev) {
+      if (this.manual) {
+        if (rq && this.shiftT <= 0) {
+          if (rq > 0 && this.gear < topG) { this.gear++; this.shiftT = 0.35; this.shiftCut = 0.1; }
+          else if (rq < 0 && this.gear > 1 && wheelRpm * (P.gears[this.gear - 1] / P.gears[this.gear]) < P.rpmMax * 1.02) { this.gear--; this.shiftT = 0.3; } // não deixa reduzir passando do limite do motor
+        }
+        if (this.gear > 1 && Math.abs(fwdSpeed) < 1.0 && driveIn < 0.05) this.gear = 1; // parou: volta para a 1ª
+      } else if (this.shiftT <= 0) {
+        const up = cutR * (0.5 + 0.38 * driveIn); // leve no pedal: troca cedo; pé no fundo: troca perto do limitador
+        const spdRpm = Math.abs(fwdSpeed) / P.wr * ratio * P.final * 60 / TAU; // giro "de verdade", pela velocidade do carro (ignora roda patinando)
+        if (this.gear > 1 && Math.abs(fwdSpeed) < 1.0) { this.gear = 1; this.shiftT = 0.2; } // parou (ou preso na parede): volta para a 1ª
+        else if (this.gear < topG && wheelRpm > up && spdRpm > up * 0.75) { this.gear++; this.shiftT = 0.45; this.shiftCut = 0.12; }
+        else if (this.gear > 1 && !(this.hb > 0.5)) {
+          const r = P.gears[this.gear - 1] / P.gears[this.gear]; // quanto o giro sobe ao reduzir
+          const dn = Math.min(cutR * (0.24 + 0.14 * driveIn), 0.85 * up / r); // histerese: nunca reduz para logo subir de novo
+          if (wheelRpm < dn && wheelRpm * r < cutR * 0.94) { this.gear--; this.shiftT = 0.35; }
+        }
+      }
     }
     let eT = driveIn * P.torqueFn(rpm) * (rpm > P.rpmCut ? 0 : 1) * (this.shiftCut > 0 ? 0 : 1) * (P.vMax ? clamp((P.vMax - Math.abs(fwdSpeed)) / 3, 0, 1) : 1);
     if (driveIn < 0.05) eT = -50 * this.mk * (rpm / 6000); // freio-motor
@@ -1206,6 +1240,7 @@ const Input = {
     addEventListener('keydown', (e) => {
       if (e.repeat) { if (this.isGameKey(e.code)) e.preventDefault(); return; }
       this.keys[e.code] = 1; this.lastDevice = 'kbd';
+      if (e.code === 'KeyE' || e.code === 'PageUp') this.edge.shUp = 1; if (e.code === 'KeyQ' || e.code === 'PageDown') this.edge.shDn = 1; if (e.code === 'KeyG') this.edge.trans = 1; // câmbio: E sobe, Q desce, G troca auto/manual
       if (e.code === 'KeyC') this.edge.cam = 1; if (e.code === 'KeyR') this.edge.reset = 1; if (e.code === 'KeyT') this.edge.respawn = 1;
       if (e.code === 'Escape' || e.code === 'KeyP' || e.code === 'Enter') this.edge.pause = 1; if (e.code === 'KeyM') this.edge.mute = 1; if (e.code === 'KeyH') this.edge.hud = 1;
       if (this.isGameKey(e.code)) e.preventDefault();
@@ -1238,6 +1273,7 @@ const Input = {
       if (this.lastDevice === 'pad') { thr = Math.max(thr, rt, up); brk = Math.max(brk, lt, down); hb = Math.max(hb, a > 0.5 || x > 0.5 ? 1 : 0); if (Math.abs(ax) > 0.001 || !(kL || kR)) st = ax; }
       const pb = this.prevBtn; const rise = (i, v) => (v > 0.5 && !(pb[i] > 0.5));
       if (rise(3, y)) this.edge.cam = 1; if (rise(1, b)) this.edge.reset = 1; if (rise(9, start)) this.edge.pause = 1; if (rise(8, back)) this.edge.respawn = 1; if (rise(0, a)) this.edge.padA = 1;
+      const lb = this.padBtn(g, 4), rb = this.padBtn(g, 5); if (rise(5, rb)) this.edge.shUp = 1; if (rise(4, lb)) this.edge.shDn = 1; pb[5] = rb; pb[4] = lb; // RB sobe, LB desce (câmbio manual)
       pb[3] = y; pb[1] = b; pb[9] = start; pb[8] = back; pb[0] = a;
       orbit = Math.abs(g.axes[2] || 0) > 0.2 ? g.axes[2] : 0;
       this.hasPad = true;
@@ -1526,9 +1562,10 @@ const HudBlur = (() => {
       '<div class="st"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span>MÁX</span><b id="s-top" class="num">0</b></div>' +
       '<div class="st"><svg viewBox="0 0 24 24"><path d="M4 20 20 4M14 4h6v6"/></svg><span>DIST</span><b id="s-dist" class="num">0.0 km</b></div></div>' +
       '<div id="bspeed"><b id="b-spd" class="num">0</b><span id="b-unit">km/h</span><em id="b-gear" class="num">N</em></div>' +
+      '<div id="bshift"><button id="b-trans" type="button" title="G: alternar câmbio automático / manual">AUTO</button><button id="b-dn" type="button" aria-label="Reduzir marcha (Q)">&#9660;</button><button id="b-up" type="button" aria-label="Subir marcha (E)">&#9650;</button></div>' +
       '<div id="calls"></div>';
     hud.insertBefore(box, hud.firstChild);
-    el = { mirror: $('mirror'), spd: $('b-spd'), unit: $('b-unit'), gear: $('b-gear'), time: $('s-time'), top: $('s-top'), dist: $('s-dist'), seg: [...document.querySelectorAll('#rpmseg i')], calls: $('calls') };
+    el = { mirror: $('mirror'), spd: $('b-spd'), unit: $('b-unit'), gear: $('b-gear'), trans: $('b-trans'), gearbox: $('bshift'), time: $('s-time'), top: $('s-top'), dist: $('s-dist'), seg: [...document.querySelectorAll('#rpmseg i')], calls: $('calls') };
     fx = $('fx'); fxc = fx.getContext('2d');
   }
   function call(txt, cls) {
@@ -1546,6 +1583,8 @@ const HudBlur = (() => {
       if (sp > T.top) T.top = sp;
       el.spd.textContent = Math.round(sp); el.unit.textContent = mph ? 'mph' : 'km/h';
       el.gear.textContent = veh.gear < 0 ? 'R' : (Math.abs(veh.fwdSpeed) < 0.4 && veh.throttle < 0.05 ? 'N' : veh.gear);
+      const man = cfg.trans === 'manual'; el.trans.textContent = man ? 'MANUAL · ' + (veh.P.gears.length - 1) + 'v' : 'AUTO'; el.gearbox.classList.toggle('man', man);
+      el.gear.classList.toggle('shiftnow', man && veh.gear > 0 && veh.gear < veh.P.gears.length - 1 && veh.rpm > veh.P.rpmCut * 0.93); // pisca quando é hora de subir a marcha
       el.time.textContent = fmt(T.time); el.top.textContent = Math.round(T.top) + ' ' + (mph ? 'mph' : 'km/h'); el.dist.textContent = mph ? (T.dist / 1609.34).toFixed(1) + ' mi' : (T.dist / 1000).toFixed(1) + ' km';
       const pI = veh.P.idle, pM = veh.P.rpmMax, f = clamp((veh.rpm - pI) / (pM - pI), 0, 1);
       el.seg.forEach((s, i) => { s.className = f > (i + 0.5) / 5 ? (i >= 4 ? 'on red' : 'on') : ''; });
@@ -1887,7 +1926,7 @@ const FH2 = (() => {
   const $ = (id) => document.getElementById(id);
   const qs = new URLSearchParams(location.search);
   const isTouch = (matchMedia && matchMedia('(pointer:coarse)').matches) || 'ontouchstart' in window;
-  const cfg = { quality: 'auto', units: 'kmh', sound: true, camStyle: 'mlc', fx: 'on', mirror: 'on' };
+  const cfg = { quality: 'auto', units: 'kmh', sound: true, camStyle: 'mlc', fx: 'on', mirror: 'on', trans: 'auto' };
   const KEY = 'horizon-club-unlimited'; // (migra as configurações do nome antigo, 'asfalto-livre')
   try { Object.assign(cfg, JSON.parse(localStorage.getItem(KEY) || localStorage.getItem('asfalto-livre') || '{}')); } catch (e) {}
   if (qs.get('q')) cfg.quality = qs.get('q');
@@ -2075,7 +2114,7 @@ const FH2 = (() => {
   const show = (id, on) => { $(id).hidden = !on; };
   function startGame() {
     if (mode !== 'menu') return; Sound.start(); Sound.setOn(cfg.sound); mode = 'play'; show('menu', false); show('hud', true); if (isTouch) show('touch', true); Input.edge = {};
-    toast(isTouch ? 'Arraste a faixa para esterçar' : 'WASD ou setas · Espaço: freio de mão · C: câmera · R: desvirar', 4200); $('hint').classList.add('show'); setTimeout(() => $('hint').classList.remove('show'), 14000);
+    toast(isTouch ? 'Arraste a faixa para esterçar' : 'WASD ou setas · Espaço: freio de mão · C: câmera · G: câmbio auto/manual · R: desvirar', 4200); $('hint').classList.add('show'); setTimeout(() => $('hint').classList.remove('show'), 14000);
     try { if (isTouch && document.documentElement.requestFullscreen && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {}); } catch (e) {}
   }
   function setPause(p) {
@@ -2092,9 +2131,18 @@ const FH2 = (() => {
     for (const b of document.querySelectorAll('.seg-cs button')) b.classList.toggle('on', b.dataset.v === (camMode === 0 ? 'mlc' : 'simple'));
     for (const b of document.querySelectorAll('.seg-fx button')) b.classList.toggle('on', b.dataset.v === (cfg.fx === 'off' ? 'off' : 'on'));
     for (const b of document.querySelectorAll('.seg-mr button')) b.classList.toggle('on', b.dataset.v === (cfg.mirror === 'off' ? 'off' : 'on'));
+    for (const b of document.querySelectorAll('.seg-tr button')) b.classList.toggle('on', b.dataset.v === (cfg.trans === 'manual' ? 'manual' : 'auto'));
+    document.body.classList.toggle('manual', cfg.trans === 'manual');
   }
+  // ---------- câmbio: automático (padrão) / manual ----------
+  const setTrans = (t, say) => { cfg.trans = t === 'manual' ? 'manual' : 'auto'; save(); sync(); if (say) toast(cfg.trans === 'manual' ? 'Câmbio MANUAL · E sobe · Q desce · G volta ao automático' : 'Câmbio AUTOMÁTICO', 1800); };
+  document.addEventListener('pointerdown', (e) => { // botões do HUD (mouse ou toque): ▲ ▼ e AUTO/MANUAL
+    const b = e.target.closest && e.target.closest('#b-up, #b-dn, #b-trans'); if (!b || mode !== 'play') return; e.preventDefault();
+    if (b.id === 'b-trans') setTrans(cfg.trans === 'manual' ? 'auto' : 'manual', true); else Input.edge[b.id === 'b-up' ? 'shUp' : 'shDn'] = 1;
+  });
   const segBind = (cls, key, fn) => { for (const box of document.querySelectorAll(cls)) box.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; cfg[key] = key === 'sound' ? b.dataset.v === 'on' : b.dataset.v; save(); if (key === 'sound') Sound.setOn(cfg.sound); sync(); fn && fn(); }); };
   segBind('.seg-q', 'quality', () => { dynScale = 1; R && applyQuality(); }); segBind('.seg-u', 'units'); segBind('.seg-s', 'sound'); segBind('.seg-fx', 'fx'); segBind('.seg-mr', 'mirror');
+  segBind('.seg-tr', 'trans');
   segBind('.seg-cs', 'camStyle', () => { camMode = cfg.camStyle === 'mlc' ? 0 : 1; if (typeof CamMLC !== 'undefined') CamMLC.reset(); sync(); });
   $('cam-btn').addEventListener('click', () => { camMode = (camMode + 1) % CAMS.length; if (camMode < 2) { cfg.camStyle = camMode === 0 ? 'mlc' : 'simple'; save(); } sync(); });
   $('reset-btn').addEventListener('click', () => { veh.respawn(false); setPause(false); });
@@ -2115,6 +2163,9 @@ const FH2 = (() => {
       if (Input.take('cam')) { camMode = (camMode + 1) % CAMS.length; if (camMode < 2) { cfg.camStyle = camMode === 0 ? 'mlc' : 'simple'; save(); } sync(); toast('Câmera: ' + CAMS[camMode].n, 1100); }
       if (Input.take('reset')) { veh.respawn(false); toast('Carro desvirado', 1200); }
       if (Input.take('respawn')) { veh.respawn(true); toast('De volta à última rua segura', 1500); }
+      if (Input.take('trans')) setTrans(cfg.trans === 'manual' ? 'auto' : 'manual', true);
+      veh.manual = cfg.trans === 'manual';
+      if (Input.take('shUp')) { if (veh.manual) veh.shiftReq = 1; } if (Input.take('shDn')) { if (veh.manual) veh.shiftReq = -1; }
       acc += dt; let n = 0; while (acc >= HZ && n < 10) { veh.step(HZ, inp); acc -= HZ; n++; } if (n === 10) acc = 0;
       orbitYaw += ((inp.orbit || 0) * 1.4 - orbitYaw) * Math.min(1, 6 * dt) * (inp.orbit ? 1 : 0.4); if (!inp.orbit) orbitYaw *= Math.exp(-2.5 * dt);
       if (veh.impact > 3.5) { Sound.crash(veh.impact); Input.rumble(veh.impact / 20, 180); shake = Math.min(1.6, veh.impact / 9); if (veh.impact > 8) toast('Batida!', 700); }

@@ -17,9 +17,10 @@ const HudBlur = (() => {
       '<div class="st"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span>MÁX</span><b id="s-top" class="num">0</b></div>' +
       '<div class="st"><svg viewBox="0 0 24 24"><path d="M4 20 20 4M14 4h6v6"/></svg><span>DIST</span><b id="s-dist" class="num">0.0 km</b></div></div>' +
       '<div id="bspeed"><b id="b-spd" class="num">0</b><span id="b-unit">km/h</span><em id="b-gear" class="num">N</em></div>' +
+      '<div id="bshift"><button id="b-trans" type="button" title="G: alternar câmbio automático / manual">AUTO</button><button id="b-dn" type="button" aria-label="Reduzir marcha (Q)">&#9660;</button><button id="b-up" type="button" aria-label="Subir marcha (E)">&#9650;</button></div>' +
       '<div id="calls"></div>';
     hud.insertBefore(box, hud.firstChild);
-    el = { mirror: $('mirror'), spd: $('b-spd'), unit: $('b-unit'), gear: $('b-gear'), time: $('s-time'), top: $('s-top'), dist: $('s-dist'), seg: [...document.querySelectorAll('#rpmseg i')], calls: $('calls') };
+    el = { mirror: $('mirror'), spd: $('b-spd'), unit: $('b-unit'), gear: $('b-gear'), trans: $('b-trans'), gearbox: $('bshift'), time: $('s-time'), top: $('s-top'), dist: $('s-dist'), seg: [...document.querySelectorAll('#rpmseg i')], calls: $('calls') };
     fx = $('fx'); fxc = fx.getContext('2d');
   }
   function call(txt, cls) {
@@ -37,6 +38,8 @@ const HudBlur = (() => {
       if (sp > T.top) T.top = sp;
       el.spd.textContent = Math.round(sp); el.unit.textContent = mph ? 'mph' : 'km/h';
       el.gear.textContent = veh.gear < 0 ? 'R' : (Math.abs(veh.fwdSpeed) < 0.4 && veh.throttle < 0.05 ? 'N' : veh.gear);
+      const man = cfg.trans === 'manual'; el.trans.textContent = man ? 'MANUAL · ' + (veh.P.gears.length - 1) + 'v' : 'AUTO'; el.gearbox.classList.toggle('man', man);
+      el.gear.classList.toggle('shiftnow', man && veh.gear > 0 && veh.gear < veh.P.gears.length - 1 && veh.rpm > veh.P.rpmCut * 0.93); // pisca quando é hora de subir a marcha
       el.time.textContent = fmt(T.time); el.top.textContent = Math.round(T.top) + ' ' + (mph ? 'mph' : 'km/h'); el.dist.textContent = mph ? (T.dist / 1609.34).toFixed(1) + ' mi' : (T.dist / 1000).toFixed(1) + ' km';
       const pI = veh.P.idle, pM = veh.P.rpmMax, f = clamp((veh.rpm - pI) / (pM - pI), 0, 1);
       el.seg.forEach((s, i) => { s.className = f > (i + 0.5) / 5 ? (i >= 4 ? 'on red' : 'on') : ''; });

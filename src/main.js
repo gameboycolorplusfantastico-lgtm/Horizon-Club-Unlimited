@@ -3,7 +3,7 @@
   const $ = (id) => document.getElementById(id);
   const qs = new URLSearchParams(location.search);
   const isTouch = (matchMedia && matchMedia('(pointer:coarse)').matches) || 'ontouchstart' in window;
-  const cfg = { quality: 'auto', units: 'kmh', sound: true, camStyle: 'mlc', fx: 'on', mirror: 'on' };
+  const cfg = { quality: 'auto', units: 'kmh', sound: true, camStyle: 'mlc', fx: 'on', mirror: 'on', trans: 'auto' };
   const KEY = 'horizon-club-unlimited'; // (migra as configurações do nome antigo, 'asfalto-livre')
   try { Object.assign(cfg, JSON.parse(localStorage.getItem(KEY) || localStorage.getItem('asfalto-livre') || '{}')); } catch (e) {}
   if (qs.get('q')) cfg.quality = qs.get('q');
@@ -191,7 +191,7 @@
   const show = (id, on) => { $(id).hidden = !on; };
   function startGame() {
     if (mode !== 'menu') return; Sound.start(); Sound.setOn(cfg.sound); mode = 'play'; show('menu', false); show('hud', true); if (isTouch) show('touch', true); Input.edge = {};
-    toast(isTouch ? 'Arraste a faixa para esterçar' : 'WASD ou setas · Espaço: freio de mão · C: câmera · R: desvirar', 4200); $('hint').classList.add('show'); setTimeout(() => $('hint').classList.remove('show'), 14000);
+    toast(isTouch ? 'Arraste a faixa para esterçar' : 'WASD ou setas · Espaço: freio de mão · C: câmera · G: câmbio auto/manual · R: desvirar', 4200); $('hint').classList.add('show'); setTimeout(() => $('hint').classList.remove('show'), 14000);
     try { if (isTouch && document.documentElement.requestFullscreen && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {}); } catch (e) {}
   }
   function setPause(p) {
@@ -208,9 +208,18 @@
     for (const b of document.querySelectorAll('.seg-cs button')) b.classList.toggle('on', b.dataset.v === (camMode === 0 ? 'mlc' : 'simple'));
     for (const b of document.querySelectorAll('.seg-fx button')) b.classList.toggle('on', b.dataset.v === (cfg.fx === 'off' ? 'off' : 'on'));
     for (const b of document.querySelectorAll('.seg-mr button')) b.classList.toggle('on', b.dataset.v === (cfg.mirror === 'off' ? 'off' : 'on'));
+    for (const b of document.querySelectorAll('.seg-tr button')) b.classList.toggle('on', b.dataset.v === (cfg.trans === 'manual' ? 'manual' : 'auto'));
+    document.body.classList.toggle('manual', cfg.trans === 'manual');
   }
+  // ---------- câmbio: automático (padrão) / manual ----------
+  const setTrans = (t, say) => { cfg.trans = t === 'manual' ? 'manual' : 'auto'; save(); sync(); if (say) toast(cfg.trans === 'manual' ? 'Câmbio MANUAL · E sobe · Q desce · G volta ao automático' : 'Câmbio AUTOMÁTICO', 1800); };
+  document.addEventListener('pointerdown', (e) => { // botões do HUD (mouse ou toque): ▲ ▼ e AUTO/MANUAL
+    const b = e.target.closest && e.target.closest('#b-up, #b-dn, #b-trans'); if (!b || mode !== 'play') return; e.preventDefault();
+    if (b.id === 'b-trans') setTrans(cfg.trans === 'manual' ? 'auto' : 'manual', true); else Input.edge[b.id === 'b-up' ? 'shUp' : 'shDn'] = 1;
+  });
   const segBind = (cls, key, fn) => { for (const box of document.querySelectorAll(cls)) box.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; cfg[key] = key === 'sound' ? b.dataset.v === 'on' : b.dataset.v; save(); if (key === 'sound') Sound.setOn(cfg.sound); sync(); fn && fn(); }); };
   segBind('.seg-q', 'quality', () => { dynScale = 1; R && applyQuality(); }); segBind('.seg-u', 'units'); segBind('.seg-s', 'sound'); segBind('.seg-fx', 'fx'); segBind('.seg-mr', 'mirror');
+  segBind('.seg-tr', 'trans');
   segBind('.seg-cs', 'camStyle', () => { camMode = cfg.camStyle === 'mlc' ? 0 : 1; if (typeof CamMLC !== 'undefined') CamMLC.reset(); sync(); });
   $('cam-btn').addEventListener('click', () => { camMode = (camMode + 1) % CAMS.length; if (camMode < 2) { cfg.camStyle = camMode === 0 ? 'mlc' : 'simple'; save(); } sync(); });
   $('reset-btn').addEventListener('click', () => { veh.respawn(false); setPause(false); });
@@ -231,6 +240,9 @@
       if (Input.take('cam')) { camMode = (camMode + 1) % CAMS.length; if (camMode < 2) { cfg.camStyle = camMode === 0 ? 'mlc' : 'simple'; save(); } sync(); toast('Câmera: ' + CAMS[camMode].n, 1100); }
       if (Input.take('reset')) { veh.respawn(false); toast('Carro desvirado', 1200); }
       if (Input.take('respawn')) { veh.respawn(true); toast('De volta à última rua segura', 1500); }
+      if (Input.take('trans')) setTrans(cfg.trans === 'manual' ? 'auto' : 'manual', true);
+      veh.manual = cfg.trans === 'manual';
+      if (Input.take('shUp')) { if (veh.manual) veh.shiftReq = 1; } if (Input.take('shDn')) { if (veh.manual) veh.shiftReq = -1; }
       acc += dt; let n = 0; while (acc >= HZ && n < 10) { veh.step(HZ, inp); acc -= HZ; n++; } if (n === 10) acc = 0;
       orbitYaw += ((inp.orbit || 0) * 1.4 - orbitYaw) * Math.min(1, 6 * dt) * (inp.orbit ? 1 : 0.4); if (!inp.orbit) orbitYaw *= Math.exp(-2.5 * dt);
       if (veh.impact > 3.5) { Sound.crash(veh.impact); Input.rumble(veh.impact / 20, 180); shake = Math.min(1.6, veh.impact / 9); if (veh.impact > 8) toast('Batida!', 700); }
