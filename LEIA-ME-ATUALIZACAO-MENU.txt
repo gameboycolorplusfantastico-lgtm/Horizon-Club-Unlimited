@@ -1,0 +1,12 @@
+Atualizacao: menu inicial novo, navegacao por controle (Xbox), tela cheia e pesquisa de dados gratis.
+
+COMO APLICAR: copie o conteudo desta pasta por cima do repositorio (mantem os caminhos). index.html ja vem recompilado.
+Se mexer em src/ depois: python3 tools/build.py
+
+Novos / alterados:
+  src/mods/menu_pro.js, menu_pro.css   (NOVOS: menu, foco, controle, tela cheia)
+  src/mods/menu_fh2.js                 (dicas da garagem com botoes do controle)
+  src/template.html                    (novo menu inicial + painel Opcoes + botao de tela cheia)
+  tools/specs_reais.py, tools/processar_novos_carros.py, .github/workflows/adicionar-carro.yml (+ copia em tools/workflows/)
+  LEIA-ME-DADOS.md, tools/specs_manual.exemplo.json
+O arquivo do workflow fica em .github/workflows/: pelo site do GitHub, envie esse arquivo separadamente se o upload da pasta oculta nao pegar.

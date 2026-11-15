@@ -171,6 +171,75 @@ body.touch #toast { top: calc(max(0px, env(safe-area-inset-top, 0px)) + clamp(18
 @media (max-aspect-ratio: 1/1) { .g-main { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; } .g-left { display: none; } }
 @media (max-height: 520px) { .g-left { display: none; } .g-main { grid-template-columns: minmax(0, 1fr) minmax(190px, 260px); } .g-bar { margin: 4px 0; } }
 
+/* ===== Menu inicial novo + navegação por controle/teclado + tela cheia ===== */
+/* layout: menu à esquerda, cena do jogo visível à direita */
+#menu { background: linear-gradient(90deg, rgba(4,6,10,.94) 0, rgba(4,6,10,.80) 34%, rgba(4,6,10,.28) 66%, rgba(4,6,10,.10) 100%), radial-gradient(1200px 600px at 20% 100%, rgba(255,226,26,.10), transparent 60%); }
+#p-start, #p-opts { justify-self: start; width: min(560px, 100%); }
+#p-start { gap: 14px; }
+#p-start .brand { font-size: clamp(36px, 8vw, 62px); }
+#tagline { color: var(--fy); }
+#ptxt { margin-top: 6px; }
+
+/* lista de opções do menu */
+.mlist { display: grid; gap: 8px; margin: 2px 0 4px; }
+#menu .mitem { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; width: 100%; box-sizing: border-box; min-height: 54px; padding: 12px 20px; text-align: left; font: 700 clamp(17px, 2.8vmin, 22px) var(--display); font-style: italic; text-transform: uppercase; letter-spacing: .06em; border-radius: 4px; position: relative; transition: transform .12s ease, background .12s ease, color .12s ease, box-shadow .12s ease; }
+#menu .mitem small { font: 500 12px var(--body); font-style: normal; text-transform: none; letter-spacing: .02em; opacity: .7; }
+#menu .mitem.ghost { background: rgba(12,16,22,.72); border: 1px solid rgba(255,255,255,.22); color: #fff; padding: 12px 20px; font-size: clamp(17px, 2.8vmin, 22px); }
+#menu .mitem.cta { box-shadow: none; font-size: clamp(19px, 3.2vmin, 26px); padding: 14px 20px; }
+#menu .mitem.cta:disabled { background: rgba(255,255,255,.1); color: var(--dim); }
+
+/* ===== INDICADOR DE FOCO (o ponto principal) ===== */
+/* item de lista em foco: barra amarela cheia, deslocada, com seta e brilho */
+#menu .mitem:hover:not(:disabled), body.navmode #menu .mitem:focus:not(:disabled), #menu .mitem.hf { background: var(--fy); color: #0b0b0b; border-color: var(--fy); transform: translateX(14px); box-shadow: -6px 0 0 0 #fff, 0 0 0 2px rgba(255,226,26,.35), 0 10px 34px rgba(255,226,26,.35); z-index: 2; outline: none; }
+#menu .mitem:hover:not(:disabled)::before, body.navmode #menu .mitem:focus:not(:disabled)::before, #menu .mitem.hf::before { content: ''; position: absolute; left: -34px; top: 50%; width: 0; height: 0; margin-top: -11px; border-left: 16px solid var(--fy); border-top: 11px solid transparent; border-bottom: 11px solid transparent; animation: mnudge .7s ease-in-out infinite alternate; }
+@keyframes mnudge { from { transform: translateX(-5px); } to { transform: translateX(3px); } }
+#menu .mitem:active:not(:disabled) { transform: translateX(14px) scale(.985); }
+/* demais botões (opções, pausa, voltar): anel branco + halo amarelo + leve aumento */
+#menu .seg button:hover, body.navmode #menu .seg button:focus, body.navmode #menu .ghost:not(.mitem):focus, body.navmode #menu .cta:not(.mitem):focus, #menu .ghost:not(.mitem):hover { outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 0 7px rgba(255,226,26,.55), 0 0 26px 8px rgba(255,226,26,.4); position: relative; z-index: 3; transform: scale(1.06); }
+#menu .seg { overflow: visible; }
+#menu .seg button { transition: transform .1s ease, box-shadow .1s ease; }
+#menu .seg button:not(.on) { color: #cfd6df; }
+/* linha da opção inteira acende quando um controle dela está em foco */
+.row { transition: background .12s ease, box-shadow .12s ease; }
+#p-opts .row, #p-pause .row { background: rgba(255,255,255,.06); padding: 8px 12px; border-radius: 3px; }
+#p-opts .row > span { color: #fff; font: 600 13px var(--display); letter-spacing: .06em; text-transform: uppercase; }
+body.navmode .row:focus-within, .row:hover { background: rgba(255,226,26,.16) !important; box-shadow: inset 5px 0 0 var(--fy); }
+#p-opts { background: rgba(0,0,0,.62); padding: 22px 24px; border-left: 6px solid var(--fy); gap: 10px; }
+body.touch #menu button:focus { outline: none; }
+
+/* tela cheia flutuante (canto superior direito do menu) */
+.fs-float { position: fixed; right: max(14px, env(safe-area-inset-right, 0px)); top: max(14px, env(safe-area-inset-top, 0px)); width: 52px; height: 52px; display: grid; place-items: center; background: rgba(0,0,0,.6); border: 1px solid rgba(255,255,255,.35); border-radius: 4px; color: #fff; cursor: pointer; z-index: 5; }
+.fs-float svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.fs-float .fs-out { display: none; } body.is-fs .fs-float .fs-in { display: none; } body.is-fs .fs-float .fs-out { display: inline; }
+.fs-float:hover, body.navmode .fs-float:focus { background: var(--fy); color: #0b0b0b; border-color: var(--fy); outline: none; box-shadow: 0 0 0 4px #fff, 0 0 26px 8px rgba(255,226,26,.45); }
+body.nofs .fs-float, body.nofs [data-fs] { display: none !important; }
+
+/* barra de dicas de botões embaixo do menu */
+.mhints { position: fixed; left: 0; right: 0; bottom: max(2px, env(safe-area-inset-bottom, 0px)); display: flex; justify-content: center; gap: 22px; flex-wrap: wrap; padding: 8px 12px; background: linear-gradient(0deg, rgba(0,0,0,.7), transparent); font: 600 14px var(--display); letter-spacing: .06em; text-transform: uppercase; color: #e6edf5; pointer-events: none; z-index: 4; }
+.mhints span { display: inline-flex; align-items: center; gap: 8px; }
+.mhints i, .g-hints i.pd { font-style: normal; display: inline-grid; place-items: center; min-width: 26px; height: 26px; padding: 0 6px; box-sizing: border-box; border-radius: 13px; border: 2px solid #9aa6b4; font: 700 12px var(--display); color: #fff; }
+.mhints i.a, .g-hints i.a { background: #3fa13f; border-color: #3fa13f; } .mhints i.b, .g-hints i.b { background: #d8372b; border-color: #d8372b; }
+.mhints i.x { background: #2f6fd6; border-color: #2f6fd6; } .mhints i.y, .g-hints i.y { background: #e8c21a; border-color: #e8c21a; color: #111; }
+.mhints i.k { border-radius: 5px; background: rgba(255,255,255,.12); }
+body.touch .mhints { display: none; }
+/* garagem: mostra glifos do teclado OU do controle */
+body.pad-ui .g-hints .kb { display: none; } body:not(.pad-ui) .g-hints .pd { display: none; }
+.g-tile.sel { outline: 3px solid var(--fy); outline-offset: 2px; box-shadow: 0 10px 18px rgba(0,0,0,.5), 0 0 26px 6px rgba(255,226,26,.45); }
+.g-tile { transition: transform .12s, box-shadow .12s, outline-color .12s; }
+
+#fs-note { color: var(--fy); font: 500 12px var(--body); min-height: 1em; }
+@media (max-width: 640px) { #p-start, #p-opts { justify-self: stretch; } #menu .mitem:hover:not(:disabled), body.navmode #menu .mitem:focus:not(:disabled), #menu .mitem.hf { transform: translateX(6px); } }
+@media (max-height: 560px) { #menu .mitem { min-height: 42px; padding-top: 8px; padding-bottom: 8px; } #p-start .keys { display: none; } }
+@media (prefers-reduced-motion: reduce) { #menu .mitem::before { animation: none !important; } }
+/* botão principal (Começar/Voltar) em repouso: contorno amarelo; só o item em foco fica totalmente amarelo */
+#menu .mitem.cta:not(:disabled) { background: rgba(255,226,26,.12); color: var(--fy); border: 1px solid rgba(255,226,26,.65); }
+#menu .mitem.cta:hover:not(:disabled), body.navmode #menu .mitem.cta:focus:not(:disabled) { background: var(--fy); color: #0b0b0b; }
+/* o conteúdo não fica escondido atrás da barra de dicas */
+#menu { padding-bottom: 60px; box-sizing: border-box; }
+#p-pause { gap: 8px; } #p-pause .row { padding: 5px 12px; }
+#menu { padding-left: clamp(16px, 4vw, 56px); padding-right: clamp(16px, 4vw, 56px); } #p-pause { justify-self: center; }
+body.touch #p-start .keys div:not(:last-child) { display: none; }
+
 
 </style>
 <canvas id="c" aria-label="Jogo de direção em cidade aberta"></canvas>
@@ -197,15 +266,30 @@ body.touch #toast { top: calc(max(0px, env(safe-area-inset-top, 0px)) + clamp(18
   <div id="menu">
     <div class="card" id="p-start">
       <div><p class="sub num" id="tagline" style="letter-spacing:.2em;text-transform:uppercase;font-size:12px">Mundo aberto</p><h1 class="brand">Horizon Club <span>Unlimited</span></h1></div>
-      <p class="sub">Uma cidade inteira de ruas, pontes, ladeiras e orla para dirigir sem rota. A colisão segue o relevo do mapa.</p>
       <div class="cars" id="cars-start" role="radiogroup" aria-label="Escolha o carro" hidden></div>
-      <div class="prog"><div id="bar"></div></div><div id="ptxt">Preparando…</div>
-      <div class="acts"><button class="cta" id="start" disabled>Carregando…</button><button class="ghost" id="open-garage">Garagem</button></div>
+      <div><div class="prog"><div id="bar"></div></div><div id="ptxt">Preparando…</div></div>
+      <div class="mlist" role="menu" aria-label="Menu principal">
+        <button class="cta mitem" id="start" disabled>Carregando…</button>
+        <button class="ghost mitem" id="open-garage"><span>Garagem</span><small>escolher o carro</small></button>
+        <button class="ghost mitem" id="open-opts"><span>Opções</span><small>gráficos, som, câmera</small></button>
+        <button class="ghost mitem" id="fs-start" data-fs><span>Tela cheia</span></button>
+      </div>
       <div class="keys">
-        <div><h3>Teclado</h3>W A S D ou setas dirigem, Espaço é o freio de mão, C troca a câmera, R desvira, T volta à rua.</div>
-        <div><h3>Controle</h3>RT acelera, LT freia e dá ré, X ou A é o freio de mão, Y câmera, B desvira, Start pausa.</div>
+        <div><h3>Teclado</h3>W A S D ou setas dirigem, Espaço é o freio de mão, C troca a câmera, R desvira, T volta à rua, F tela cheia.</div>
+        <div><h3>Controle</h3>RT acelera, LT freia e dá ré, X ou A é o freio de mão, Y câmera, B desvira, Start pausa. Nos menus: direcional ou analógico navega, A seleciona, B volta, Y tela cheia.</div>
         <div><h3>Toque</h3>Arraste a faixa da esquerda para esterçar. Pedais à direita. Rode o celular para a horizontal.</div>
       </div>
+    </div>
+    <div class="card" id="p-opts" hidden>
+      <h2 class="brand" style="font-size:clamp(30px,7vw,44px)">Opções</h2>
+      <div class="row"><span>Qualidade gráfica</span><div class="seg seg-q"><button data-v="auto">Auto</button><button data-v="low">Baixa</button><button data-v="med">Média</button><button data-v="high">Alta</button></div></div>
+      <div class="row"><span>Unidade de velocidade</span><div class="seg seg-u"><button data-v="kmh">km/h</button><button data-v="mph">mph</button></div></div>
+      <div class="row"><span>Som</span><div class="seg seg-s"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
+      <div class="row"><span>Estilo da câmera</span><div class="seg seg-cs"><button data-v="mlc">Midnight Club</button><button data-v="simple">Simples</button></div></div>
+      <div class="row"><span>Efeito de velocidade</span><div class="seg seg-fx"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
+      <div class="row"><span>Retrovisor</span><div class="seg seg-mr"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
+      <div class="row"><span>Tela cheia ao começar</span><div class="seg seg-fa"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
+      <div class="mlist"><button class="cta mitem" id="opts-back">Voltar</button></div>
     </div>
     <div class="card" id="p-pause" hidden>
       <h2 class="brand" style="font-size:clamp(30px,7vw,44px)">Pausado</h2>
@@ -217,8 +301,10 @@ body.touch #toast { top: calc(max(0px, env(safe-area-inset-top, 0px)) + clamp(18
       <div class="row"><span>Efeito de velocidade</span><div class="seg seg-fx"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
       <div class="row"><span>Retrovisor</span><div class="seg seg-mr"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
       <div class="row"><span>Câmera atual: <b id="camname"></b></span><button class="ghost" id="cam-btn">Trocar câmera</button></div>
-      <div class="grid2"><button class="ghost" id="garage-btn">Garagem</button><button class="ghost" id="reset-btn">Desvirar o carro</button><button class="ghost" id="home-btn">Voltar ao ponto inicial</button><button class="ghost" id="fs-btn">Tela cheia</button><button class="cta" id="resume">Continuar</button></div>
+      <div class="grid2"><button class="ghost" id="garage-btn">Garagem</button><button class="ghost" id="reset-btn">Desvirar o carro</button><button class="ghost" id="home-btn">Voltar ao ponto inicial</button><button class="ghost" id="fs-btn" data-fs>Tela cheia</button><button class="cta" id="resume">Continuar</button></div>
     </div>
+    <button class="fs-float" id="fs-float" data-fs-icon aria-label="Tela cheia" title="Tela cheia (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="fs-in" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><path class="fs-out" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button>
+    <div class="mhints" id="mhints" aria-hidden="true"></div>
   </div>
 </div>
 <script>
@@ -1276,7 +1362,7 @@ const FH2 = (() => {
         '<aside class="g-right"><div class="g-class"><div class="g-ci"><b id="g-cls">S2</b><span id="g-pi">925</span></div><div class="g-drive"><svg viewBox="0 0 60 90" id="g-drv"></svg><b id="g-drvt">AWD</b></div></div><div class="g-bars" id="g-bars"></div></aside>' +
       '</div>' +
       '<div class="g-strip" id="g-strip" role="listbox" aria-label="Carros"></div>' +
-      '<div class="g-hints"><button id="g-bk"><i>Esc</i>Voltar</button><span><i>←</i><i>→</i>Escolher</span><button id="g-ok2"><i>Enter</i>Selecionar</button></div>';
+      '<div class="g-hints"><button id="g-bk"><i class="kb">Esc</i><i class="pd b">B</i>Voltar</button><span><i class="kb">←</i><i class="kb">→</i><i class="pd">◀</i><i class="pd">▶</i>Escolher</span><button id="g-ok2"><i class="kb">Enter</i><i class="pd a">A</i>Selecionar</button></div>';
     ui.appendChild(G);
     $('g-ok').onclick = $('g-ok2').onclick = confirm; $('g-bk').onclick = close;
     $('g-strip').addEventListener('click', (e) => { const t = e.target.closest('.g-tile'); if (t) { focus = t.dataset.id; paint(); } });
@@ -1320,6 +1406,198 @@ const FH2 = (() => {
     },
     statsFor,
   };
+})();
+
+// ===================== MENU PRO =====================
+// 1) Tela cheia: botão no menu inicial, no menu de pausa, ícone flutuante, tecla F e opção "tela cheia ao começar".
+// 2) Navegação dos menus por controle (direcional / analógico esquerdo / A / B / Y / Start) e por teclado (setas, Enter, Esc),
+//    com cursor amarelo bem visível e dicas de botões embaixo. Nada disso mexe no jogo em si: só atua com o menu aberto.
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const doc = document, root = doc.documentElement, body = doc.body, menu = $('menu');
+  if (!menu) return;
+  const LS = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) {} return null; };
+  const mode = () => (window.__game ? window.__game.mode : 'boot');
+  const menuOn = () => !menu.hidden;
+  const garageOpen = () => typeof FH2 !== 'undefined' && FH2.isOpen;
+  const now = () => performance.now();
+
+  // ---------------- tela cheia ----------------
+  const reqFs = root.requestFullscreen || root.webkitRequestFullscreen;
+  const canFs = !!reqFs && doc.fullscreenEnabled !== false;
+  const isFs = () => !!(doc.fullscreenElement || doc.webkitFullscreenElement);
+  let flashT = 0, hintKey = '';
+  function flash(msg) { const mh = $('mhints'); if (!mh) return; mh.textContent = msg; hintKey = ''; clearTimeout(flashT); flashT = setTimeout(() => { hintKey = ''; renderHints(); }, 4200); }
+  function toggleFs() {
+    if (!canFs) return;
+    const fail = () => flash('O navegador só libera a tela cheia com um clique ou toque. Use o botão com o mouse/toque ou a tecla F.');
+    try {
+      const p = isFs() ? (doc.exitFullscreen || doc.webkitExitFullscreen).call(doc) : reqFs.call(root, { navigationUI: 'hide' });
+      if (p && p.catch) p.catch(fail);
+    } catch (e) { fail(); }
+  }
+  function syncFs() {
+    const on = isFs(); body.classList.toggle('is-fs', on); body.classList.toggle('nofs', !canFs);
+    for (const el of doc.querySelectorAll('[data-fs]')) { const s = el.querySelector('span') || el; s.textContent = on ? 'Sair da tela cheia' : 'Tela cheia'; }
+    const f = $('fs-float'); if (f) { const t = (on ? 'Sair da tela cheia' : 'Tela cheia') + ' (F)'; f.title = t; f.setAttribute('aria-label', t); }
+  }
+  doc.addEventListener('fullscreenchange', syncFs); doc.addEventListener('webkitfullscreenchange', syncFs);
+  for (const id of ['fs-start', 'fs-float']) { const b = $(id); if (b) b.addEventListener('click', toggleFs); } // o #fs-btn da pausa já é ligado no main.js
+  const faVal = () => (LS('hcu-fs-auto') === 'on' ? 'on' : 'off');
+  const syncFa = () => { for (const b of doc.querySelectorAll('.seg-fa button')) b.classList.toggle('on', b.dataset.v === faVal()); };
+  const fa = doc.querySelector('.seg-fa'); if (fa) fa.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { LS('hcu-fs-auto', b.dataset.v); syncFa(); } });
+  const st = $('start'); if (st) st.addEventListener('click', () => { if (faVal() === 'on' && !isFs()) toggleFs(); });
+  syncFs(); syncFa();
+
+  // ---------------- painéis ----------------
+  const PANELS = ['p-start', 'p-opts', 'p-pause'];
+  const activePanel = () => PANELS.map($).find((p) => p && !p.hidden);
+  function items() {
+    const p = activePanel(), out = [];
+    if (p) for (const b of p.querySelectorAll('button')) if (!b.disabled && b.offsetParent !== null) out.push(b);
+    const f = $('fs-float'); if (f && f.offsetParent !== null) out.push(f);
+    return out;
+  }
+  function defaultItem(L) {
+    const p = activePanel(), id = p && p.id;
+    if (id === 'p-start') return L.find((b) => b.id === 'start') || L[0];
+    if (id === 'p-pause') return L.find((b) => b.id === 'resume') || L[0];
+    return L[0];
+  }
+  function focusEl(el) { if (!el) return; body.classList.add('navmode'); try { el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) {} }
+  function showPanel(id) { for (const k of ['p-start', 'p-opts']) { const p = $(k); if (p) p.hidden = k !== id; } }
+  const oo = $('open-opts'), ob = $('opts-back');
+  if (oo) oo.addEventListener('click', () => { showPanel('p-opts'); focusEl(items()[0]); });
+  if (ob) ob.addEventListener('click', () => { showPanel('p-start'); focusEl(oo); });
+
+  // ---------------- navegação espacial ----------------
+  function move(dir) {
+    const L = items(); if (!L.length) return;
+    const cur = L.includes(doc.activeElement) ? doc.activeElement : null;
+    if (!cur) { focusEl(defaultItem(L)); return; }
+    const r = cur.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    let best = null, bs = 1e9;
+    for (const el of L) {
+      if (el === cur) continue;
+      const q = el.getBoundingClientRect(), dx = q.left + q.width / 2 - cx, dy = q.top + q.height / 2 - cy;
+      const m = dir === 'left' ? -dx : dir === 'right' ? dx : dir === 'up' ? -dy : dy, o = dir === 'left' || dir === 'right' ? Math.abs(dy) : Math.abs(dx);
+      if (m < 4) continue;
+      const s = m + o * 2.5; if (s < bs) { bs = s; best = el; }
+    }
+    if (!best && (dir === 'up' || dir === 'down')) { // dá a volta: do último pro primeiro item (e vice-versa), ignorando o ícone flutuante
+      const M = L.filter((b) => b.id !== 'fs-float'); if (M.length > 1) best = dir === 'down' ? M[0] : M[M.length - 1];
+    }
+    if (best) focusEl(best);
+  }
+
+  // clique do controle e clique nativo do navegador (ex.: Xbox) no mesmo botão contam uma vez só
+  let lastEl = null, lastT = 0, lastTrusted = false;
+  doc.addEventListener('click', (e) => {
+    const el = e.target.closest && e.target.closest('button'), t = now();
+    if (el && el === lastEl && t - lastT < 280 && e.isTrusted !== lastTrusted) { e.stopImmediatePropagation(); e.preventDefault(); return; }
+    lastEl = el; lastT = t; lastTrusted = e.isTrusted;
+  }, true);
+  // o clique é adiado um instante para o laço do jogo terminar o quadro atual; depois limpa botões pendentes (ex.: B = "desvirar") para não vazarem pro jogo
+  const press = (el) => { if (!el) return; setTimeout(() => { try { if (typeof Input !== 'undefined') Input.edge = {}; } catch (e) {} el.click(); }, 40); };
+
+  function panelBack() {
+    const p = activePanel(); if (!p) return;
+    if (p.id === 'p-opts') { press(ob); } else if (p.id === 'p-pause') press($('resume'));
+  }
+  const GARAGE_KEY = { left: 'ArrowLeft', up: 'ArrowLeft', right: 'ArrowRight', down: 'ArrowRight', ok: 'Enter', back: 'Escape' };
+  function act(k) {
+    if (k === 'fs') { toggleFs(); return; }
+    if (garageOpen()) { const c = GARAGE_KEY[k]; if (c) window.dispatchEvent(new KeyboardEvent('keydown', { code: c, key: c, bubbles: true, cancelable: true })); return; }
+    if (!menuOn()) return;
+    body.classList.add('navmode');
+    if (k === 'up' || k === 'down' || k === 'left' || k === 'right') { move(k); return; }
+    if (k === 'back') { panelBack(); return; }
+    if (k === 'start') { const s = $('start'); if (mode() === 'menu' && s && !s.disabled) press(s); return; }
+    if (k === 'ok') {
+      const L = items(), cur = L.includes(doc.activeElement) ? doc.activeElement : null;
+      if (cur) { press(cur); return; }
+      const d = defaultItem(L); focusEl(d); if (d && (d.id === 'start' || d.id === 'resume')) press(d);
+    }
+  }
+
+  // ---------------- teclado ----------------
+  const KDIR = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', KeyW: 'up', KeyS: 'down', KeyA: 'left', KeyD: 'right' };
+  const setPad = (on) => { if (body.classList.contains('pad-ui') !== on) { body.classList.toggle('pad-ui', on); hintKey = ''; } };
+  addEventListener('keydown', (e) => {
+    if (!e.isTrusted) return;
+    setPad(false);
+    const c = e.code;
+    if (c === 'KeyF' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey) { toggleFs(); return; }
+    if (!menuOn() || garageOpen()) return; // a garagem tem o próprio tratamento de teclas
+    if (KDIR[c]) { e.preventDefault(); e.stopImmediatePropagation(); act(KDIR[c]); return; }
+    if (c === 'Enter' || c === 'NumpadEnter') {
+      e.stopImmediatePropagation(); // impede que o Enter também dispare "pausa" no jogo
+      if (!items().includes(doc.activeElement)) { e.preventDefault(); act('ok'); }
+      return; // com um botão em foco, o clique nativo do Enter faz o resto
+    }
+    if (c === 'Escape' && (activePanel() || {}).id === 'p-opts') { e.preventDefault(); e.stopImmediatePropagation(); panelBack(); }
+  }, true);
+  menu.addEventListener('pointermove', (e) => {
+    if (e.pointerType !== 'mouse') return;
+    body.classList.remove('navmode'); setPad(false);
+    const b = e.target.closest && e.target.closest('button');
+    if (b && b !== doc.activeElement && items().includes(b)) b.focus({ preventScroll: true });
+  });
+  menu.addEventListener('pointerdown', () => body.classList.remove('navmode'));
+
+  // ---------------- controle (gamepad) ----------------
+  // evita que cliques/botões "vazem" para o jogo enquanto o menu está aberto
+  if (typeof Input !== 'undefined' && Input.take) {
+    const take0 = Input.take.bind(Input);
+    Input.take = function (n) {
+      const m = mode();
+      if (m !== 'play') {
+        if (n === 'padA' || n === 'cam' || n === 'reset' || n === 'respawn') { this.edge[n] = 0; return false; }
+        if (n === 'pause' && m === 'menu') { this.edge.pause = 0; return false; } // no menu inicial só o botão "Começar" inicia
+      }
+      return take0(n);
+    };
+  }
+  const prev = {}, hold = { dir: null, t: 0, n: 0 };
+  function padLoop() {
+    requestAnimationFrame(padLoop);
+    let g = null; try { const ps = navigator.getGamepads ? navigator.getGamepads() : []; for (const p of ps) if (p && p.connected) { g = p; break; } } catch (e) {}
+    const on = menuOn() || garageOpen();
+    if (g) {
+      const B = (i) => !!(g.buttons[i] && (g.buttons[i].pressed || g.buttons[i].value > 0.5));
+      const edge = (i) => { const v = B(i), r = v && !prev[i]; prev[i] = v; return r; };
+      const a = edge(0), b = edge(1), y = edge(3), lb = edge(4), rb = edge(5), start = edge(9);
+      const ax = g.axes[0] || 0, ay = g.axes[1] || 0; let dir = null;
+      if (B(12)) dir = 'up'; else if (B(13)) dir = 'down'; else if (B(14)) dir = 'left'; else if (B(15)) dir = 'right';
+      else if (Math.hypot(ax, ay) > 0.55) dir = Math.abs(ax) > Math.abs(ay) ? (ax < 0 ? 'left' : 'right') : (ay < 0 ? 'up' : 'down');
+      if (a || b || y || start || dir) setPad(true);
+      if (on) {
+        if (dir !== hold.dir) { hold.dir = dir; hold.t = now(); hold.n = 0; if (dir) act(dir); }
+        else if (dir && now() - hold.t > (hold.n === 0 ? 380 : 130)) { hold.t = now(); hold.n++; act(dir); }
+        if (a) act('ok'); if (b) act('back'); if (y) act('fs'); if (start) act('start');
+        if (garageOpen()) { if (lb) act('left'); if (rb) act('right'); }
+      } else hold.dir = null;
+    }
+    if (on) {
+      if (body.classList.contains('navmode') && !garageOpen()) { const L = items(); if (L.length && !L.includes(doc.activeElement)) focusEl(defaultItem(L)); }
+      renderHints();
+    }
+  }
+  addEventListener('gamepadconnected', () => setPad(true));
+
+  // ---------------- dicas de botões ----------------
+  function renderHints() {
+    const mh = $('mhints'); if (!mh || !menuOn()) return;
+    const p = activePanel(), id = p ? p.id : '', pad = body.classList.contains('pad-ui');
+    const back = id === 'p-opts' ? 'Voltar' : id === 'p-pause' ? 'Continuar' : '';
+    const key = [pad, id, canFs, isFs()].join('|'); if (key === hintKey) return; hintKey = key;
+    const g = (cls, t, label) => '<span><i class="' + cls + '">' + t + '</i>' + label + '</span>';
+    const fs = canFs ? (isFs() ? 'Sair da tela cheia' : 'Tela cheia') : '';
+    mh.innerHTML = pad
+      ? g('', '✛', 'Navegar') + g('a', 'A', 'Selecionar') + (back ? g('b', 'B', back) : '') + (fs ? g('y', 'Y', fs) : '')
+      : g('k', '↑↓←→', 'Navegar') + g('k', 'Enter', 'Selecionar') + (back ? g('k', 'Esc', back) : '') + (fs ? g('k', 'F', fs) : '');
+  }
+  requestAnimationFrame(padLoop);
 })();
 
 

@@ -1,0 +1,5 @@
+{
+  "_ajuda": "Copie este arquivo para specs_manual.json e edite. A chave e o id do carro (veja assets/cars/cars.json). Chaves que comecam com _ sao ignoradas.",
+  "ford-f150-raptor": {"hp": 411, "kg": 2650, "awd": true, "top_kmh": 170, "cyl": 8, "torque_nm": 590, "redline": 6300, "motor": "V8 6.2", "preset": "pickup"},
+  "bmw-m3-gtr": {"hp": 340, "kg": 1500, "awd": false, "cyl": 6, "motor": "L6 3.2", "preset": "esportivo", "travado": true}
+}

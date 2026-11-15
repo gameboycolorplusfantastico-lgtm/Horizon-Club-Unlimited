@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Busca dados REAIS de um carro na internet e converte em fisica para o jogo.
 
-Ordem de busca:
-  1. API da Anthropic com pesquisa na web (se existir o segredo ANTHROPIC_API_KEY no GitHub)
-  2. Wikipedia (sem chave nenhuma; menos preciso)
-  3. Nada achado -> o carro usa o preset normal (esportivo/pickup)
+Ordem (a primeira que achar vale; o que voce escreveu na mao SEMPRE vence):
+  0. "real" no .json do carro  >  tools/specs_manual.json            (gratis, 100% preciso - recomendado)
+  1. API da Anthropic com pesquisa na web   (se existir o segredo ANTHROPIC_API_KEY; PAGO)
+  2. Wikipedia lida por IA gratuita do Google (se existir o segredo GEMINI_API_KEY; GRATIS, chave em aistudio.google.com)
+  3. Wikipedia lida por regras (sem chave nenhuma; melhorada: varias paginas candidatas, {{convert}}, pt+en)
+  4. Nada achado -> o carro usa o preset normal (esportivo/pickup)
 
 Dados que o .json do carro pode trazer para FORCAR um valor (tem prioridade sobre a busca):
   "real": {"hp": 411, "kg": 2650, "awd": true, "top_kmh": 170, "cyl": 8, "torque_nm": 590, "redline": 6300, "motor": "V8 6.2"}
@@ -35,7 +37,7 @@ def limpar(d):
         elif k == 'awd' and isinstance(v, bool):
             out[k] = v
         elif k in ('motor', 'fonte') and isinstance(v, str) and v.strip():
-            out[k] = v.strip()[:60]
+            out[k] = v.strip()[:140]
     return out
 
 
@@ -65,52 +67,178 @@ def via_api(nome):
         return {}
 
 
-# ---------------- 2) Wikipedia ----------------
-def via_wikipedia(nome):
-    try:
-        q = urllib.parse.urlencode({'action': 'query', 'list': 'search', 'srsearch': nome + ' automobile', 'srlimit': 1, 'format': 'json'})
-        hits = json.loads(_get('https://en.wikipedia.org/w/api.php?' + q))['query']['search']
-        if not hits:
-            return {}
-        title = hits[0]['title']
-        q = urllib.parse.urlencode({'action': 'parse', 'page': title, 'prop': 'wikitext', 'format': 'json', 'redirects': 1})
-        wt = json.loads(_get('https://en.wikipedia.org/w/api.php?' + q))['parse']['wikitext']['*']
-    except Exception as e:
-        print('  [aviso] Wikipedia falhou:', e)
-        return {}
-    ib = wt[:wt.lower().find('}}\n\n') if '}}\n\n' in wt else 6000]
+# ---------------- Wikipedia (compartilhado) ----------------
+def _wiki_api(lang, **params):
+    params['format'] = 'json'
+    return json.loads(_get('https://%s.wikipedia.org/w/api.php?' % lang + urllib.parse.urlencode(params)))
+
+
+def _tokens(s):
+    return [w for w in re.findall(r'[a-z0-9]+', s.lower()) if w not in ('automobile', 'automovel', 'car', 'the', 'de', 'da', 'do')]
+
+
+def wiki_candidatas(nome, lang='en', n=5):
+    """Titulos candidatos, o mais parecido com o nome primeiro (a busca crua da Wikipedia erra muito em carros)."""
+    termo = nome + (' automobile' if lang == 'en' else ' automóvel')
+    hits = _wiki_api(lang, action='query', list='search', srsearch=termo, srlimit=n)['query']['search']
+    q = set(_tokens(nome))
+
+    def score(h):
+        tt = set(_tokens(h['title']))
+        return (len(q & tt) / (len(q) or 1)) - 0.05 * len(tt - q)  # cobre o nome e nao tem palavras a mais
+    return [h['title'] for h in sorted(hits, key=score, reverse=True)]
+
+
+def wiki_texto(title, lang='en'):
+    j = _wiki_api(lang, action='parse', page=title, prop='wikitext', redirects=1)
+    wt = j['parse']['wikitext']['*']
+    wt = re.sub(r'<!--.*?-->', '', wt, flags=re.S)
+    wt = re.sub(r'<ref[^>]*?/>|<ref[^>]*?>.*?</ref>', '', wt, flags=re.S)
+    return wt
+
+
+def _n(s):
+    return float(s.replace(',', '').replace(' ', ''))
+
+
+def _conv(txt):
+    """Acha medidas em {{convert|411|hp|kW}} / {{cvt|...}} e em texto solto. Devolve lista de (valor, unidade em minusculo)."""
+    out = []
+    for m in re.finditer(r'\{\{\s*(?:convert|cvt)\s*\|\s*([\d,\.]+)(?:\s*\|\s*(?:to|-|–|and|&)\s*\|\s*[\d,\.]+)?\s*\|\s*([a-zA-Z/]+)', txt, re.I):
+        try:
+            out.append((_n(m.group(1)), m.group(2).lower()))
+        except ValueError:
+            pass
+    for m in re.finditer(r'(\d[\d,\.]*)\s*(hp|bhp|ps|cv|kw|kg|lb|lbs|km/h|kph)\b', txt, re.I):
+        try:
+            out.append((_n(m.group(1)), m.group(2).lower()))
+        except ValueError:
+            pass
+    return out
+
+
+def wiki_regras(wt, title):
+    """Extrai os numeros do texto da Wikipedia por regras (sem IA)."""
+    fim = wt.find('\n}}\n') if '\n}}\n' in wt else 9000
+    ib = wt[:max(3000, min(fim, 12000))]
     d = {}
-    m = re.search(r'(\d{2,4})\s*(?:hp|bhp|PS)\b', ib, re.I)
-    if m:
-        d['hp'] = int(m.group(1))
-    else:
-        m = re.search(r'(\d{2,4})\s*kW', ib, re.I)
-        if m:
-            d['hp'] = int(int(m.group(1)) * 1.341)
-    m = re.search(r'(?:curb ?weight|weight)\s*=\s*[^\n]*?(\d[\d,]{2,5})\s*(?:kg|\|kg)', ib, re.I)
-    if m:
-        d['kg'] = int(m.group(1).replace(',', ''))
-    else:
-        m = re.search(r'(?:curb ?weight|weight)\s*=\s*[^\n]*?(\d[\d,]{3,6})\s*(?:lb|\|lb)', ib, re.I)
-        if m:
-            d['kg'] = int(int(m.group(1).replace(',', '')) * 0.4536)
-    m = re.search(r'(\d{3})\s*(?:km/h|\|km/h)', ib, re.I)
-    if m:
-        d['top_kmh'] = int(m.group(1))
-    low = ib.lower()
-    if re.search(r'all-wheel|four-wheel|4wd|awd|4x4', low):
+    hps = []
+    for v, u in _conv(ib):
+        if u in ('hp', 'bhp'):
+            hps.append(v)
+        elif u in ('ps', 'cv'):
+            hps.append(v * 0.9863)
+        elif u == 'kw':
+            hps.append(v * 1.341)
+    hps = [h for h in hps if 40 <= h <= 2000]
+    if hps:
+        d['hp'] = int(round(max(hps)))
+    kgs = []
+    for m in re.finditer(r'(?:curb ?weight|kerb ?weight|weight)\s*=\s*([^\n]*)', ib, re.I):
+        for v, u in _conv(m.group(1)):
+            if u == 'kg':
+                kgs.append(v)
+            elif u in ('lb', 'lbs'):
+                kgs.append(v * 0.4536)
+    kgs = [k for k in kgs if 600 <= k <= 6000]
+    if kgs:
+        d['kg'] = int(round(sum(kgs[:2]) / len(kgs[:2])))
+    tops = [v if u in ('km/h', 'kph') else v * 1.609 for v, u in _conv(ib) if u in ('km/h', 'kph', 'mph')]
+    tops = [x for x in tops if 100 <= x <= 450]
+    if tops:
+        d['top_kmh'] = int(round(max(tops)))
+    if re.search(r'all-wheel|four-wheel|4wd|awd|4x4|quattro|xdrive|4matic', ib.lower()):
         d['awd'] = True  # so afirma 4x4 quando achou; nunca assume "tracao simples" por falta de dado
-    m = re.search(r'\bV(\d{1,2})\b', ib)
+    m = re.search(r'\bV\s?(\d{1,2})\b', ib)
     if m:
         d['cyl'] = int(m.group(1))
     else:
-        m = re.search(r'(?:inline|straight|flat)[- ](\d)|\bI(\d)\b|\bH(\d)\b', ib)
+        m = re.search(r'(?:inline|straight|flat|boxer)[- ](\d)|\bI(\d)\b|\bH(\d)\b|(\d)[- ]cylinder', ib, re.I)
         if m:
             d['cyl'] = int([g for g in m.groups() if g][0])
     d = limpar(d)
     if d:
         d['fonte'] = 'Wikipedia: ' + title
     return d
+
+
+# ---------------- 2) Wikipedia + IA gratuita do Google (Gemini) ----------------
+GEMINI_MODELOS = ['gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite']
+
+
+def _gemini(prompt):
+    key = os.environ.get('GEMINI_API_KEY', '').strip()
+    if not key:
+        return None
+    modelos = [os.environ['GEMINI_MODEL']] if os.environ.get('GEMINI_MODEL') else GEMINI_MODELOS
+    body = json.dumps({'contents': [{'parts': [{'text': prompt}]}], 'generationConfig': {'temperature': 0, 'responseMimeType': 'application/json'}}).encode()
+    for mod in modelos:
+        try:
+            r = json.loads(_get('https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent' % mod, body,
+                                {'content-type': 'application/json', 'x-goog-api-key': key}, 90))
+            return ''.join(p.get('text', '') for p in r['candidates'][0]['content']['parts'])
+        except Exception as e:  # modelo aposentado / limite do plano gratis: tenta o proximo
+            print('  [aviso] Gemini %s falhou: %s' % (mod, e))
+    return None
+
+
+def via_gemini(nome):
+    if not os.environ.get('GEMINI_API_KEY', '').strip():
+        return {}
+    for lang in ('en', 'pt'):
+        try:
+            tit = wiki_candidatas(nome, lang, 3)
+        except Exception as e:
+            print('  [aviso] Wikipedia (%s) falhou: %s' % (lang, e))
+            continue
+        for title in tit[:2]:
+            try:
+                wt = wiki_texto(title, lang)[:16000]
+            except Exception as e:
+                print('  [aviso] nao li a pagina', title, ':', e)
+                continue
+            prompt = ('Abaixo esta o texto-fonte (wikitexto da Wikipedia, pagina "%s") sobre um carro. Extraia as especificacoes do carro "%s" '
+                      'USANDO SOMENTE o texto abaixo. Se a pagina descrever varias versoes, use a versao pedida no nome; se o nome nao diz, use a versao mais conhecida/mais potente. '
+                      'Se a pagina NAO for sobre esse carro, responda {}. Responda SOMENTE um JSON com as chaves: hp (potencia maxima em cv/hp, numero), torque_nm, '
+                      'kg (peso em ordem de marcha), awd (true se tracao integral/4x4, false se tracao simples e o texto diz isso, senao null), top_kmh (velocidade maxima), '
+                      'cyl (numero de cilindros), redline (rpm maximo), motor (texto curto ex "V8 6.2"), versao (texto curto: a qual versao/ano os numeros se referem). '
+                      'Use null no que nao estiver no texto. Converta lb->kg, kW->cv, mph->km/h. NAO invente.\n\n---\n%s') % (title, nome, wt)
+            txt = _gemini(prompt)
+            if not txt:
+                return {}
+            try:
+                m = re.search(r'\{.*\}', txt, re.S)
+                j = json.loads(m.group(0)) if m else {}
+            except Exception:
+                j = {}
+            ver = j.pop('versao', None) if isinstance(j, dict) else None
+            d = limpar(j)
+            if d.get('hp') or d.get('kg'):
+                d['fonte'] = ('Wikipedia(%s): %s + IA Gemini' % (lang, title)) + ((' - ' + str(ver)) if ver else '')
+                return d
+    return {}
+
+
+# ---------------- 3) Wikipedia por regras (sem chave) ----------------
+def via_wikipedia(nome):
+    melhor = {}
+    for lang in ('en', 'pt'):
+        try:
+            tit = wiki_candidatas(nome, lang, 4)
+        except Exception as e:
+            print('  [aviso] Wikipedia (%s) falhou: %s' % (lang, e))
+            continue
+        for title in tit[:3]:
+            try:
+                d = wiki_regras(wiki_texto(title, lang), title)
+            except Exception as e:
+                print('  [aviso] nao li a pagina', title, ':', e)
+                continue
+            if len(d) > len(melhor) and ('hp' in d or 'kg' in d):
+                melhor = d
+            if 'hp' in melhor and 'kg' in melhor:
+                return melhor
+    return melhor
 
 
 MANUAL = os.path.join(HERE, 'specs_manual.json')
@@ -132,9 +260,9 @@ def buscar(nome, manual=None, car_id=None):
     achado = {}
     if not ('hp' in manual and 'kg' in manual):  # so pesquisa se o usuario nao deu potencia e peso
         print('  buscando dados reais de', nome, '...')
-        achado = via_api(nome) or via_wikipedia(nome)
-        if achado and achado.get('fonte', '').startswith('Wikipedia'):
-            print('  [aviso] Wikipedia e pouco confiavel (pega a pagina errada). Melhor preencher tools/specs_manual.json')
+        achado = via_api(nome) or via_gemini(nome) or via_wikipedia(nome)
+        if achado and achado.get('fonte', '').startswith('Wikipedia') and 'Gemini' not in achado.get('fonte', ''):
+            print('  [aviso] Wikipedia por regras e pouco confiavel (pode pegar a pagina/versao errada). Melhor preencher tools/specs_manual.json ou usar GEMINI_API_KEY')
     achado.update(manual)
     return achado
 

@@ -124,15 +124,30 @@ body.touch #toast { top: 74px; }
   <div id="menu">
     <div class="card" id="p-start">
       <div><p class="sub num" id="tagline" style="letter-spacing:.2em;text-transform:uppercase;font-size:12px">Mundo aberto</p><h1 class="brand">Horizon Club <span>Unlimited</span></h1></div>
-      <p class="sub">Uma cidade inteira de ruas, pontes, ladeiras e orla para dirigir sem rota. A colisão segue o relevo do mapa.</p>
       <div class="cars" id="cars-start" role="radiogroup" aria-label="Escolha o carro" hidden></div>
-      <div class="prog"><div id="bar"></div></div><div id="ptxt">Preparando…</div>
-      <div class="acts"><button class="cta" id="start" disabled>Carregando…</button><button class="ghost" id="open-garage">Garagem</button></div>
+      <div><div class="prog"><div id="bar"></div></div><div id="ptxt">Preparando…</div></div>
+      <div class="mlist" role="menu" aria-label="Menu principal">
+        <button class="cta mitem" id="start" disabled>Carregando…</button>
+        <button class="ghost mitem" id="open-garage"><span>Garagem</span><small>escolher o carro</small></button>
+        <button class="ghost mitem" id="open-opts"><span>Opções</span><small>gráficos, som, câmera</small></button>
+        <button class="ghost mitem" id="fs-start" data-fs><span>Tela cheia</span></button>
+      </div>
       <div class="keys">
-        <div><h3>Teclado</h3>W A S D ou setas dirigem, Espaço é o freio de mão, C troca a câmera, R desvira, T volta à rua.</div>
-        <div><h3>Controle</h3>RT acelera, LT freia e dá ré, X ou A é o freio de mão, Y câmera, B desvira, Start pausa.</div>
+        <div><h3>Teclado</h3>W A S D ou setas dirigem, Espaço é o freio de mão, C troca a câmera, R desvira, T volta à rua, F tela cheia.</div>
+        <div><h3>Controle</h3>RT acelera, LT freia e dá ré, X ou A é o freio de mão, Y câmera, B desvira, Start pausa. Nos menus: direcional ou analógico navega, A seleciona, B volta, Y tela cheia.</div>
         <div><h3>Toque</h3>Arraste a faixa da esquerda para esterçar. Pedais à direita. Rode o celular para a horizontal.</div>
       </div>
+    </div>
+    <div class="card" id="p-opts" hidden>
+      <h2 class="brand" style="font-size:clamp(30px,7vw,44px)">Opções</h2>
+      <div class="row"><span>Qualidade gráfica</span><div class="seg seg-q"><button data-v="auto">Auto</button><button data-v="low">Baixa</button><button data-v="med">Média</button><button data-v="high">Alta</button></div></div>
+      <div class="row"><span>Unidade de velocidade</span><div class="seg seg-u"><button data-v="kmh">km/h</button><button data-v="mph">mph</button></div></div>
+      <div class="row"><span>Som</span><div class="seg seg-s"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
+      <div class="row"><span>Estilo da câmera</span><div class="seg seg-cs"><button data-v="mlc">Midnight Club</button><button data-v="simple">Simples</button></div></div>
+      <div class="row"><span>Efeito de velocidade</span><div class="seg seg-fx"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
+      <div class="row"><span>Retrovisor</span><div class="seg seg-mr"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
+      <div class="row"><span>Tela cheia ao começar</span><div class="seg seg-fa"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
+      <div class="mlist"><button class="cta mitem" id="opts-back">Voltar</button></div>
     </div>
     <div class="card" id="p-pause" hidden>
       <h2 class="brand" style="font-size:clamp(30px,7vw,44px)">Pausado</h2>
@@ -144,8 +159,10 @@ body.touch #toast { top: 74px; }
       <div class="row"><span>Efeito de velocidade</span><div class="seg seg-fx"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
       <div class="row"><span>Retrovisor</span><div class="seg seg-mr"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
       <div class="row"><span>Câmera atual: <b id="camname"></b></span><button class="ghost" id="cam-btn">Trocar câmera</button></div>
-      <div class="grid2"><button class="ghost" id="garage-btn">Garagem</button><button class="ghost" id="reset-btn">Desvirar o carro</button><button class="ghost" id="home-btn">Voltar ao ponto inicial</button><button class="ghost" id="fs-btn">Tela cheia</button><button class="cta" id="resume">Continuar</button></div>
+      <div class="grid2"><button class="ghost" id="garage-btn">Garagem</button><button class="ghost" id="reset-btn">Desvirar o carro</button><button class="ghost" id="home-btn">Voltar ao ponto inicial</button><button class="ghost" id="fs-btn" data-fs>Tela cheia</button><button class="cta" id="resume">Continuar</button></div>
     </div>
+    <button class="fs-float" id="fs-float" data-fs-icon aria-label="Tela cheia" title="Tela cheia (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="fs-in" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><path class="fs-out" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button>
+    <div class="mhints" id="mhints" aria-hidden="true"></div>
   </div>
 </div>
 <script>

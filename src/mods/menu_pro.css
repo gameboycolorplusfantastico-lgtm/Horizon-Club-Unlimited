@@ -1,0 +1,68 @@
+/* ===== Menu inicial novo + navegação por controle/teclado + tela cheia ===== */
+/* layout: menu à esquerda, cena do jogo visível à direita */
+#menu { background: linear-gradient(90deg, rgba(4,6,10,.94) 0, rgba(4,6,10,.80) 34%, rgba(4,6,10,.28) 66%, rgba(4,6,10,.10) 100%), radial-gradient(1200px 600px at 20% 100%, rgba(255,226,26,.10), transparent 60%); }
+#p-start, #p-opts { justify-self: start; width: min(560px, 100%); }
+#p-start { gap: 14px; }
+#p-start .brand { font-size: clamp(36px, 8vw, 62px); }
+#tagline { color: var(--fy); }
+#ptxt { margin-top: 6px; }
+
+/* lista de opções do menu */
+.mlist { display: grid; gap: 8px; margin: 2px 0 4px; }
+#menu .mitem { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; width: 100%; box-sizing: border-box; min-height: 54px; padding: 12px 20px; text-align: left; font: 700 clamp(17px, 2.8vmin, 22px) var(--display); font-style: italic; text-transform: uppercase; letter-spacing: .06em; border-radius: 4px; position: relative; transition: transform .12s ease, background .12s ease, color .12s ease, box-shadow .12s ease; }
+#menu .mitem small { font: 500 12px var(--body); font-style: normal; text-transform: none; letter-spacing: .02em; opacity: .7; }
+#menu .mitem.ghost { background: rgba(12,16,22,.72); border: 1px solid rgba(255,255,255,.22); color: #fff; padding: 12px 20px; font-size: clamp(17px, 2.8vmin, 22px); }
+#menu .mitem.cta { box-shadow: none; font-size: clamp(19px, 3.2vmin, 26px); padding: 14px 20px; }
+#menu .mitem.cta:disabled { background: rgba(255,255,255,.1); color: var(--dim); }
+
+/* ===== INDICADOR DE FOCO (o ponto principal) ===== */
+/* item de lista em foco: barra amarela cheia, deslocada, com seta e brilho */
+#menu .mitem:hover:not(:disabled), body.navmode #menu .mitem:focus:not(:disabled), #menu .mitem.hf { background: var(--fy); color: #0b0b0b; border-color: var(--fy); transform: translateX(14px); box-shadow: -6px 0 0 0 #fff, 0 0 0 2px rgba(255,226,26,.35), 0 10px 34px rgba(255,226,26,.35); z-index: 2; outline: none; }
+#menu .mitem:hover:not(:disabled)::before, body.navmode #menu .mitem:focus:not(:disabled)::before, #menu .mitem.hf::before { content: ''; position: absolute; left: -34px; top: 50%; width: 0; height: 0; margin-top: -11px; border-left: 16px solid var(--fy); border-top: 11px solid transparent; border-bottom: 11px solid transparent; animation: mnudge .7s ease-in-out infinite alternate; }
+@keyframes mnudge { from { transform: translateX(-5px); } to { transform: translateX(3px); } }
+#menu .mitem:active:not(:disabled) { transform: translateX(14px) scale(.985); }
+/* demais botões (opções, pausa, voltar): anel branco + halo amarelo + leve aumento */
+#menu .seg button:hover, body.navmode #menu .seg button:focus, body.navmode #menu .ghost:not(.mitem):focus, body.navmode #menu .cta:not(.mitem):focus, #menu .ghost:not(.mitem):hover { outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 0 7px rgba(255,226,26,.55), 0 0 26px 8px rgba(255,226,26,.4); position: relative; z-index: 3; transform: scale(1.06); }
+#menu .seg { overflow: visible; }
+#menu .seg button { transition: transform .1s ease, box-shadow .1s ease; }
+#menu .seg button:not(.on) { color: #cfd6df; }
+/* linha da opção inteira acende quando um controle dela está em foco */
+.row { transition: background .12s ease, box-shadow .12s ease; }
+#p-opts .row, #p-pause .row { background: rgba(255,255,255,.06); padding: 8px 12px; border-radius: 3px; }
+#p-opts .row > span { color: #fff; font: 600 13px var(--display); letter-spacing: .06em; text-transform: uppercase; }
+body.navmode .row:focus-within, .row:hover { background: rgba(255,226,26,.16) !important; box-shadow: inset 5px 0 0 var(--fy); }
+#p-opts { background: rgba(0,0,0,.62); padding: 22px 24px; border-left: 6px solid var(--fy); gap: 10px; }
+body.touch #menu button:focus { outline: none; }
+
+/* tela cheia flutuante (canto superior direito do menu) */
+.fs-float { position: fixed; right: max(14px, env(safe-area-inset-right, 0px)); top: max(14px, env(safe-area-inset-top, 0px)); width: 52px; height: 52px; display: grid; place-items: center; background: rgba(0,0,0,.6); border: 1px solid rgba(255,255,255,.35); border-radius: 4px; color: #fff; cursor: pointer; z-index: 5; }
+.fs-float svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.fs-float .fs-out { display: none; } body.is-fs .fs-float .fs-in { display: none; } body.is-fs .fs-float .fs-out { display: inline; }
+.fs-float:hover, body.navmode .fs-float:focus { background: var(--fy); color: #0b0b0b; border-color: var(--fy); outline: none; box-shadow: 0 0 0 4px #fff, 0 0 26px 8px rgba(255,226,26,.45); }
+body.nofs .fs-float, body.nofs [data-fs] { display: none !important; }
+
+/* barra de dicas de botões embaixo do menu */
+.mhints { position: fixed; left: 0; right: 0; bottom: max(2px, env(safe-area-inset-bottom, 0px)); display: flex; justify-content: center; gap: 22px; flex-wrap: wrap; padding: 8px 12px; background: linear-gradient(0deg, rgba(0,0,0,.7), transparent); font: 600 14px var(--display); letter-spacing: .06em; text-transform: uppercase; color: #e6edf5; pointer-events: none; z-index: 4; }
+.mhints span { display: inline-flex; align-items: center; gap: 8px; }
+.mhints i, .g-hints i.pd { font-style: normal; display: inline-grid; place-items: center; min-width: 26px; height: 26px; padding: 0 6px; box-sizing: border-box; border-radius: 13px; border: 2px solid #9aa6b4; font: 700 12px var(--display); color: #fff; }
+.mhints i.a, .g-hints i.a { background: #3fa13f; border-color: #3fa13f; } .mhints i.b, .g-hints i.b { background: #d8372b; border-color: #d8372b; }
+.mhints i.x { background: #2f6fd6; border-color: #2f6fd6; } .mhints i.y, .g-hints i.y { background: #e8c21a; border-color: #e8c21a; color: #111; }
+.mhints i.k { border-radius: 5px; background: rgba(255,255,255,.12); }
+body.touch .mhints { display: none; }
+/* garagem: mostra glifos do teclado OU do controle */
+body.pad-ui .g-hints .kb { display: none; } body:not(.pad-ui) .g-hints .pd { display: none; }
+.g-tile.sel { outline: 3px solid var(--fy); outline-offset: 2px; box-shadow: 0 10px 18px rgba(0,0,0,.5), 0 0 26px 6px rgba(255,226,26,.45); }
+.g-tile { transition: transform .12s, box-shadow .12s, outline-color .12s; }
+
+#fs-note { color: var(--fy); font: 500 12px var(--body); min-height: 1em; }
+@media (max-width: 640px) { #p-start, #p-opts { justify-self: stretch; } #menu .mitem:hover:not(:disabled), body.navmode #menu .mitem:focus:not(:disabled), #menu .mitem.hf { transform: translateX(6px); } }
+@media (max-height: 560px) { #menu .mitem { min-height: 42px; padding-top: 8px; padding-bottom: 8px; } #p-start .keys { display: none; } }
+@media (prefers-reduced-motion: reduce) { #menu .mitem::before { animation: none !important; } }
+/* botão principal (Começar/Voltar) em repouso: contorno amarelo; só o item em foco fica totalmente amarelo */
+#menu .mitem.cta:not(:disabled) { background: rgba(255,226,26,.12); color: var(--fy); border: 1px solid rgba(255,226,26,.65); }
+#menu .mitem.cta:hover:not(:disabled), body.navmode #menu .mitem.cta:focus:not(:disabled) { background: var(--fy); color: #0b0b0b; }
+/* o conteúdo não fica escondido atrás da barra de dicas */
+#menu { padding-bottom: 60px; box-sizing: border-box; }
+#p-pause { gap: 8px; } #p-pause .row { padding: 5px 12px; }
+#menu { padding-left: clamp(16px, 4vw, 56px); padding-right: clamp(16px, 4vw, 56px); } #p-pause { justify-self: center; }
+body.touch #p-start .keys div:not(:last-child) { display: none; }

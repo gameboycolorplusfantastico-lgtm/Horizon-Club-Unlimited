@@ -36,7 +36,7 @@ const FH2 = (() => {
         '<aside class="g-right"><div class="g-class"><div class="g-ci"><b id="g-cls">S2</b><span id="g-pi">925</span></div><div class="g-drive"><svg viewBox="0 0 60 90" id="g-drv"></svg><b id="g-drvt">AWD</b></div></div><div class="g-bars" id="g-bars"></div></aside>' +
       '</div>' +
       '<div class="g-strip" id="g-strip" role="listbox" aria-label="Carros"></div>' +
-      '<div class="g-hints"><button id="g-bk"><i>Esc</i>Voltar</button><span><i>←</i><i>→</i>Escolher</span><button id="g-ok2"><i>Enter</i>Selecionar</button></div>';
+      '<div class="g-hints"><button id="g-bk"><i class="kb">Esc</i><i class="pd b">B</i>Voltar</button><span><i class="kb">←</i><i class="kb">→</i><i class="pd">◀</i><i class="pd">▶</i>Escolher</span><button id="g-ok2"><i class="kb">Enter</i><i class="pd a">A</i>Selecionar</button></div>';
     ui.appendChild(G);
     $('g-ok').onclick = $('g-ok2').onclick = confirm; $('g-bk').onclick = close;
     $('g-strip').addEventListener('click', (e) => { const t = e.target.closest('.g-tile'); if (t) { focus = t.dataset.id; paint(); } });
