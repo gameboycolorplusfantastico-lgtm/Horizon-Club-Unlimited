@@ -911,12 +911,13 @@ void main(){
 const FS_CAR = `#version 300 es
 precision highp float;
 in vec3 v_wp; in vec3 v_n; in vec2 v_uv; in vec2 v_uv1; in float v_lz;
-uniform sampler2D u_tex; uniform vec4 u_color; uniform vec4 u_paint, u_paint2, u_pref, u_pref2; uniform float u_hasTex, u_metal, u_rough, u_coat, u_emis, u_lamp, u_headE, u_tailE, u_len;
+uniform sampler2D u_tex; uniform vec4 u_color; uniform vec4 u_paint, u_paint2, u_pref, u_pref2; uniform float u_atest; uniform float u_hasTex, u_metal, u_rough, u_coat, u_emis, u_lamp, u_headE, u_tailE, u_len;
 out vec4 o;
 ${GLSL_COMMON}
 void main(){
   vec4 t = u_hasTex > 0.5 ? texture(u_tex, v_uv) : vec4(1.);
   vec3 alb = u_color.rgb * t.rgb; float alpha = u_color.a * t.a;
+  if (u_atest > 0.) { if (alpha < u_atest) discard; alpha = 1.; } // material "mask" (logos/emblemas recortados): pixel transparente some
   if (u_pref.w > 0.5) { // troca de pintura: so os pixels parecidos com a cor original da pintura (rodas, vidros, emblemas, grade e lanternas ficam como estao)
     // ate 2 tons por material (carro de duas cores): cada pixel vai para o tom mais proximo; u_paint.w / u_paint2.w = 1 quando aquele tom foi pintado
     vec3 LU = vec3(.2126, .7152, .0722);
@@ -980,7 +981,7 @@ class Renderer {
     this.planes = new Float64Array(24); this.drawDist = 900; this.time = 0; this.stats = { calls: 0, prims: 0 };
     this.env = { sun: normalize3([-0.55, 0.52, 0.40]), sunCol: [2.5, 1.95, 1.4], zenith: [0.10, 0.26, 0.58], horizon: [0.55, 0.70, 0.88], ground: [0.16, 0.17, 0.19], ambSky: [0.38, 0.50, 0.72], ambGround: [0.24, 0.21, 0.18], exposure: 0.82 };
     this.progs.world = this.prog(VS_MESH, FS_WORLD, ['u_vp', 'u_model', 'u_pmin', 'u_psize', 'u_uvb0', 'u_uvb1', 'u_tex', 'u_ao', 'u_hasAo', 'u_alphaTest', 'u_water', 'u_time', 'u_aoStr']);
-    this.progs.car = this.prog(VS_MESH, FS_CAR, ['u_vp', 'u_model', 'u_pmin', 'u_psize', 'u_uvb0', 'u_uvb1', 'u_tex', 'u_color', 'u_paint', 'u_paint2', 'u_pref', 'u_pref2', 'u_hasTex', 'u_metal', 'u_rough', 'u_coat', 'u_emis', 'u_lamp', 'u_headE', 'u_tailE', 'u_len']);
+    this.progs.car = this.prog(VS_MESH, FS_CAR, ['u_vp', 'u_model', 'u_pmin', 'u_psize', 'u_uvb0', 'u_uvb1', 'u_tex', 'u_color', 'u_paint', 'u_paint2', 'u_pref', 'u_pref2', 'u_atest', 'u_hasTex', 'u_metal', 'u_rough', 'u_coat', 'u_emis', 'u_lamp', 'u_headE', 'u_tailE', 'u_len']);
     this.progs.sky = this.prog(VS_SKY, FS_SKY, ['u_right', 'u_up', 'u_fwd', 'u_tanH', 'u_asp']);
     this.progs.quad = this.prog(VS_QUAD, FS_QUAD, ['u_vp', 'u_c', 'u_r', 'u_f', 'u_s', 'u_a']);
     this.progs.part = this.prog(VS_PART, FS_PART, ['u_vp', 'u_px', 'u_col']);
@@ -1074,7 +1075,7 @@ class Renderer {
   }
   drawProps() {
     const man = this.props; if (!man) return; const gl = this.gl, p = this.progs.car, cp = this.camPos, lim = Math.min(this.drawDist, 520);
-    gl.useProgram(p.p); this.setEnv(p); gl.uniformMatrix4fv(p.u_vp, false, this.vp); gl.uniform1i(p.u_tex, 0); gl.uniform1f(p.u_lamp, 0); gl.uniform1f(p.u_coat, 0); gl.uniform1f(p.u_hasTex, 1); gl.uniform4f(p.u_pref, 0, 0, 0, 0);
+    gl.useProgram(p.p); this.setEnv(p); gl.uniformMatrix4fv(p.u_vp, false, this.vp); gl.uniform1i(p.u_tex, 0); gl.uniform1f(p.u_lamp, 0); gl.uniform1f(p.u_coat, 0); gl.uniform1f(p.u_hasTex, 1); gl.uniform4f(p.u_pref, 0, 0, 0, 0); gl.uniform1f(p.u_atest, 0);
     gl.disable(gl.BLEND); gl.depthMask(true); const M = this.propM, T = this.time || 0;
     const run = (model, st) => {
       for (const pr of model.prims) {
@@ -1129,7 +1130,7 @@ class Renderer {
     const mats = man.mats, bodyUse = {}, wheelUse = {}; let total = 0;
     for (const pr of man.body) { bodyUse[pr.m] = (bodyUse[pr.m] || 0) + pr.ni; total += pr.ni; }
     for (const k in man.wheels) for (const pr of man.wheels[k].prims) wheelUse[pr.m] = true; // material que tambem aparece na roda nunca e pintura
-    const nm = (m) => (m.name || '').replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+    const nm = (m) => (m.name || '').replace(/([a-z0-9])([A-Z])/g, '$1_$2').replace(/[^a-zA-Z0-9]+/g, '_').toLowerCase(); // 'body.001' vira 'body_001'
     const ok = (i) => bodyUse[i] && !wheelUse[i] && mats[i].mode !== 'blend' && !mats[i].brake && !mats[i].head && !mats[i].lamp;
     const BAD = /glass|window|windshield|lens|light|lamp|(^|_)led|brake|calip|rotor|disc|disk|tyre|tire|rubber|wheel|(^|_)rim|chrom|trim|interior|(^|_)int(_|$)|(^|_)cab(_|$)|seat|leather|carbon|cockpit|gauge|dash|steering|badge|logo|emblem|plate|grill|exhaust|engine|(^|_)motor|under|chassis|misc|wood|reflect|mirror$|(^|_)mirror_?(glass|surr)|metal|plastic|detail/;
     const want = (spec) => { if (Array.isArray(spec)) return (m) => spec.indexOf(m.name) >= 0; const re = new RegExp(spec, 'i'); return (m) => re.test(m.name || ''); };
@@ -1147,7 +1148,8 @@ class Renderer {
       if (!pick.length) { // sem nomes uteis: material com verniz (clearcoat) ou, senao, o maior material liso do corpo
         const c = all.filter((i) => !BAD.test(nm(mats[i])) && bodyUse[i] >= 0.08 * total); // so materiais grandes: peca pequena nunca vira "a pintura"
         let pool = c.filter((i) => mats[i].coat); if (!pool.length) pool = c.filter((i) => !mats[i].tex);
-        pool.sort((a, b) => bodyUse[b] - bodyUse[a]); if (pool.length) pick = [pool[0]];
+        if (!pool.length) pool = c.filter((i) => mats[i].mode !== 'mask'); // so texturas: o maior material (com bonus se for metalico), a troca so pega os pixels da cor da pintura
+        const sc = (i) => bodyUse[i] * (mats[i].metal > 0.05 ? 1.5 : 1); pool.sort((a, b) => sc(b) - sc(a)); if (pool.length) pick = [pool[0]];
       }
       if (pick.length) { defs = [{ name: 'Pintura', idx: pick }]; pick.forEach((i) => { slots[i] = [defs[0]]; }); }
     }
@@ -1291,6 +1293,7 @@ class Renderer {
           gl.uniform4f(p.u_paint, t1 ? t1[0] : 0, t1 ? t1[1] : 0, t1 ? t1[2] : 0, t1 ? 1 : 0); gl.uniform4f(p.u_pref, m.pref[0], m.pref[1], m.pref[2], 1);
           if (z2) { gl.uniform4f(p.u_paint2, t2 ? t2[0] : 0, t2 ? t2[1] : 0, t2 ? t2[2] : 0, t2 ? 1 : 0); gl.uniform4f(p.u_pref2, m.pref2[0], m.pref2[1], m.pref2[2], 1); } else gl.uniform4f(p.u_pref2, 0, 0, 0, 0);
         } else gl.uniform4f(p.u_pref, 0, 0, 0, 0);
+        gl.uniform1f(p.u_atest, m.mode === 'mask' ? 0.5 : 0);
         gl.uniform1f(p.u_lamp, m.lamp ? 1 : 0); if (m.lamp) { gl.uniform1f(p.u_headE, 0.2); gl.uniform1f(p.u_tailE, c.brake > 0.1 ? 0.55 : 0.08); gl.uniform1f(p.u_len, man.length || 4.49); }
         if (m.glTex) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, m.glTex); gl.uniform1f(p.u_hasTex, 1); } else gl.uniform1f(p.u_hasTex, 0);
         this.drawPrim(p, pr);
