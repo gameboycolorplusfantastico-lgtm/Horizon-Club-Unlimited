@@ -153,6 +153,51 @@
       "params": {},
       "bytes": 630564,
       "tris": 32936
+    },
+    {
+      "id": "2008-chrysler-300c-srt-8",
+      "name": "2008 Chrysler 300C Srt 8",
+      "brand": "",
+      "class": "",
+      "dir": "2008-chrysler-300c-srt-8",
+      "scale": 1.2,
+      "specs": "4x4",
+      "cyl": 6,
+      "params": {
+        "awd": true
+      },
+      "bytes": 3318012,
+      "tris": 178230
+    },
+    {
+      "id": "2008-land-rover-range-rover-supercharged",
+      "name": "2008 Land Rover Range Rover Supercharged",
+      "brand": "",
+      "class": "",
+      "dir": "2008-land-rover-range-rover-supercharged",
+      "scale": 1.2,
+      "specs": "4x4",
+      "cyl": 6,
+      "params": {
+        "awd": true
+      },
+      "bytes": 4067952,
+      "tris": 179652
+    },
+    {
+      "id": "2011-lexus-lfa",
+      "name": "2011 Lexus Lfa",
+      "brand": "",
+      "class": "",
+      "dir": "2011-lexus-lfa",
+      "scale": 1.2,
+      "specs": "10 cil. · 1.579 kg",
+      "cyl": 10,
+      "params": {
+        "mass": 1579
+      },
+      "bytes": 3793886,
+      "tris": 216281
     }
   ]
 }
