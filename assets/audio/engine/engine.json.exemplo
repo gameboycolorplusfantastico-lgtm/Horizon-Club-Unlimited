@@ -1,0 +1,11 @@
+{
+  "gain": 1,
+  "clips": [
+    { "file": "idle.ogg",  "rpm": 900  },
+    { "file": "2000.ogg",  "rpm": 2000 },
+    { "file": "3500.ogg",  "rpm": 3500 },
+    { "file": "5000.ogg",  "rpm": 5000 },
+    { "file": "6500.ogg",  "rpm": 6500 },
+    { "file": "8000.ogg",  "rpm": 8000 }
+  ]
+}

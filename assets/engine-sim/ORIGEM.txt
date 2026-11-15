@@ -1,0 +1,1 @@
+Engine_Sim (MIT, conforme package.json) - https://github.com/YigitSalihEmecen/Engine_Sim - copiado de src/ do Engine_Sim-main.zip enviado pelo dono do jogo
