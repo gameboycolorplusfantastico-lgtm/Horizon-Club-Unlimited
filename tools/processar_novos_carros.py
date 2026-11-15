@@ -7,12 +7,15 @@ Opcional: ao lado de meu-carro.glb, um meu-carro.json com ajustes (todos os camp
    "brake_nodes": "glass_red", "rotate_y": 180, "tex_size": 1024, "wheel_mode": "auto|name|path|geom"}
 Sem o .json, o nome vem do nome do arquivo e vale o preset "esportivo" com escala 1.2.
 
+TABELA MANUAL (gratis, sem chave): tools/specs_manual.json guarda hp, kg, 4x4, etc. por id de carro. Tem prioridade sobre a pesquisa
+e tambem e aplicada nos carros que ja estao cadastrados (basta salvar o arquivo; o robo reaplica so o que mudou).
+
 DADOS REAIS: por padrao o robo pesquisa na internet a potencia, o peso, a tracao e a velocidade maxima do carro
 (pelo "name", ou por "busca": "Ford F-150 Raptor 2010" se quiser ser mais especifico) e ajusta a fisica a eles.
   "buscar_dados": false     -> desliga a pesquisa
   "real": {"hp": 411, "kg": 2650, "awd": true, "top_kmh": 170, "cyl": 8}   -> forca valores (tem prioridade)
 """
-import glob, json, os, re, subprocess, sys
+import glob, hashlib, json, os, re, subprocess, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import specs_reais
 
@@ -30,11 +33,12 @@ def ajustar_com_dados_reais(car_id, cfg, nome):
     reg_path = os.path.join(ROOT, 'assets', 'cars', 'cars.json')
     reg = json.load(open(reg_path, encoding='utf-8'))
     car = next(c for c in reg['cars'] if c['id'] == car_id)
-    real = specs_reais.buscar(cfg.get('busca') or nome, cfg.get('real'))
+    manual = specs_reais.carregar_manual(car_id)
+    real = specs_reais.buscar(cfg.get('busca') or nome, cfg.get('real'), car_id)
     if not real:
-        print('  nenhum dado real encontrado; mantendo o preset'); return
+        print('  nenhum dado real encontrado; mantendo o preset'); return False
     presets = json.load(open(os.path.join(ROOT, 'tools', 'presets.json'), encoding='utf-8'))
-    preset = presets.get(cfg.get('preset') or 'esportivo', presets['esportivo'])
+    preset = presets.get(cfg.get('preset') or manual.get('preset') or 'esportivo', presets['esportivo'])
     raio = None
     try:
         raio = json.load(open(os.path.join(ROOT, 'assets', 'cars', car_id, 'car.json')))['radius'] * car['scale']
@@ -42,16 +46,40 @@ def ajustar_com_dados_reais(car_id, cfg, nome):
         pass
     P, cyl, specs = specs_reais.aplicar(preset, real, raio)
     car['params'], car['cyl'] = P, cyl
+    if manual:  # marca que a tabela manual ja foi aplicada (so reaplica se voce mudar os numeros dela)
+        car['specs_hash'] = hashlib.md5(json.dumps(manual, sort_keys=True).encode()).hexdigest()[:10]
     if not cfg.get('specs') and specs:
         car['specs'] = specs
     json.dump(reg, open(reg_path, 'w', encoding='utf-8'), ensure_ascii=False, indent=2)
     print('  dados reais aplicados (%s): %s' % (real.get('fonte', 'manual'), specs))
+    return True
+
+
+def aplicar_manuais():
+    """Aplica tools/specs_manual.json aos carros JA cadastrados (nao precisa do .glb). So mexe nos que mudaram."""
+    reg_path = os.path.join(ROOT, 'assets', 'cars', 'cars.json')
+    if not os.path.exists(reg_path):
+        return
+    for car_id, m in specs_reais.carregar_manual().items():
+        reg = json.load(open(reg_path, encoding='utf-8'))
+        car = next((c for c in reg['cars'] if c['id'] == car_id), None)
+        if not car:
+            continue
+        h = hashlib.md5(json.dumps(m, sort_keys=True).encode()).hexdigest()[:10]
+        if car.get('specs_hash') == h:
+            continue
+        print('==> aplicando specs_manual.json em', car_id)
+        try:
+            ajustar_com_dados_reais(car_id, {}, car.get('name') or car_id)
+        except Exception as e:
+            print('  [aviso] nao consegui aplicar em', car_id, ':', e)
 
 
 def main():
     glbs = sorted(glob.glob(os.path.join(PASTA, '*.glb')) + glob.glob(os.path.join(PASTA, '*.GLB')))
     if not glbs:
-        print('Nenhum .glb em novos-carros/. Nada a fazer.'); return 0
+        print('Nenhum .glb em novos-carros/.')
+        aplicar_manuais(); return 0
     falhas = []
     for glb in glbs:
         stem = os.path.splitext(os.path.basename(glb))[0]
@@ -78,6 +106,7 @@ def main():
         for f in (glb, side):
             if os.path.exists(f):
                 os.remove(f)
+    aplicar_manuais()
     if falhas:
         print('\nFALHARAM:', ', '.join(falhas), '\nDica: envie um', '<nome>.json', 'com "wheel_nodes" ou "rotate_y" e tente de novo.'); return 1
     return 0

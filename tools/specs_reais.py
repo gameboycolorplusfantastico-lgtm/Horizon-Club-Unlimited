@@ -98,7 +98,8 @@ def via_wikipedia(nome):
     if m:
         d['top_kmh'] = int(m.group(1))
     low = ib.lower()
-    d['awd'] = bool(re.search(r'all-wheel|four-wheel|4wd|awd|4x4|4wd', low))
+    if re.search(r'all-wheel|four-wheel|4wd|awd|4x4', low):
+        d['awd'] = True  # so afirma 4x4 quando achou; nunca assume "tracao simples" por falta de dado
     m = re.search(r'\bV(\d{1,2})\b', ib)
     if m:
         d['cyl'] = int(m.group(1))
@@ -112,12 +113,28 @@ def via_wikipedia(nome):
     return d
 
 
-def buscar(nome, manual=None):
-    manual = limpar(manual or {})
+MANUAL = os.path.join(HERE, 'specs_manual.json')
+
+
+def carregar_manual(car_id=None):
+    """Le tools/specs_manual.json ({id_do_carro: {hp, kg, awd, cyl, top_kmh, motor, fonte, preset}}). Sem car_id devolve tudo."""
+    try:
+        tudo = json.load(open(MANUAL, encoding='utf-8'))
+    except Exception:
+        return {}
+    tudo = {k: v for k, v in tudo.items() if not k.startswith('_') and isinstance(v, dict)}
+    return tudo if car_id is None else tudo.get(car_id, {})
+
+
+def buscar(nome, manual=None, car_id=None):
+    # prioridade: "real" do .json do carro > tools/specs_manual.json > pesquisa na internet
+    manual = limpar({**carregar_manual(car_id), **(manual or {})})
     achado = {}
-    if len(manual) < 4:  # so pesquisa se o usuario nao deu tudo
+    if not ('hp' in manual and 'kg' in manual):  # so pesquisa se o usuario nao deu potencia e peso
         print('  buscando dados reais de', nome, '...')
         achado = via_api(nome) or via_wikipedia(nome)
+        if achado and achado.get('fonte', '').startswith('Wikipedia'):
+            print('  [aviso] Wikipedia e pouco confiavel (pega a pagina errada). Melhor preencher tools/specs_manual.json')
     achado.update(manual)
     return achado
 

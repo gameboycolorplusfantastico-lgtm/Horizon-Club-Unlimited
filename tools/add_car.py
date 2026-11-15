@@ -173,7 +173,7 @@ def main():
     ap.add_argument('--wheel-nodes', default=WHEEL_DEFAULT, help='regex dos nomes de objetos que fazem parte das rodas')
     ap.add_argument('--wheel-mode', default='auto', choices=['auto', 'name', 'path', 'geom'],
                     help='como achar as rodas: auto (nome -> caminho -> geometria), name, path ou geom')
-    ap.add_argument('--drop', default='', help='regex extra de pecas a descartar (deixa o carro mais leve)')
+    ap.add_argument('--drop', default='', help='regex extra de pecas a descartar (deixa o carro mais leve). O fundo do carro (undercarriage) NAO e mais descartado por padrao; use --drop undercarriage se quiser')
     ap.add_argument('--brake-nodes', default='', help='regex das pecas que acendem ao frear (lanternas vermelhas)')
     ap.add_argument('--rotate-y', type=int, default=0, choices=[0, 180], help='use 180 se o carro estiver virado para tras')
     ap.add_argument('--tex-size', type=int, default=1024, help='lado maximo das texturas')
@@ -183,12 +183,15 @@ def main():
 
     g = GLB(a.glb)
     parts = load_parts(g, a.rotate_y == 180)
-    drop_re = re.compile(r'(?i)callip|caliper|undercarriage' + ('|' + a.drop if a.drop else ''))
+    drop_re = re.compile(r'(?i)callip|caliper' + ('|' + a.drop if a.drop else ''))
     n0 = len(parts); parts = [p for p in parts if not drop_re.search(p['name'])]
     print('pecas:', len(parts), '(descartadas', n0 - len(parts), ')')
 
     # ---- rodas ----
+    n_antes = len(parts)
     cand, how, parts = find_wheels(parts, a, drop_re)
+    if how != 'nome' and n_antes != len(parts):
+        print('descartadas tambem pelo caminho (pincas etc.):', n_antes - len(parts))
     if not cand:
         sys.exit('Nenhuma peca de roda encontrada (tentei nome, caminho e geometria). Use --report e ajuste --wheel-nodes.')
     print('rodas achadas por', how, '-', len(cand), 'pecas')
