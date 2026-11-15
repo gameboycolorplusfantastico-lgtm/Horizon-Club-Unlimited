@@ -172,6 +172,51 @@
       },
       "bytes": 3268360,
       "tris": 176211
+    },
+    {
+      "id": "1997-toyota-supra-rz",
+      "name": "1997 Toyota Supra Rz",
+      "brand": "",
+      "class": "",
+      "dir": "1997-toyota-supra-rz",
+      "scale": 1.2,
+      "specs": "tração simples",
+      "cyl": 6,
+      "params": {
+        "awd": false
+      },
+      "bytes": 8704684,
+      "tris": 570057
+    },
+    {
+      "id": "2005-porsche-911-gt2",
+      "name": "2005 Porsche 911 Gt2",
+      "brand": "",
+      "class": "",
+      "dir": "2005-porsche-911-gt2",
+      "scale": 1.2,
+      "specs": "tração simples",
+      "cyl": 6,
+      "params": {
+        "awd": false
+      },
+      "bytes": 630564,
+      "tris": 32936
+    },
+    {
+      "id": "2008-land-rover-range-rover-supercharged",
+      "name": "2008 Land Rover Range Rover Supercharged",
+      "brand": "",
+      "class": "",
+      "dir": "2008-land-rover-range-rover-supercharged",
+      "scale": 1.2,
+      "specs": "4x4",
+      "cyl": 6,
+      "params": {
+        "awd": true
+      },
+      "bytes": 4025668,
+      "tris": 177605
     }
   ]
 }
