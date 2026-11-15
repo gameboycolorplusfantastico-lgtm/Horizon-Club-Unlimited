@@ -1,0 +1,4 @@
+Atualizacao: camera Midnight Club, HUD Blur, garagem Forza Horizon 2.
+Novos arquivos: src/mods/ (camera_mlc.js, hud_blur.js/.css, menu_fh2.js/.css) + thumb.png dos carros.
+Alterados (pequenos ganchos): src/main.js, src/render.js, src/template.html, tools/build.py. index.html ja vem recompilado.
+Para recompilar depois de mexer em src/: python3 tools/build.py

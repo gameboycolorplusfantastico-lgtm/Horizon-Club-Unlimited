@@ -98,6 +98,7 @@ body.touch #toast { top: 74px; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 @media (max-width: 480px) { .grid2 { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { #toast, #bar, #hint { transition: none; } }
+/*{{MODS_CSS}}*/
 </style>
 <canvas id="c" aria-label="Jogo de direção em cidade aberta"></canvas>
 <div id="ui">
@@ -126,7 +127,7 @@ body.touch #toast { top: 74px; }
       <p class="sub">Uma cidade inteira de ruas, pontes, ladeiras e orla para dirigir sem rota. A colisão segue o relevo do mapa.</p>
       <div class="cars" id="cars-start" role="radiogroup" aria-label="Escolha o carro" hidden></div>
       <div class="prog"><div id="bar"></div></div><div id="ptxt">Preparando…</div>
-      <button class="cta" id="start" disabled>Carregando…</button>
+      <div class="acts"><button class="cta" id="start" disabled>Carregando…</button><button class="ghost" id="open-garage">Garagem</button></div>
       <div class="keys">
         <div><h3>Teclado</h3>W A S D ou setas dirigem, Espaço é o freio de mão, C troca a câmera, R desvira, T volta à rua.</div>
         <div><h3>Controle</h3>RT acelera, LT freia e dá ré, X ou A é o freio de mão, Y câmera, B desvira, Start pausa.</div>
@@ -139,8 +140,11 @@ body.touch #toast { top: 74px; }
       <div class="row"><span>Qualidade gráfica</span><div class="seg seg-q"><button data-v="auto">Auto</button><button data-v="low">Baixa</button><button data-v="med">Média</button><button data-v="high">Alta</button></div></div>
       <div class="row"><span>Unidade de velocidade</span><div class="seg seg-u"><button data-v="kmh">km/h</button><button data-v="mph">mph</button></div></div>
       <div class="row"><span>Som</span><div class="seg seg-s"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
+      <div class="row"><span>Estilo da câmera</span><div class="seg seg-cs"><button data-v="mlc">Midnight Club</button><button data-v="simple">Simples</button></div></div>
+      <div class="row"><span>Efeito de velocidade</span><div class="seg seg-fx"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
+      <div class="row"><span>Retrovisor</span><div class="seg seg-mr"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
       <div class="row"><span>Câmera atual: <b id="camname"></b></span><button class="ghost" id="cam-btn">Trocar câmera</button></div>
-      <div class="grid2"><button class="ghost" id="reset-btn">Desvirar o carro</button><button class="ghost" id="home-btn">Voltar ao ponto inicial</button><button class="ghost" id="fs-btn">Tela cheia</button><button class="cta" id="resume">Continuar</button></div>
+      <div class="grid2"><button class="ghost" id="garage-btn">Garagem</button><button class="ghost" id="reset-btn">Desvirar o carro</button><button class="ghost" id="home-btn">Voltar ao ponto inicial</button><button class="ghost" id="fs-btn">Tela cheia</button><button class="cta" id="resume">Continuar</button></div>
     </div>
   </div>
 </div>
@@ -149,5 +153,6 @@ body.touch #toast { top: 74px; }
 {{RENDER}}
 {{INPUT}}
 {{AUDIO}}
+{{MODS}}
 {{MAIN}}
 </script>

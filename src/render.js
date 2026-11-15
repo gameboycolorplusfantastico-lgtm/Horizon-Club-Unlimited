@@ -230,25 +230,52 @@ class Renderer {
   // frame: {cam:{pos,right,up,fwd,fov}, car:{...} , particles, time, shadow}
   render(F) {
     const gl = this.gl, cam = F.cam, e = this.env; this.time = F.time; this.stats.calls = 0; this.stats.prims = 0;
-    this.camPos = cam.pos; M4.persp(this.proj, cam.fov, this.aspect, 0.35, 3600);
+    // F.rect {x,y,w,h} (frações, y do topo) desenha só numa região (retrovisor); F.flipX espelha; F.studio {bg} = só o carro em fundo liso
+    let aspect = this.aspect, rectOn = false;
+    if (F.rect) { const CW = this.canvas.width, CH = this.canvas.height, rw = Math.max(2, Math.round(F.rect.w * CW)), rh = Math.max(2, Math.round(F.rect.h * CH)), rx = Math.round(F.rect.x * CW), ry = Math.round(CH - F.rect.y * CH - rh); gl.enable(gl.SCISSOR_TEST); gl.viewport(rx, ry, rw, rh); gl.scissor(rx, ry, rw, rh); aspect = rw / rh; rectOn = true; }
+    this.camPos = cam.pos; M4.persp(this.proj, cam.fov, aspect, 0.35, 3600); if (F.flipX) this.proj[0] = -this.proj[0];
     M4.look(this.view, cam.pos[0], cam.pos[1], cam.pos[2], cam.fwd[0], cam.fwd[1], cam.fwd[2], cam.right[0], cam.right[1], cam.right[2], cam.up[0], cam.up[1], cam.up[2]);
     M4.mul(this.vp, this.proj, this.view); this.frustum();
-    gl.disable(gl.BLEND); gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.depthFunc(gl.LEQUAL); gl.disable(gl.CULL_FACE); gl.clearColor(0.4, 0.55, 0.75, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.disable(gl.BLEND); gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.depthFunc(gl.LEQUAL); gl.disable(gl.CULL_FACE); if (F.studio) gl.clearColor(F.studio.bg, F.studio.bg, F.studio.bg, 1); else gl.clearColor(0.4, 0.55, 0.75, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     // céu
-    let s = this.progs.sky; gl.useProgram(s.p); this.setEnv(s); gl.uniform3fv(s.u_right, cam.right); gl.uniform3fv(s.u_up, cam.up); gl.uniform3fv(s.u_fwd, cam.fwd);
-    gl.uniform1f(s.u_tanH, Math.tan(cam.fov / 2)); gl.uniform1f(s.u_asp, this.aspect); gl.depthMask(false); gl.bindVertexArray(this.emptyVao); gl.drawArrays(gl.TRIANGLES, 0, 3); gl.depthMask(true);
+    let s = this.progs.sky; if (!F.studio) { gl.useProgram(s.p); this.setEnv(s); gl.uniform3fv(s.u_right, cam.right); gl.uniform3fv(s.u_up, cam.up); gl.uniform3fv(s.u_fwd, cam.fwd);
+    gl.uniform1f(s.u_tanH, Math.tan(cam.fov / 2)); gl.uniform1f(s.u_asp, aspect); gl.depthMask(false); gl.bindVertexArray(this.emptyVao); gl.drawArrays(gl.TRIANGLES, 0, 3); gl.depthMask(true); }
     // cidade
-    if (this.city) this.drawCity(false);
+    if (this.city && !F.studio) this.drawCity(false);
     // sombra
-    if (F.car) this.drawShadow(F.car);
+    if (F.car && !F.studio) this.drawShadow(F.car);
     // carro opaco
     if (F.car) this.drawCar(F.car, false);
     // partículas
     if (F.particles && F.particles.n) this.drawParticles(F.particles);
     // blend
-    if (this.city) this.drawCity(true);
+    if (this.city && !F.studio) this.drawCity(true);
     if (F.car) this.drawCar(F.car, true);
+    if (rectOn) { gl.disable(gl.SCISSOR_TEST); gl.viewport(0, 0, this.canvas.width, this.canvas.height); }
   }
+  // foto 2D do carro com fundo transparente: renderiza sobre fundo preto e sobre fundo branco e calcula o alfa pela diferença
+  captureCar(car, o) {
+    o = o || {}; const gl = this.gl, cv = this.canvas, oW = cv.width, oH = cv.height, W = 1280, H = 640, S = car.scale || 1;
+    const az = o.az == null ? -0.62 : o.az, el = o.el == null ? 0.14 : o.el, dist = (o.dist || 11.5) * S, tgt = [0, 0.62 * S, 0];
+    const pos = [tgt[0] + Math.sin(az) * Math.cos(el) * dist, tgt[1] + Math.sin(el) * dist, tgt[2] + Math.cos(az) * Math.cos(el) * dist];
+    const f = normalize3([tgt[0] - pos[0], tgt[1] - pos[1], tgt[2] - pos[2]]), r = normalize3([-f[2], 0, f[0]]), up = [r[1] * f[2] - r[2] * f[1], r[2] * f[0] - r[0] * f[2], r[0] * f[1] - r[1] * f[0]];
+    cv.width = W; cv.height = H; this.aspect = W / H; gl.viewport(0, 0, W, H);
+    const px = [new Uint8Array(W * H * 4), new Uint8Array(W * H * 4)], fr = Object.assign({}, car, { p: [0, car.hModel, 0] });
+    for (let i = 0; i < 2; i++) { this.render({ cam: { pos, right: r, up, fwd: f, fov: o.fov || 0.5 }, time: 0, car: fr, studio: { bg: i } }); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px[i]); }
+    cv.width = oW; cv.height = oH; this.aspect = oW / oH; gl.viewport(0, 0, oW, oH);
+    const out = new Uint8ClampedArray(W * H * 4); let x0 = W, y0 = H, x1 = -1, y1 = -1;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const i = ((H - 1 - y) * W + x) * 4, j = (y * W + x) * 4, B = px[0], Wt = px[1];
+      let a = 1 - ((Wt[i] - B[i]) + (Wt[i + 1] - B[i + 1]) + (Wt[i + 2] - B[i + 2])) / 765; if (a < 0) a = 0; if (a > 1) a = 1;
+      if (a > 0.02) { out[j] = Math.min(255, B[i] / a); out[j + 1] = Math.min(255, B[i + 1] / a); out[j + 2] = Math.min(255, B[i + 2] / a); out[j + 3] = a * 255; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    }
+    if (x1 < 0) return null;
+    const big = document.createElement('canvas'); big.width = W; big.height = H; big.getContext('2d').putImageData(new ImageData(out, W, H), 0, 0);
+    const m = 8, sx = Math.max(0, x0 - m), sy = Math.max(0, y0 - m), sw = Math.min(W, x1 + m) - sx, sh = Math.min(H, y1 + m) - sy, ow = o.out || 560, oh = Math.round(ow * sh / sw);
+    const c2 = document.createElement('canvas'); c2.width = ow; c2.height = oh; const g2 = c2.getContext('2d'); g2.imageSmoothingQuality = 'high'; g2.drawImage(big, sx, sy, sw, sh, 0, 0, ow, oh);
+    return c2.toDataURL('image/png');
+  }
+
   drawCity(blendPass) {
     const gl = this.gl, p = this.progs.world, man = this.city, cp = this.camPos, dd = this.drawDist; gl.useProgram(p.p); this.setEnv(p);
     gl.uniformMatrix4fv(p.u_vp, false, this.vp); gl.uniformMatrix4fv(p.u_model, false, this.ident); gl.uniform1f(p.u_time, this.time); gl.uniform1f(p.u_aoStr, this.opt.ao === false ? 0 : 0.9);

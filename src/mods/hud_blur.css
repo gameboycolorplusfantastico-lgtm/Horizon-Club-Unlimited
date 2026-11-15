@@ -1,0 +1,27 @@
+/* ===== HUD estilo Blur ===== */
+:root { --bl: #3fd0ff; --bl2: rgba(8, 22, 38, .72); --gold: #ffc43d; }
+body.blurhud #speedo { display: none !important; }
+#bl { position: absolute; inset: 0; pointer-events: none; }
+#fx { position: absolute; inset: 0; width: 100%; height: 100%; }
+#mirror { position: absolute; left: 50%; top: max(0px, env(safe-area-inset-top, 0px)); transform: translateX(-50%); width: clamp(220px, 36vw, 440px); padding: 0; border-radius: 18px; background: transparent; border: 7px solid rgba(10,26,44,.94); box-shadow: 0 0 0 2px var(--bl), 0 0 20px rgba(63,208,255,.6); }
+#mirror-in { aspect-ratio: 4 / 1; border-radius: 9px; background: transparent; }
+#rpmseg { position: absolute; left: 50%; top: calc(max(0px, env(safe-area-inset-top, 0px)) + clamp(220px, 36vw, 440px) / 4 + 24px); transform: translateX(-50%); display: flex; gap: 4px; padding: 4px 8px; border-radius: 8px; background: rgba(8,20,34,.85); border: 1px solid rgba(63,208,255,.5); }
+#rpmseg i { width: clamp(14px, 2.2vw, 24px); height: 8px; border-radius: 2px; background: rgba(255,255,255,.14); transform: skewX(-18deg); }
+#rpmseg i.on { background: #51ffa0; box-shadow: 0 0 8px rgba(81,255,160,.8); } #rpmseg i.on.red { background: #ff5b4a; box-shadow: 0 0 8px rgba(255,91,74,.9); }
+#stats { position: absolute; left: 0; top: 56px; display: grid; gap: 6px; }
+.st { display: flex; align-items: center; gap: 8px; padding: 6px 14px 6px 10px; border-radius: 10px 22px 22px 10px; background: var(--bl2); border-left: 3px solid var(--bl); box-shadow: 0 0 14px rgba(63,208,255,.25); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); font-family: var(--display); }
+.st svg { width: 18px; height: 18px; fill: none; stroke: var(--bl); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.st span { font: 600 10px var(--display); letter-spacing: .14em; color: var(--dim); } .st b { font: 700 clamp(15px, 2.6vmin, 22px)/1 var(--display); color: #fff; text-shadow: 0 0 10px rgba(63,208,255,.6); margin-left: auto; }
+#bspeed { position: absolute; right: 0; top: calc(max(0px, env(safe-area-inset-top, 0px)) + clamp(110px, 20vmin, 168px) + 10px); display: flex; align-items: baseline; gap: 8px; padding: 6px 14px; border-radius: 22px 10px 10px 22px; background: var(--bl2); border-right: 3px solid var(--bl); box-shadow: 0 0 14px rgba(63,208,255,.3); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+#b-spd { font: 700 clamp(34px, 7vmin, 56px)/1 var(--display); color: #fff; text-shadow: 0 0 12px rgba(63,208,255,.7); min-width: 3ch; text-align: right; }
+#b-unit { font: 600 12px var(--display); letter-spacing: .12em; color: var(--bl); text-transform: uppercase; }
+#b-gear { font: 700 clamp(18px, 3.4vmin, 26px)/1 var(--display); color: var(--gold); font-style: normal; margin-left: 6px; padding: 2px 8px; border: 1px solid rgba(255,196,61,.6); border-radius: 6px; }
+#calls { position: absolute; left: 50%; bottom: 12%; transform: translateX(-50%); display: grid; gap: 6px; justify-items: center; }
+.call { padding: 6px 18px; border-radius: 999px; background: rgba(8,22,38,.78); border: 1px solid var(--bl); font: 700 14px var(--display); letter-spacing: .08em; color: #fff; text-shadow: 0 0 8px rgba(63,208,255,.8); animation: callIn .25s ease-out, callOut .4s ease-in 2.2s forwards; }
+.call.gold { border-color: var(--gold); text-shadow: 0 0 8px rgba(255,196,61,.9); color: #ffe7a8; }
+@keyframes callIn { from { transform: translateY(10px) scale(.9); opacity: 0; } } @keyframes callOut { to { opacity: 0; transform: translateY(-8px); } }
+#mmwrap { border: 2px solid var(--bl) !important; box-shadow: 0 0 18px rgba(63,208,255,.5), inset 0 0 14px rgba(0,0,0,.6) !important; }
+#toast { background: var(--bl2) !important; border-color: var(--bl) !important; top: calc(max(0px, env(safe-area-inset-top, 0px)) + clamp(220px, 36vw, 440px) / 4 + 64px) !important; }
+body.touch #mirror { width: clamp(180px, 34vw, 300px); } body.touch #rpmseg { top: calc(max(0px, env(safe-area-inset-top, 0px)) + clamp(180px, 34vw, 300px) / 4 + 24px); }
+body.touch #stats { top: 52px; transform: scale(.82); transform-origin: left top; } body.touch #bspeed { transform: scale(.85); transform-origin: right top; }
+body.touch #toast { top: calc(max(0px, env(safe-area-inset-top, 0px)) + clamp(180px, 34vw, 300px) / 4 + 60px) !important; }

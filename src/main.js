@@ -3,13 +3,13 @@
   const $ = (id) => document.getElementById(id);
   const qs = new URLSearchParams(location.search);
   const isTouch = (matchMedia && matchMedia('(pointer:coarse)').matches) || 'ontouchstart' in window;
-  const cfg = { quality: 'auto', units: 'kmh', sound: true };
+  const cfg = { quality: 'auto', units: 'kmh', sound: true, camStyle: 'mlc', fx: 'on', mirror: 'on' };
   const KEY = 'horizon-club-unlimited'; // (migra as configurações do nome antigo, 'asfalto-livre')
   try { Object.assign(cfg, JSON.parse(localStorage.getItem(KEY) || localStorage.getItem('asfalto-livre') || '{}')); } catch (e) {}
   if (qs.get('q')) cfg.quality = qs.get('q');
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch (e) {} };
   const QUAL = { low: { scale: 0.62, dist: 420, aniso: 1, tex: 0.5, ao: false, dpr: 1 }, med: { scale: 0.85, dist: 760, aniso: 4, tex: 1, ao: true, dpr: 1.5 }, high: { scale: 1, dist: 1250, aniso: 8, tex: 1, ao: true, dpr: 2 } };
-  const canvas = $('c'); let R, world, veh, city, CARS = [], carBusy = false, mode = 'loading', hudOn = true, camMode = 0, minimapImg = null;
+  const canvas = $('c'); let R, world, veh, city, CARS = [], carBusy = false, mode = 'loading', hudOn = true, camMode = (cfg.camStyle === 'simple' ? 1 : 0), minimapImg = null;
   document.body.classList.toggle('touch', isTouch);
   Input.init(); if (isTouch) Input.bindTouch();
   Sound.on = cfg.sound;
@@ -55,12 +55,13 @@
       const prev = veh, nv = makeVehicle(c), sp = city.spawn;
       if (prev) { nv.place(prev.p[0], prev.p[1] + 0.8, prev.p[2], prev.yaw); settle(nv); nv.safe = prev.safe || { x: nv.p[0], y: nv.p[1], z: nv.p[2], yaw: prev.yaw }; }
       else { nv.place(sp.pos[0], sp.pos[1] + 0.8, sp.pos[2], sp.yaw); settle(nv); nv.safe = { x: nv.p[0], y: nv.p[1], z: nv.p[2], yaw: sp.yaw }; }
-      veh = nv; R.setCar(c.man); cfg.car = id; save();
+      veh = nv; R.setCar(c.man); cfg.car = id; save(); if (typeof FH2 !== 'undefined') { FH2.capture(R, veh, c); resize(); }
     } catch (e) { console.error(e); toast('Não consegui carregar ' + c.name, 3000); }
     carBusy = false; renderCars();
   }
   function renderCars(loadingId) { // desenha os cartões de seleção (menu inicial e menu de pausa)
     const t = $('tagline'); if (t) t.textContent = 'Mundo aberto · ' + CARS.length + (CARS.length === 1 ? ' carro' : ' carros');
+    if (typeof FH2 !== 'undefined') FH2.update({ cars: CARS, current: veh && veh.carId, loading: loadingId, busy: carBusy });
     for (const box of [$('cars-start'), $('cars-pause')]) {
       if (!box) continue; box.hidden = CARS.length < 2; box.innerHTML = '';
       for (const c of CARS) {
@@ -91,7 +92,7 @@
     setProg(0.88, 'Construindo colisão do mapa…'); await tick();
     const col = buildCollision(cm, cb); world = new World(col.V, col.surf, 16);
     const sp = cm.spawn; veh = makeVehicle(first); veh.place(sp.pos[0], sp.pos[1] + 0.8, sp.pos[2], sp.yaw); settle(veh);
-    veh.safe = { x: veh.p[0], y: veh.p[1], z: veh.p[2], yaw: sp.yaw }; cfg.car = first.id; renderCars();
+    veh.safe = { x: veh.p[0], y: veh.p[1], z: veh.p[2], yaw: sp.yaw }; cfg.car = first.id; renderCars(); if (typeof FH2 !== 'undefined') FH2.capture(R, veh, first);
     minimapImg = new Image(); minimapImg.src = 'assets/' + cm.minimap.img;
     camYaw = sp.yaw; camPos = [veh.p[0] - Math.sin(sp.yaw) * 6, veh.p[1] + 2, veh.p[2] - Math.cos(sp.yaw) * 6]; camTgt = veh.p.slice();
     applyQuality(); setProg(1, 'Pronto');
@@ -101,9 +102,10 @@
   }
 
   // ---------- câmera ----------
-  let camYaw = 0, camPos = [0, 0, 0], camTgt = [0, 0, 0], orbitYaw = 0, orbitPitch = 0, shake = 0, fovCur = 1.05, menuAng = 0;
-  const CAMS = [{ n: 'Perseguição', d: 6.4, h: 2.1, fov: 1.0 }, { n: 'Perto', d: 4.4, h: 1.35, fov: 1.05 }, { n: 'Motorista', d: 0, h: 0, fov: 1.12 }];
+  let blurK = 0, camYaw = 0, camPos = [0, 0, 0], camTgt = [0, 0, 0], orbitYaw = 0, orbitPitch = 0, shake = 0, fovCur = 1.05, menuAng = 0;
+  const CAMS = [{ n: 'Midnight Club', mlc: true, fov: 1.0 }, { n: 'Simples', d: 6.4, h: 2.1, fov: 1.0 }, { n: 'Perto', d: 4.4, h: 1.35, fov: 1.05 }, { n: 'Motorista', drv: true, d: 0, h: 0, fov: 1.12 }];
   const angDiff = (a, b) => { let d = a - b; while (d > Math.PI) d -= TAU; while (d < -Math.PI) d += TAU; return d; };
+  let lastCam = -1;
   const camOut = { pos: [0, 0, 0], right: [1, 0, 0], up: [0, 1, 0], fwd: [0, 0, -1], fov: 1 };
   function nrm(v) { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; }
   function cross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
@@ -114,7 +116,10 @@
     if (mode === 'menu') {
       menuAng += dt * 0.25; const d = 7.2 * cs, tg = [p[0], p[1] + 0.6 * cs, p[2]];
       pos = [tg[0] + Math.sin(menuAng) * d, tg[1] + 1.9 * cs, tg[2] + Math.cos(menuAng) * d]; f = nrm([tg[0] - pos[0], tg[1] - pos[1], tg[2] - pos[2]]);
-    } else if (camMode === 2) {
+    } else if (c.mlc) {
+      if (lastCam !== camMode) { CamMLC.reset(); }
+      const o = CamMLC.update(dt, veh, world, orbitYaw); pos = o.pos; f = o.f; up = o.up; fovCur = o.fov; blurK = o.blur;
+    } else if (c.drv) {
       const Rm = veh.R, lx = 0.34 * cs, ly = 0.62 * cs, lz = 0.1 * cs;
       pos = [p[0] + Rm[0] * lx + Rm[1] * ly + Rm[2] * lz, p[1] + Rm[3] * lx + Rm[4] * ly + Rm[5] * lz, p[2] + Rm[6] * lx + Rm[7] * ly + Rm[8] * lz];
       f = [Rm[2], Rm[5], Rm[8]]; up = nrm([Rm[1] * 0.6, Rm[4] * 0.6 + 0.4, Rm[7] * 0.6]);
@@ -136,6 +141,7 @@
     if (shake > 0.001) { pos[0] += (Math.random() - 0.5) * shake * 0.25; pos[1] += (Math.random() - 0.5) * shake * 0.25; pos[2] += (Math.random() - 0.5) * shake * 0.25; shake *= Math.exp(-dt * 6); }
     const r = nrm(cross(f, up)); up = cross(r, f);
     camOut.pos = pos; camOut.fwd = f; camOut.right = r; camOut.up = up; camOut.fov = fovCur;
+    lastCam = camMode;
   }
 
   // ---------- partículas ----------
@@ -197,10 +203,14 @@
     for (const b of document.querySelectorAll('.seg-u button')) b.classList.toggle('on', b.dataset.v === cfg.units);
     for (const b of document.querySelectorAll('.seg-s button')) b.classList.toggle('on', (b.dataset.v === 'on') === !!cfg.sound);
     $('camname').textContent = CAMS[camMode].n;
+    for (const b of document.querySelectorAll('.seg-cs button')) b.classList.toggle('on', b.dataset.v === (camMode === 0 ? 'mlc' : 'simple'));
+    for (const b of document.querySelectorAll('.seg-fx button')) b.classList.toggle('on', b.dataset.v === (cfg.fx === 'off' ? 'off' : 'on'));
+    for (const b of document.querySelectorAll('.seg-mr button')) b.classList.toggle('on', b.dataset.v === (cfg.mirror === 'off' ? 'off' : 'on'));
   }
   const segBind = (cls, key, fn) => { for (const box of document.querySelectorAll(cls)) box.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; cfg[key] = key === 'sound' ? b.dataset.v === 'on' : b.dataset.v; save(); if (key === 'sound') Sound.setOn(cfg.sound); sync(); fn && fn(); }); };
-  segBind('.seg-q', 'quality', () => { dynScale = 1; R && applyQuality(); }); segBind('.seg-u', 'units'); segBind('.seg-s', 'sound');
-  $('cam-btn').addEventListener('click', () => { camMode = (camMode + 1) % CAMS.length; sync(); });
+  segBind('.seg-q', 'quality', () => { dynScale = 1; R && applyQuality(); }); segBind('.seg-u', 'units'); segBind('.seg-s', 'sound'); segBind('.seg-fx', 'fx'); segBind('.seg-mr', 'mirror');
+  segBind('.seg-cs', 'camStyle', () => { camMode = cfg.camStyle === 'mlc' ? 0 : 1; if (typeof CamMLC !== 'undefined') CamMLC.reset(); sync(); });
+  $('cam-btn').addEventListener('click', () => { camMode = (camMode + 1) % CAMS.length; if (camMode < 2) { cfg.camStyle = camMode === 0 ? 'mlc' : 'simple'; save(); } sync(); });
   $('reset-btn').addEventListener('click', () => { veh.respawn(false); setPause(false); });
   $('home-btn').addEventListener('click', () => { const s = city.spawn; veh.place(s.pos[0], s.pos[1] + 1, s.pos[2], s.yaw); camYaw = s.yaw; setPause(false); });
   $('fs-btn').addEventListener('click', () => { try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {}); } catch (e) {} });
@@ -216,7 +226,7 @@
     if (mode === 'menu') { if (Input.take('padA') || Input.take('pause')) { if (!$('start').disabled) startGame(); } }
     else if (Input.take('pause')) setPause(mode === 'play');
     if (mode === 'play') {
-      if (Input.take('cam')) { camMode = (camMode + 1) % CAMS.length; sync(); toast('Câmera: ' + CAMS[camMode].n, 1100); }
+      if (Input.take('cam')) { camMode = (camMode + 1) % CAMS.length; if (camMode < 2) { cfg.camStyle = camMode === 0 ? 'mlc' : 'simple'; save(); } sync(); toast('Câmera: ' + CAMS[camMode].n, 1100); }
       if (Input.take('reset')) { veh.respawn(false); toast('Carro desvirado', 1200); }
       if (Input.take('respawn')) { veh.respawn(true); toast('De volta à última rua segura', 1500); }
       acc += dt; let n = 0; while (acc >= HZ && n < 10) { veh.step(HZ, inp); acc -= HZ; n++; } if (n === 10) acc = 0;
@@ -234,12 +244,17 @@
     if (mode !== 'pause') updateParticles(dt);
     if (toastT > 0) { toastT -= dt; if (toastT <= 0) toastEl.classList.remove('show'); }
     if (mode === 'play') updateHud(dt);
+    if (typeof HudBlur !== 'undefined' && (mode === 'play' || mode === 'pause')) HudBlur.update(mode === 'play' ? dt : 0, veh, cfg, mode);
     let shadow = null;
     if (world.raycast(veh.p[0], veh.p[1], veh.p[2], 0, -1, 0, 25, 0.4)) {
       const h = world.hit, n = [h.nx, h.ny, h.nz], Rm = veh.R; let f = [Rm[2], Rm[5], Rm[8]]; const d = f[0] * n[0] + f[1] * n[1] + f[2] * n[2]; f = nrm([f[0] - n[0] * d, f[1] - n[1] * d, f[2] - n[2] * d]);
       shadow = { c: [veh.p[0], veh.p[1] - h.t, veh.p[2]], n, f, r: nrm(cross(f, n)), a: clamp(0.62 - (h.t - 0.55) * 0.09, 0, 0.62) };
     }
-    R.render({ cam: camOut, time: now / 1000, particles: P, car: { R: veh.R, p: veh.p, wheels: veh.wheels, steerA: veh.steerA, hModel: veh.P.hCom, scale: veh.P.scale, anchorY: veh.P.anchorY, brake: mode === 'play' ? (veh.gear < 0 ? veh.throttle : veh.brake) : 0, shadow, hideBody: mode === 'play' && camMode === 2 } });
+    R.render({ cam: camOut, time: now / 1000, particles: P, car: { R: veh.R, p: veh.p, wheels: veh.wheels, steerA: veh.steerA, hModel: veh.P.hCom, scale: veh.P.scale, anchorY: veh.P.anchorY, brake: mode === 'play' ? (veh.gear < 0 ? veh.throttle : veh.brake) : 0, shadow, hideBody: mode === 'play' && !!CAMS[camMode].drv } });
+    if (mode === 'play' || mode === 'pause') {
+      const rc = typeof HudBlur !== 'undefined' ? HudBlur.mirrorRect(cfg, mode) : null; if (rc && (qName !== 'low' || qs.get('mirror'))) { const dd = R.drawDist; R.drawDist = Math.min(dd, 380); R.render({ cam: HudBlur.mirrorCam(veh), time: now / 1000, rect: rc, flipX: true, car: Object.assign({}, { R: veh.R, p: veh.p, wheels: veh.wheels, steerA: veh.steerA, hModel: veh.P.hCom, scale: veh.P.scale, anchorY: veh.P.anchorY, brake: 0, shadow: null, hideBody: true }) }); R.drawDist = dd; }
+    }
+    if (typeof HudBlur !== 'undefined') HudBlur.fx(cfg, mode, CAMS[camMode].mlc ? blurK : Math.min(1, Math.max(0, (Math.hypot(veh.v[0], veh.v[2]) - 22) / 48)));
     ema += (dt * 1000 - ema) * 0.05; lastAdj += dt;
     if (cfg.quality === 'auto' && mode === 'play' && lastAdj > 1.5) {
       if (ema > 24 && dynScale > 0.5) { dynScale = Math.max(0.5, dynScale - 0.1); resize(); lastAdj = 0; }
@@ -247,6 +262,6 @@
     }
     if (qs.get('debug')) $('dbg').textContent = ema.toFixed(1) + ' ms · ' + R.stats.calls + ' draws · ' + W + 'x' + H + ' · ' + qName + ' x' + dynScale.toFixed(2);
   }
-  window.__game = { selectCar, get cars() { return CARS; }, get veh() { return veh; }, get world() { return world; }, get R() { return R; }, get mode() { return mode; }, cfg, start: startGame, setCam(m) { camMode = m; }, get frames() { return frames; }, get cam() { return camOut; } };
+  window.__game = { save, selectCar, get cars() { return CARS; }, get veh() { return veh; }, get world() { return world; }, get R() { return R; }, get mode() { return mode; }, cfg, start: startGame, setCam(m) { camMode = m; }, get frames() { return frames; }, get cam() { return camOut; } };
   boot().catch((e) => { console.error(e); $('ptxt').textContent = 'Erro ao carregar: ' + e.message; $('bar').style.background = 'var(--hot)'; });
 })();
