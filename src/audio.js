@@ -1,6 +1,14 @@
 // ===================== ÁUDIO sintetizado (WebAudio) =====================
 // Motor: usa o Engine_Sim (assets/engine-sim/, baixado pelo Action "Atualizar audio de motor").
 // Se a pasta nao existir ou falhar, cai sozinho no motor antigo (3 osciladores) abaixo.
+function audioBadge(txt, good) {
+  if (typeof document === 'undefined') return;
+  try {
+    const d = document.createElement('div'); d.textContent = txt;
+    d.style.cssText = 'position:fixed;left:8px;top:8px;z-index:99999;max-width:90vw;padding:6px 10px;border-radius:8px;font:12px/1.3 sans-serif;color:#fff;pointer-events:none;background:' + (good ? 'rgba(20,120,50,.9)' : 'rgba(170,40,40,.92)');
+    document.body.appendChild(d); setTimeout(() => d.remove(), good ? 7000 : 20000);
+  } catch (e) {}
+}
 const ENGINE_BY_CYL = { 1: 'vtwin', 2: 'vtwin', 3: 'i3', 4: 'i4', 5: 'i5', 6: 'i6', 8: 'v8cross', 10: 'v10', 12: 'v12' };
 // Escolhe o id do motor do Engine_Sim a partir dos dados do carro (cars.json):
 // 1) campo "engine" (manual, ex.: "v8flat")  2) texto de "specs" (V8, V6, boxer, turbo, diesel, rotativo)  3) "cyl"
@@ -36,9 +44,9 @@ const Sound = {
       const comp = c.createDynamicsCompressor(); comp.connect(this.master); this.bus = comp;
       // motor: 3 osciladores + filtro
       this.eng = c.createGain(); this.eng.gain.value = 0; this.lp = c.createBiquadFilter(); this.lp.type = 'lowpass'; this.lp.Q.value = 2.2; this.lp.frequency.value = 600;
-      this.o1 = c.createOscillator(); this.o1.type = 'sawtooth'; this.o2 = c.createOscillator(); this.o2.type = 'square'; this.o3 = c.createOscillator(); this.o3.type = 'sawtooth';
+      this.o1 = c.createOscillator(); this.o1.type = 'sawtooth'; this.o2 = c.createOscillator(); this.o2.type = 'triangle'; this.o3 = c.createOscillator(); this.o3.type = 'sawtooth';
       const g1 = c.createGain(), g2 = c.createGain(), g3 = c.createGain(); g1.gain.value = 0.5; g2.gain.value = 0.22; g3.gain.value = 0.3;
-      this.o1.connect(g1).connect(this.lp); this.o2.connect(g2).connect(this.lp); this.o3.connect(g3).connect(this.lp); this.lp.connect(this.eng).connect(this.bus);
+      const sh = c.createWaveShaper(), cv = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = i / 512 - 1; cv[i] = Math.tanh(2.4 * x); } sh.curve = cv; this.lp.connect(sh); this.o1.connect(g1).connect(this.lp); this.o2.connect(g2).connect(this.lp); this.o3.connect(g3).connect(this.lp); sh.connect(this.eng).connect(this.bus);
       this.o1.start(); this.o2.start(); this.o3.start();
       // ruído
       const len = c.sampleRate * 2, nb = c.createBuffer(1, len, c.sampleRate), d = nb.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1; this.noiseBuf = nb;
@@ -58,8 +66,8 @@ const Sound = {
       try { const reg = await fetch('assets/cars/cars.json').then((r) => r.json()); this.carTable = {}; for (const k of reg.cars || []) this.carTable[k.id] = { specs: k.specs, cls: k.class, engine: k.engine, cyl: k.cyl }; } catch (e) {}
       const car = this.info(this.wantCar || { cyl: 6 });
       this.sim = new this.ES(this.ctx, { engine: pickEngine(car, this.ids), vehicle: pickVehicle(car), destination: this.simOut });
-      await this.sim.start(); console.info('[Engine_Sim] ativo: motor', car.engine || pickEngine(car, this.ids)); this.curCar = (this.wantCar && this.wantCar.carId) || null; this.simReady = true; this.lastT = performance.now();
-    } catch (e) { console.warn('[Engine_Sim] indisponivel, usando motor simples. Motivo:', e && (e.message || e)); this.simOff = true; this.sim = null; this.simReady = false; }
+      await this.sim.start(); console.info('[Engine_Sim] ativo'); audioBadge('Áudio: Engine_Sim ativo (' + pickEngine(car, this.ids) + ')', true); this.curCar = (this.wantCar && this.wantCar.carId) || null; this.simReady = true; this.lastT = performance.now();
+    } catch (e) { console.warn('[Engine_Sim] indisponivel, usando motor simples. Motivo:', e && (e.message || e)); audioBadge('Áudio: motor SIMPLES (Engine_Sim falhou: ' + String((e && (e.message || e)) || '?').slice(0, 140) + ')', false); this.simOff = true; this.sim = null; this.simReady = false; }
     this.simLoading = false;
   },
   // junta os dados do veiculo com a linha dele em cars.json (specs, class, engine, cyl)
@@ -87,7 +95,7 @@ const Sound = {
     }
     const rpm = car.rpm, thr = car.throttle, f0 = rpm / 60 * (car.cyl || 6) / 2; const load = 0.35 + 0.65 * thr;
     this.o1.frequency.setTargetAtTime(f0, t, 0.03); this.o2.frequency.setTargetAtTime(f0 * 0.5, t, 0.03); this.o3.frequency.setTargetAtTime(f0 * 2.01, t, 0.03);
-    this.lp.frequency.setTargetAtTime(350 + rpm * 0.55 + thr * 700, t, 0.05);
+    this.lp.frequency.setTargetAtTime(260 + rpm * 0.38 + thr * 500, t, 0.05);
     this.eng.gain.setTargetAtTime(paused || useSim ? 0 : (0.16 + 0.22 * load) * (0.5 + rpm / 16000), t, 0.05);
     const sk = Math.max(car.skidAmt, 0); this.tire.g.gain.setTargetAtTime(paused ? 0 : Math.min(0.4, sk * 0.5), t, 0.05); this.tire.fl.frequency.setTargetAtTime(900 + car.speed * 14, t, 0.1);
     this.wind.g.gain.setTargetAtTime(paused ? 0 : Math.min(0.35, Math.pow(car.speed / 70, 1.6) * 0.4), t, 0.1); this.wind.fl.frequency.setTargetAtTime(300 + car.speed * 8, t, 0.1);
