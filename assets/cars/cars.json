@@ -3366,6 +3366,32 @@
       "params": {},
       "bytes": 4077796,
       "tris": 208559
+    },
+    {
+      "id": "2002-honda-nsx-r",
+      "name": "2002 Honda Nsx R",
+      "brand": "",
+      "class": "",
+      "dir": "2002-honda-nsx-r",
+      "scale": 1.2,
+      "specs": "",
+      "cyl": 6,
+      "params": {},
+      "bytes": 974520,
+      "tris": 45989
+    },
+    {
+      "id": "2013-nissan-370z",
+      "name": "2013 Nissan 370Z",
+      "brand": "",
+      "class": "",
+      "dir": "2013-nissan-370z",
+      "scale": 1.2,
+      "specs": "",
+      "cyl": 6,
+      "params": {},
+      "bytes": 1527752,
+      "tris": 80074
     }
   ]
 }
