@@ -428,9 +428,10 @@ class Vehicle {
 const COLLIDE_CATS = { Street: 1, Buildings: 1, Opaque: 1, Misc: 1 };
 function surfFromUV(u, v) {
   const cx = ((Math.floor(u * 4) % 4) + 4) % 4, cy = ((Math.floor(v * 4) % 4) + 4) % 4;
-  if ((cx === 1 && cy === 2) || (cx === 3 && cy === 0)) return 1;
+  // células da textura de rua (grade 4x4): (1,2) e (3,0) = rua; (1,3) = asfalto de cruzamento (faixa STOP + faixa de pedestres)
+  if ((cx === 1 && cy === 2) || (cx === 3 && cy === 0) || (cx === 1 && cy === 3)) return 1;
   if ((cx === 0 && cy === 3) || (cx === 3 && cy === 3)) return 2;
-  if ((cx === 1 && cy === 3) || (cx === 2 && cy === 3) || (cx === 2 && cy === 0) || (cx === 1 && cy === 1)) return 3;
+  if ((cx === 2 && cy === 3) || (cx === 2 && cy === 0) || (cx === 1 && cy === 1)) return 3;
   return 0;
 }
 function buildCollision(man, buf, props) {
