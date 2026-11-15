@@ -1,0 +1,46 @@
+name: Descompactar ZIP
+# Envie um .zip para a pasta zips/ e este action extrai tudo na raiz do repositorio (mantendo as pastas),
+# depois apaga o .zip. Se o zip tiver uma unica pasta por fora, ela e removida do caminho.
+on:
+  push:
+    paths:
+      - 'zips/*.zip'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Descompactar
+        run: |
+          python3 - <<'PY'
+          import glob, os, zipfile
+          zips = sorted(glob.glob('zips/*.zip'))
+          if not zips: print('Nenhum zip em zips/'); raise SystemExit
+          for zp in zips:
+              z = zipfile.ZipFile(zp)
+              nomes = [n for n in z.namelist() if not n.endswith('/') and not n.startswith('__MACOSX') and '/.DS_Store' not in n]
+              tops = {n.split('/')[0] for n in nomes}
+              tira = len(tops) == 1 and all('/' in n for n in nomes)
+              ok = 0
+              for n in nomes:
+                  dest = n.split('/', 1)[1] if tira else n
+                  partes = dest.split('/')
+                  if dest.startswith('/') or '..' in partes or partes[0] in ('.git', '.github', 'zips'):
+                      print('PULEI (nao permitido):', dest); continue
+                  os.makedirs(os.path.dirname(dest) or '.', exist_ok=True)
+                  with z.open(n) as src, open(dest, 'wb') as out: out.write(src.read())
+                  ok += 1
+              print(zp, '->', ok, 'arquivos')
+              os.remove(zp)
+          PY
+      - name: Salvar no repositorio
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then echo "Nada para salvar"; exit 0; fi
+          git commit -m "Arquivos descompactados do ZIP"
+          git push
