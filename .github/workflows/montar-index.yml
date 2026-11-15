@@ -1,0 +1,24 @@
+name: Montar index.html
+# Roda tools/build.py (junta src/ em index.html) e salva no repositorio.
+# Manual: aba Actions > "Montar index.html" > Run workflow. Tambem roda sozinho quando voce mexe em src/ pelo site.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/**'
+permissions:
+  contents: write
+jobs:
+  montar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/build.py
+      - name: Salvar no repositorio
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then echo "Nada para salvar"; exit 0; fi
+          git commit -m "index.html regenerado automaticamente"
+          git push
