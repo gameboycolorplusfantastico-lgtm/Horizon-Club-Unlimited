@@ -14,124 +14,8 @@
       "tris": 190914
     },
     {
-      "id": "2001-bmw-m3-gtr-straenversion",
-      "name": "2001 Bmw M3 Gtr Straenversion",
-      "brand": "",
-      "class": "",
-      "dir": "2001-bmw-m3-gtr-straenversion",
-      "scale": 1.2,
-      "specs": "",
-      "cyl": 6,
-      "params": {},
-      "bytes": 1005104,
-      "tris": 47748
-    },
-    {
-      "id": "2002-mazda-rx-7-spirit-r",
-      "name": "2002 Mazda Rx 7 Spirit R",
-      "brand": "",
-      "class": "",
-      "dir": "2002-mazda-rx-7-spirit-r",
-      "scale": 1.2,
-      "specs": "tração simples",
-      "cyl": 6,
-      "params": {
-        "awd": false
-      },
-      "bytes": 729624,
-      "tris": 33936
-    },
-    {
-      "id": "2002-nissan-skyline-gt-r-v-spec-ii-nur-r34",
-      "name": "2002 Nissan Skyline Gt R V Spec Ii Nur R34",
-      "brand": "",
-      "class": "",
-      "dir": "2002-nissan-skyline-gt-r-v-spec-ii-nur-r34",
-      "scale": 1.2,
-      "specs": "tração simples",
-      "cyl": 6,
-      "params": {
-        "awd": false
-      },
-      "bytes": 4312832,
-      "tris": 226046
-    },
-    {
-      "id": "2008-chrysler-300c-srt-8",
-      "name": "2008 Chrysler 300C Srt 8",
-      "brand": "",
-      "class": "",
-      "dir": "2008-chrysler-300c-srt-8",
-      "scale": 1.2,
-      "specs": "4x4",
-      "cyl": 6,
-      "params": {
-        "awd": true
-      },
-      "bytes": 3318012,
-      "tris": 178230
-    },
-    {
-      "id": "1997-toyota-supra-rz",
-      "name": "1997 Toyota Supra Rz",
-      "brand": "",
-      "class": "",
-      "dir": "1997-toyota-supra-rz",
-      "scale": 1.2,
-      "specs": "tração simples",
-      "cyl": 6,
-      "params": {
-        "awd": false
-      },
-      "bytes": 8704684,
-      "tris": 570057
-    },
-    {
-      "id": "2005-porsche-911-gt2",
-      "name": "2005 Porsche 911 Gt2",
-      "brand": "",
-      "class": "",
-      "dir": "2005-porsche-911-gt2",
-      "scale": 1.2,
-      "specs": "tração simples",
-      "cyl": 6,
-      "params": {
-        "awd": false
-      },
-      "bytes": 630564,
-      "tris": 32936
-    },
-    {
-      "id": "2008-land-rover-range-rover-supercharged",
-      "name": "2008 Land Rover Range Rover Supercharged",
-      "brand": "",
-      "class": "",
-      "dir": "2008-land-rover-range-rover-supercharged",
-      "scale": 1.2,
-      "specs": "4x4",
-      "cyl": 6,
-      "params": {
-        "awd": true
-      },
-      "bytes": 4025668,
-      "tris": 177605
-    },
-    {
-      "id": "1987-buick-grand-national-regal-gnx",
-      "name": "1987 Buick Grand National Regal Gnx",
-      "brand": "",
-      "class": "",
-      "dir": "1987-buick-grand-national-regal-gnx",
-      "scale": 1.2,
-      "specs": "",
-      "cyl": 6,
-      "params": {},
-      "bytes": 5537752,
-      "tris": 298206
-    },
-    {
-      "id": "2010-ford-f-150-svt-raptor-r",
-      "name": "2010 Ford F 150 Svt Raptor R",
+      "id": "ford-f150-raptor",
+      "name": "Ford F-150 SVT Raptor",
       "brand": "Ford",
       "class": "Pickup",
       "dir": "ford-f150-raptor",
@@ -153,65 +37,83 @@
         "eff": 0.85,
         "steerMax": 0.55,
         "vMax": 50,
+        "gears": [
+          0,
+          4.17,
+          2.34,
+          1.52,
+          1.14,
+          0.87,
+          0.69
+        ],
+        "rev": 3.4,
+        "final": 4.1,
+        "idle": 700,
+        "rpmMax": 6300,
+        "rpmCut": 6100,
+        "launch": 2600,
+        "launchEnd": 2200,
+        "shiftUp": [
+          3600,
+          2200
+        ],
+        "shiftDn": [
+          1500,
+          1400
+        ],
+        "torque": [
+          [
+            0,
+            0
+          ],
+          [
+            700,
+            150
+          ],
+          [
+            1000,
+            230
+          ],
+          [
+            1500,
+            330
+          ],
+          [
+            2500,
+            470
+          ],
+          [
+            3500,
+            545
+          ],
+          [
+            4500,
+            588
+          ],
+          [
+            5000,
+            570
+          ],
+          [
+            5500,
+            530
+          ],
+          [
+            5900,
+            470
+          ],
+          [
+            6200,
+            300
+          ],
+          [
+            6500,
+            0
+          ]
+        ]
       },
-      "bytes": 4344298,
-      "tris": 212749
-    },
-    {
-      "id": "2011-lexus-lfa",
-      "name": "2011 Lexus Lfa",
-      "brand": "",
-      "class": "",
-      "dir": "2011-lexus-lfa",
-      "scale": 1.2,
-      "specs": "10 cil. · 1.579 kg",
-      "cyl": 10,
-      "params": {
-        "mass": 1579
-      },
-      "bytes": 3793886,
-      "tris": 216281
-    },
-    {
-      "id": "2011-nissan-gt-r",
-      "name": "2011 Nissan Gt R",
-      "brand": "",
-      "class": "",
-      "dir": "2011-nissan-gt-r",
-      "scale": 1.2,
-      "specs": "6 cil. · 4x4",
-      "cyl": 6,
-      "params": {
-        "awd": true
-      },
-      "bytes": 504290,
-      "tris": 24420
-    },
-    {
-      "id": "2011-pagani-huayra",
-      "name": "2011 Pagani Huayra",
-      "brand": "",
-      "class": "",
-      "dir": "2011-pagani-huayra",
-      "scale": 1.2,
-      "specs": "12 cil.",
-      "cyl": 12,
-      "params": {},
-      "bytes": 604100,
-      "tris": 27452
-    },
-    {
-      "id": "2016-koenigsegg-agera-rs",
-      "name": "2016 Koenigsegg Agera Rs",
-      "brand": "",
-      "class": "",
-      "dir": "2016-koenigsegg-agera-rs",
-      "scale": 1.2,
-      "specs": "8 cil.",
-      "cyl": 8,
-      "params": {},
-      "bytes": 919988,
-      "tris": 41366
+      "bytes": 4250422,
+      "tris": 209298
     }
   ]
 }
