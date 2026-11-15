@@ -3353,6 +3353,19 @@
         "motor": "Dual motor",
         "fonte": "Wikipedia(en): Volkswagen I.D. R + IA Gemini - 2019"
       }
+    },
+    {
+      "id": "1986-audi-quattro-s1-2-hb-audi-team-sport",
+      "name": "1986 Audi Quattro S1 2 Hb Audi Team Sport",
+      "brand": "",
+      "class": "",
+      "dir": "1986-audi-quattro-s1-2-hb-audi-team-sport",
+      "scale": 1.2,
+      "specs": "",
+      "cyl": 6,
+      "params": {},
+      "bytes": 4077796,
+      "tris": 208559
     }
   ]
 }
