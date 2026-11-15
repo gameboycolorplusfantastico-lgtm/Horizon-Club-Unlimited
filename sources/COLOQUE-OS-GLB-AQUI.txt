@@ -1,0 +1,1 @@
+Coloque aqui os .glb originais (esta pasta nao vai para o GitHub).

@@ -1,0 +1,30 @@
+# OPCIONAL: publicação automática com GitHub Actions.
+# Para usar: crie a pasta .github/workflows/ no repositório, copie este arquivo para lá com o nome pages.yml
+# e em Settings > Pages escolha "Source: GitHub Actions". A cada push ele recompila o index.html e publica o site.
+name: Publicar no GitHub Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/build.py
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,8 @@
+# modelos originais (pesados) ficam fora do repositório; só os arquivos empacotados em assets/ vão para o GitHub
+sources/
+*.glb
+!novos-carros/*.glb
+*.zip
+__pycache__/
+.DS_Store
+Thumbs.db
