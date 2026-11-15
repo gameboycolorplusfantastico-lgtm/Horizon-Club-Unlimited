@@ -203,6 +203,40 @@ class Renderer {
     man.order = man.mats.map((m, i) => i).sort((a, b) => ({ opaque: 0, mask: 1, blend: 2 })[man.mats[a].mode] - ({ opaque: 0, mask: 1, blend: 2 })[man.mats[b].mode]);
   }
 
+  // ---- postes de luz e sinaleiras (assets/props.json): modelos instanciados, desenhados com o programa do carro ----
+  async loadProps(man, buf, texScale) {
+    this.props = man; const vbo = this.uploadBin(buf);
+    for (const k of ['lamp', 'sig']) for (const pr of man[k].prims) this.prepPrim(vbo, pr);
+    for (const m of man.mats) m.glTex = await this.loadTex('assets/' + m.tex, true, texScale);
+    this.propM = new Float32Array(16); this.propM[5] = this.propM[15] = 1;
+  }
+  // estado do semáforo (0 vermelho, 1 amarelo, 2 verde): ciclo de 26 s por cruzamento, eixos opostos defasados
+  sigState(j, axis, t) {
+    const p = (t + j * 7.3 + axis * 13) % 26; return p < 10 ? 2 : (p < 12 ? 1 : 0);
+  }
+  drawProps() {
+    const man = this.props; if (!man) return; const gl = this.gl, p = this.progs.car, cp = this.camPos, lim = Math.min(this.drawDist, 520);
+    gl.useProgram(p.p); this.setEnv(p); gl.uniformMatrix4fv(p.u_vp, false, this.vp); gl.uniform1i(p.u_tex, 0); gl.uniform1f(p.u_lamp, 0); gl.uniform1f(p.u_coat, 0); gl.uniform1f(p.u_hasTex, 1);
+    gl.disable(gl.BLEND); gl.depthMask(true); const M = this.propM, T = this.time || 0;
+    const run = (model, st) => {
+      for (const pr of model.prims) {
+        if (pr.lens >= 0) { const lit = pr.lens === st; if ((pr.on ? 1 : 0) !== (lit ? 1 : 0)) continue; }
+        const m = man.mats[pr.m]; gl.uniform4f(p.u_color, 1, 1, 1, 1); gl.uniform1f(p.u_metal, m.metal); gl.uniform1f(p.u_rough, m.rough);
+        gl.uniform1f(p.u_emis, pr.lens >= 0 ? (pr.on ? 0.55 : 0) : m.emis);
+        gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, m.glTex); this.drawPrim(p, pr);
+      }
+    };
+    const near = (x, y, z, r) => { const dx = x - cp[0], dz = z - cp[2]; return dx * dx + dz * dz < lim * lim && this.visible(x, y + 4, z, r); };
+    for (const l of man.lamps) {
+      if (!near(l[0], l[1], l[2], 8)) continue;
+      M[0] = l[3]; M[2] = l[4]; M[8] = -l[4]; M[10] = l[3]; M[12] = l[0]; M[13] = l[1]; M[14] = l[2]; gl.uniformMatrix4fv(p.u_model, false, M); run(man.lamp, -1);
+    }
+    for (const s of man.sigs) {
+      if (!near(s[0], s[1], s[2], 14)) continue;
+      M[0] = -s[4]; M[2] = s[3]; M[8] = -s[3]; M[10] = -s[4]; M[12] = s[0]; M[13] = s[1]; M[14] = s[2]; gl.uniformMatrix4fv(p.u_model, false, M); run(man.sig, this.sigState(s[5], s[6], T));
+    }
+  }
+
   // Descobre sozinho, pelos nomes dos materiais e pela posicao na carroceria, quais pecas sao luzes. Vale para QUALQUER carro novo.
   //  brake = lanterna traseira (acende ao frear) | head = farol (aceso sempre) | lamp = material com farol e lanterna juntos (separa por frente/traseira no shader)
   // Para mandar na mao, ponha no material do car.json "brake"/"head"/"lamp": true (ou "nolight": true), ou "lights": false no carro todo.
@@ -271,6 +305,7 @@ class Renderer {
     // cidade
     if (this.city && !F.studio) this.drawCity(false);
     // sombra
+    if (this.props && !F.studio) this.drawProps();
     if (F.car && !F.studio) this.drawShadow(F.car);
     // carro opaco
     if (F.car) this.drawCar(F.car, false);

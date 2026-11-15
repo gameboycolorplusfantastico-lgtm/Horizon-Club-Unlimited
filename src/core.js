@@ -415,7 +415,7 @@ function surfFromUV(u, v) {
   if ((cx === 1 && cy === 3) || (cx === 2 && cy === 3) || (cx === 2 && cy === 0) || (cx === 1 && cy === 1)) return 3;
   return 0;
 }
-function buildCollision(man, buf) {
+function buildCollision(man, buf, props) {
   let nT = 0; for (const pr of man.prims) if (COLLIDE_CATS[pr.c]) nT += pr.ni / 3;
   const V = new Float32Array(nT * 9), surf = new Uint8Array(nT); let t = 0;
   for (const pr of man.prims) {
@@ -432,6 +432,15 @@ function buildCollision(man, buf) {
       }
       surf[t] = uv ? surfFromUV(su / 3, sv / 3) : 0; t++;
     }
+  }
+  if (props) { // postes e mastros: prismas finos de 6 lados (r = 0,22 m, 5 m de altura) para o carro bater
+    const pts = [...props.lamps.map((l) => [l[0], l[1], l[2]]), ...props.sigs.map((l) => [l[0], l[1], l[2]])], K = 6, H = 5, r = 0.22, E = new Float32Array(pts.length * K * 18), ES = new Uint8Array(pts.length * K * 2); let o = 0;
+    for (const q of pts) for (let k = 0; k < K; k++) {
+      const a0 = k / K * TAU, a1 = (k + 1) / K * TAU, x0 = q[0] + Math.cos(a0) * r, z0 = q[2] + Math.sin(a0) * r, x1 = q[0] + Math.cos(a1) * r, z1 = q[2] + Math.sin(a1) * r, y0 = q[1], y1 = q[1] + H;
+      E.set([x0, y0, z0, x1, y0, z1, x1, y1, z1, x0, y0, z0, x1, y1, z1, x0, y1, z0], o); o += 18;
+    }
+    const V2 = new Float32Array(V.length + E.length); V2.set(V); V2.set(E, V.length); const s2 = new Uint8Array(surf.length + ES.length); s2.set(surf);
+    return { V: V2, surf: s2 };
   }
   return { V, surf };
 }

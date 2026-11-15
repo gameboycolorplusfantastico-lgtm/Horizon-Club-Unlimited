@@ -763,7 +763,7 @@ function surfFromUV(u, v) {
   if ((cx === 1 && cy === 3) || (cx === 2 && cy === 3) || (cx === 2 && cy === 0) || (cx === 1 && cy === 1)) return 3;
   return 0;
 }
-function buildCollision(man, buf) {
+function buildCollision(man, buf, props) {
   let nT = 0; for (const pr of man.prims) if (COLLIDE_CATS[pr.c]) nT += pr.ni / 3;
   const V = new Float32Array(nT * 9), surf = new Uint8Array(nT); let t = 0;
   for (const pr of man.prims) {
@@ -780,6 +780,15 @@ function buildCollision(man, buf) {
       }
       surf[t] = uv ? surfFromUV(su / 3, sv / 3) : 0; t++;
     }
+  }
+  if (props) { // postes e mastros: prismas finos de 6 lados (r = 0,22 m, 5 m de altura) para o carro bater
+    const pts = [...props.lamps.map((l) => [l[0], l[1], l[2]]), ...props.sigs.map((l) => [l[0], l[1], l[2]])], K = 6, H = 5, r = 0.22, E = new Float32Array(pts.length * K * 18), ES = new Uint8Array(pts.length * K * 2); let o = 0;
+    for (const q of pts) for (let k = 0; k < K; k++) {
+      const a0 = k / K * TAU, a1 = (k + 1) / K * TAU, x0 = q[0] + Math.cos(a0) * r, z0 = q[2] + Math.sin(a0) * r, x1 = q[0] + Math.cos(a1) * r, z1 = q[2] + Math.sin(a1) * r, y0 = q[1], y1 = q[1] + H;
+      E.set([x0, y0, z0, x1, y0, z1, x1, y1, z1, x0, y0, z0, x1, y1, z1, x0, y1, z0], o); o += 18;
+    }
+    const V2 = new Float32Array(V.length + E.length); V2.set(V); V2.set(E, V.length); const s2 = new Uint8Array(surf.length + ES.length); s2.set(surf);
+    return { V: V2, surf: s2 };
   }
   return { V, surf };
 }
@@ -990,6 +999,40 @@ class Renderer {
     man.order = man.mats.map((m, i) => i).sort((a, b) => ({ opaque: 0, mask: 1, blend: 2 })[man.mats[a].mode] - ({ opaque: 0, mask: 1, blend: 2 })[man.mats[b].mode]);
   }
 
+  // ---- postes de luz e sinaleiras (assets/props.json): modelos instanciados, desenhados com o programa do carro ----
+  async loadProps(man, buf, texScale) {
+    this.props = man; const vbo = this.uploadBin(buf);
+    for (const k of ['lamp', 'sig']) for (const pr of man[k].prims) this.prepPrim(vbo, pr);
+    for (const m of man.mats) m.glTex = await this.loadTex('assets/' + m.tex, true, texScale);
+    this.propM = new Float32Array(16); this.propM[5] = this.propM[15] = 1;
+  }
+  // estado do semáforo (0 vermelho, 1 amarelo, 2 verde): ciclo de 26 s por cruzamento, eixos opostos defasados
+  sigState(j, axis, t) {
+    const p = (t + j * 7.3 + axis * 13) % 26; return p < 10 ? 2 : (p < 12 ? 1 : 0);
+  }
+  drawProps() {
+    const man = this.props; if (!man) return; const gl = this.gl, p = this.progs.car, cp = this.camPos, lim = Math.min(this.drawDist, 520);
+    gl.useProgram(p.p); this.setEnv(p); gl.uniformMatrix4fv(p.u_vp, false, this.vp); gl.uniform1i(p.u_tex, 0); gl.uniform1f(p.u_lamp, 0); gl.uniform1f(p.u_coat, 0); gl.uniform1f(p.u_hasTex, 1);
+    gl.disable(gl.BLEND); gl.depthMask(true); const M = this.propM, T = this.time || 0;
+    const run = (model, st) => {
+      for (const pr of model.prims) {
+        if (pr.lens >= 0) { const lit = pr.lens === st; if ((pr.on ? 1 : 0) !== (lit ? 1 : 0)) continue; }
+        const m = man.mats[pr.m]; gl.uniform4f(p.u_color, 1, 1, 1, 1); gl.uniform1f(p.u_metal, m.metal); gl.uniform1f(p.u_rough, m.rough);
+        gl.uniform1f(p.u_emis, pr.lens >= 0 ? (pr.on ? 0.55 : 0) : m.emis);
+        gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, m.glTex); this.drawPrim(p, pr);
+      }
+    };
+    const near = (x, y, z, r) => { const dx = x - cp[0], dz = z - cp[2]; return dx * dx + dz * dz < lim * lim && this.visible(x, y + 4, z, r); };
+    for (const l of man.lamps) {
+      if (!near(l[0], l[1], l[2], 8)) continue;
+      M[0] = l[3]; M[2] = l[4]; M[8] = -l[4]; M[10] = l[3]; M[12] = l[0]; M[13] = l[1]; M[14] = l[2]; gl.uniformMatrix4fv(p.u_model, false, M); run(man.lamp, -1);
+    }
+    for (const s of man.sigs) {
+      if (!near(s[0], s[1], s[2], 14)) continue;
+      M[0] = -s[4]; M[2] = s[3]; M[8] = -s[3]; M[10] = -s[4]; M[12] = s[0]; M[13] = s[1]; M[14] = s[2]; gl.uniformMatrix4fv(p.u_model, false, M); run(man.sig, this.sigState(s[5], s[6], T));
+    }
+  }
+
   // Descobre sozinho, pelos nomes dos materiais e pela posicao na carroceria, quais pecas sao luzes. Vale para QUALQUER carro novo.
   //  brake = lanterna traseira (acende ao frear) | head = farol (aceso sempre) | lamp = material com farol e lanterna juntos (separa por frente/traseira no shader)
   // Para mandar na mao, ponha no material do car.json "brake"/"head"/"lamp": true (ou "nolight": true), ou "lights": false no carro todo.
@@ -1058,6 +1101,7 @@ class Renderer {
     // cidade
     if (this.city && !F.studio) this.drawCity(false);
     // sombra
+    if (this.props && !F.studio) this.drawProps();
     if (F.car && !F.studio) this.drawShadow(F.car);
     // carro opaco
     if (F.car) this.drawCar(F.car, false);
@@ -1929,8 +1973,9 @@ const FH2 = (() => {
     ]);
     city = cm; setProg(0.56, 'Carregando texturas…'); await tick();
     await R.loadCar(kk.man, kk.buf, q0.tex, carBase(first)); first.man = kk.man; setProg(0.66); await R.loadCity(cm, cb, q0.tex, (f) => setProg(0.66 + 0.2 * f));
+    try { const [pm, pb] = await Promise.all([fetch('assets/props.json').then((r) => r.json()), fetchBuf('assets/props.wasm')]); await R.loadProps(pm, pb, q0.tex); window.__props = pm; } catch (e) { console.warn('props indisponíveis', e); R.props = null; }
     setProg(0.88, 'Construindo colisão do mapa…'); await tick();
-    const col = buildCollision(cm, cb); world = new World(col.V, col.surf, 16);
+    const col = buildCollision(cm, cb, window.__props); world = new World(col.V, col.surf, 16);
     const sp = cm.spawn; veh = makeVehicle(first); veh.place(sp.pos[0], sp.pos[1] + 0.8, sp.pos[2], sp.yaw); settle(veh);
     veh.safe = { x: veh.p[0], y: veh.p[1], z: veh.p[2], yaw: sp.yaw }; cfg.car = first.id; renderCars(); if (typeof FH2 !== 'undefined') FH2.capture(R, veh, first);
     minimapImg = new Image(); minimapImg.src = 'assets/' + cm.minimap.img;
@@ -1938,6 +1983,7 @@ const FH2 = (() => {
     applyQuality(); setProg(1, 'Pronto');
     mode = 'menu'; $('start').disabled = false; $('start').textContent = isTouch ? 'Toque para começar' : 'Começar a dirigir'; $('ptxt').textContent = 'Mapa com ' + ((col.V.length / 9 / 1000) | 0) + ' mil triângulos de colisão';
     last = performance.now(); requestAnimationFrame(frame);
+    if (qs.get('at')) { const a = qs.get('at').split(',').map(Number); veh.place(a[0], a[1] + 1, a[2], a[3] || 0); settle(veh); camYaw = a[3] || 0; camPos = [a[0] - Math.sin(camYaw) * 6, a[1] + 3, a[2] - Math.cos(camYaw) * 6]; } // depuração: ?at=x,y,z,yaw
     if (qs.get('auto')) startGame();
   }
 

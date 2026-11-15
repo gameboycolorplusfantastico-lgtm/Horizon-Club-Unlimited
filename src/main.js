@@ -89,8 +89,9 @@
     ]);
     city = cm; setProg(0.56, 'Carregando texturas…'); await tick();
     await R.loadCar(kk.man, kk.buf, q0.tex, carBase(first)); first.man = kk.man; setProg(0.66); await R.loadCity(cm, cb, q0.tex, (f) => setProg(0.66 + 0.2 * f));
+    try { const [pm, pb] = await Promise.all([fetch('assets/props.json').then((r) => r.json()), fetchBuf('assets/props.wasm')]); await R.loadProps(pm, pb, q0.tex); window.__props = pm; } catch (e) { console.warn('props indisponíveis', e); R.props = null; }
     setProg(0.88, 'Construindo colisão do mapa…'); await tick();
-    const col = buildCollision(cm, cb); world = new World(col.V, col.surf, 16);
+    const col = buildCollision(cm, cb, window.__props); world = new World(col.V, col.surf, 16);
     const sp = cm.spawn; veh = makeVehicle(first); veh.place(sp.pos[0], sp.pos[1] + 0.8, sp.pos[2], sp.yaw); settle(veh);
     veh.safe = { x: veh.p[0], y: veh.p[1], z: veh.p[2], yaw: sp.yaw }; cfg.car = first.id; renderCars(); if (typeof FH2 !== 'undefined') FH2.capture(R, veh, first);
     minimapImg = new Image(); minimapImg.src = 'assets/' + cm.minimap.img;
@@ -98,6 +99,7 @@
     applyQuality(); setProg(1, 'Pronto');
     mode = 'menu'; $('start').disabled = false; $('start').textContent = isTouch ? 'Toque para começar' : 'Começar a dirigir'; $('ptxt').textContent = 'Mapa com ' + ((col.V.length / 9 / 1000) | 0) + ' mil triângulos de colisão';
     last = performance.now(); requestAnimationFrame(frame);
+    if (qs.get('at')) { const a = qs.get('at').split(',').map(Number); veh.place(a[0], a[1] + 1, a[2], a[3] || 0); settle(veh); camYaw = a[3] || 0; camPos = [a[0] - Math.sin(camYaw) * 6, a[1] + 3, a[2] - Math.cos(camYaw) * 6]; } // depuração: ?at=x,y,z,yaw
     if (qs.get('auto')) startGame();
   }
 
