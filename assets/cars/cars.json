@@ -198,6 +198,47 @@
       },
       "bytes": 3793886,
       "tris": 216281
+    },
+    {
+      "id": "2011-nissan-gt-r",
+      "name": "2011 Nissan Gt R",
+      "brand": "",
+      "class": "",
+      "dir": "2011-nissan-gt-r",
+      "scale": 1.2,
+      "specs": "6 cil. · 4x4",
+      "cyl": 6,
+      "params": {
+        "awd": true
+      },
+      "bytes": 504290,
+      "tris": 24420
+    },
+    {
+      "id": "2011-pagani-huayra",
+      "name": "2011 Pagani Huayra",
+      "brand": "",
+      "class": "",
+      "dir": "2011-pagani-huayra",
+      "scale": 1.2,
+      "specs": "12 cil.",
+      "cyl": 12,
+      "params": {},
+      "bytes": 604100,
+      "tris": 27452
+    },
+    {
+      "id": "2016-koenigsegg-agera-rs",
+      "name": "2016 Koenigsegg Agera Rs",
+      "brand": "",
+      "class": "",
+      "dir": "2016-koenigsegg-agera-rs",
+      "scale": 1.2,
+      "specs": "8 cil.",
+      "cyl": 8,
+      "params": {},
+      "bytes": 919988,
+      "tris": 41366
     }
   ]
 }
