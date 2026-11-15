@@ -114,6 +114,45 @@
       },
       "bytes": 4250422,
       "tris": 209298
+    },
+    {
+      "id": "2002-mazda-rx-7-spirit-r",
+      "name": "2002 Mazda Rx 7 Spirit R",
+      "brand": "",
+      "class": "",
+      "dir": "2002-mazda-rx-7-spirit-r",
+      "scale": 1.2,
+      "specs": "",
+      "cyl": 6,
+      "params": {},
+      "bytes": 729624,
+      "tris": 33936
+    },
+    {
+      "id": "2002-nissan-skyline-gt-r-v-spec-ii-nur-r34",
+      "name": "2002 Nissan Skyline Gt R V Spec Ii Nur R34",
+      "brand": "",
+      "class": "",
+      "dir": "2002-nissan-skyline-gt-r-v-spec-ii-nur-r34",
+      "scale": 1.2,
+      "specs": "",
+      "cyl": 6,
+      "params": {},
+      "bytes": 4312832,
+      "tris": 226046
+    },
+    {
+      "id": "2005-porsche-911-gt2",
+      "name": "2005 Porsche 911 Gt2",
+      "brand": "",
+      "class": "",
+      "dir": "2005-porsche-911-gt2",
+      "scale": 1.2,
+      "specs": "",
+      "cyl": 6,
+      "params": {},
+      "bytes": 630564,
+      "tris": 32936
     }
   ]
 }
