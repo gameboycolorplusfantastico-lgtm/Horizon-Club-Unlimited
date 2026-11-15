@@ -239,6 +239,103 @@
       "params": {},
       "bytes": 919988,
       "tris": 41366
+    },
+    {
+      "id": "1987-buick-grand-national-regal-gnx",
+      "name": "1987 Buick Grand National Regal Gnx",
+      "brand": "",
+      "class": "",
+      "dir": "1987-buick-grand-national-regal-gnx",
+      "scale": 1.2,
+      "specs": "",
+      "cyl": 6,
+      "params": {},
+      "bytes": 5537752,
+      "tris": 298206
+    },
+    {
+      "id": "2006-lotus-elise",
+      "name": "2006 Lotus Elise",
+      "brand": "",
+      "class": "",
+      "dir": "2006-lotus-elise",
+      "scale": 1.2,
+      "specs": "4 cil. · 712 kg",
+      "cyl": 4,
+      "params": {
+        "mass": 712
+      },
+      "bytes": 697856,
+      "tris": 34143
+    },
+    {
+      "id": "2014-maserati-granturismo-mc-stradale",
+      "name": "2014 Maserati Granturismo Mc Stradale",
+      "brand": "",
+      "class": "",
+      "dir": "2014-maserati-granturismo-mc-stradale",
+      "scale": 1.2,
+      "specs": "",
+      "cyl": 6,
+      "params": {},
+      "bytes": 638226,
+      "tris": 28772
+    },
+    {
+      "id": "2015-ford-mustang-gt",
+      "name": "2015 Ford Mustang Gt",
+      "brand": "",
+      "class": "",
+      "dir": "2015-ford-mustang-gt",
+      "scale": 1.2,
+      "specs": "",
+      "cyl": 6,
+      "params": {},
+      "bytes": 622188,
+      "tris": 26398
+    },
+    {
+      "id": "2015-lamborghini-huracan-lpi-610-4",
+      "name": "2015 Lamborghini Huracan Lpi 610 4",
+      "brand": "",
+      "class": "",
+      "dir": "2015-lamborghini-huracan-lpi-610-4",
+      "scale": 1.2,
+      "specs": "10 cil. · 4x4",
+      "cyl": 10,
+      "params": {
+        "awd": true
+      },
+      "bytes": 632854,
+      "tris": 26465
+    },
+    {
+      "id": "2015-land-rover-range-rover-sport-svr",
+      "name": "2015 Land Rover Range Rover Sport Svr",
+      "brand": "",
+      "class": "",
+      "dir": "2015-land-rover-range-rover-sport-svr",
+      "scale": 1.2,
+      "specs": "",
+      "cyl": 6,
+      "params": {},
+      "bytes": 1489700,
+      "tris": 73535
+    },
+    {
+      "id": "2017-bugatti-chiron",
+      "name": "2017 Bugatti Chiron",
+      "brand": "",
+      "class": "",
+      "dir": "2017-bugatti-chiron",
+      "scale": 1.2,
+      "specs": "4x4",
+      "cyl": 6,
+      "params": {
+        "awd": true
+      },
+      "bytes": 941300,
+      "tris": 41586
     }
   ]
 }
