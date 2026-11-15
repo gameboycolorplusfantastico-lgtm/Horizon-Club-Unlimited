@@ -1,5 +1,6 @@
 name: Adicionar carro a partir de GLB
 # Envie um .glb (e, se quiser, um .json com o mesmo nome) para a pasta novos-carros/.
+# Alterar tools/specs_manual.json tambem dispara o robo (reaplica os dados reais nos carros ja cadastrados).
 # O robo empacota o carro, PESQUISA os dados reais na internet (potencia, peso, tracao, vel. maxima),
 # ajusta a fisica e registra em assets/cars/cars.json. Depois apaga o .glb.
 on:
@@ -7,6 +8,7 @@ on:
     paths:
       - 'novos-carros/*.glb'
       - 'novos-carros/*.json'
+      - 'tools/specs_manual.json'
   workflow_dispatch:
 permissions:
   contents: write
