@@ -1,6 +1,7 @@
 name: Adicionar carro a partir de GLB
-# Envie um .glb (e, se quiser, um .json com o mesmo nome) para a pasta novos-carros/ e este action
-# empacota o carro, registra em assets/cars/cars.json e apaga o .glb. O carro aparece no jogo sozinho.
+# Envie um .glb (e, se quiser, um .json com o mesmo nome) para a pasta novos-carros/.
+# O robo empacota o carro, PESQUISA os dados reais na internet (potencia, peso, tracao, vel. maxima),
+# ajusta a fisica e registra em assets/cars/cars.json. Depois apaga o .glb.
 on:
   push:
     paths:
@@ -9,13 +10,23 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+concurrency:
+  group: carros
+  cancel-in-progress: false
 jobs:
   carro:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - run: pip install numpy pillow
-      - run: python3 tools/processar_novos_carros.py
+      - name: Empacotar carro e buscar dados reais
+        env:
+          # opcional: cadastre o segredo ANTHROPIC_API_KEY (Settings > Secrets and variables > Actions) para busca mais precisa
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python3 tools/processar_novos_carros.py
       - name: Salvar no repositorio
         run: |
           git config user.name "github-actions[bot]"
@@ -23,4 +34,5 @@ jobs:
           git add -A
           if git diff --cached --quiet; then echo "Nada para salvar"; exit 0; fi
           git commit -m "Novo carro empacotado automaticamente"
+          git pull --rebase origin "${GITHUB_REF_NAME}" || true
           git push
