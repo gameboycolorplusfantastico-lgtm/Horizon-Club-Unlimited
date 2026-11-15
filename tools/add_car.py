@@ -250,10 +250,10 @@ def main():
     blend_idx = set(); tex_used = set(); tex_blend = set()
     for mi in mat_used:
         m = mats_gltf[mi]; pb = m.get('pbrMetallicRoughness', {}); ext = m.get('extensions', {})
-        mode = 'blend' if m.get('alphaMode') == 'BLEND' or 'KHR_materials_transmission' in ext else 'opaque'
+        mode = 'blend' if m.get('alphaMode') == 'BLEND' or 'KHR_materials_transmission' in ext else ('mask' if m.get('alphaMode') == 'MASK' else 'opaque')
         if 'baseColorTexture' in pb:
             tex_used.add(pb['baseColorTexture']['index'])
-            if mode == 'blend':
+            if mode in ('blend', 'mask'):  # mask = logo/emblema recortado: a textura precisa guardar o canal alfa
                 tex_blend.add(pb['baseColorTexture']['index'])
     tmap = export_textures(g, os.path.join(a.out, a.id), a.tex_size, {'used': tex_used, 'blend': tex_blend})
 
@@ -261,7 +261,7 @@ def main():
         m = mats_gltf[mi]; pb = m.get('pbrMetallicRoughness', {}); ext = m.get('extensions', {})
         d = {'name': (m.get('name') or 'mat%d' % mi).replace(' ', '_') + ('_detailglassred' if brake else ''),
              'color': pb.get('baseColorFactor', [1, 1, 1, 1]), 'metal': pb.get('metallicFactor', 1.0), 'rough': pb.get('roughnessFactor', 1.0),
-             'mode': 'blend' if m.get('alphaMode') == 'BLEND' or 'KHR_materials_transmission' in ext else 'opaque', 'coat': 'KHR_materials_clearcoat' in ext}
+             'mode': 'blend' if m.get('alphaMode') == 'BLEND' or 'KHR_materials_transmission' in ext else ('mask' if m.get('alphaMode') == 'MASK' else 'opaque'), 'coat': 'KHR_materials_clearcoat' in ext}
         if 'baseColorTexture' in pb:
             d['tex'] = tmap[pb['baseColorTexture']['index']]
         if brake:
