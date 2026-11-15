@@ -2416,7 +2416,21 @@
       },
       "bytes": 941300,
       "tris": 41586,
-      "engine": "v12"
+      "engine": "v12",
+      "paint": {
+        "zones": [
+          {
+            "name": "Carroceria (azul escuro)",
+            "mats": "_mm_ext_",
+            "ref": "#00162f"
+          },
+          {
+            "name": "Detalhes (azul claro)",
+            "mats": "_mm_ext_",
+            "ref": "#0570b2"
+          }
+        ]
+      }
     }
   ]
 }
