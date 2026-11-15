@@ -3,7 +3,7 @@
   const $ = (id) => document.getElementById(id);
   const qs = new URLSearchParams(location.search);
   const isTouch = (matchMedia && matchMedia('(pointer:coarse)').matches) || 'ontouchstart' in window;
-  const cfg = { quality: 'auto', units: 'kmh', sound: true, camStyle: 'mlc', fx: 'on', mirror: 'on', trans: 'auto' };
+  const cfg = { quality: 'auto', units: 'kmh', sound: true, camStyle: 'mlc', fx: 'on', mirror: 'on', trans: 'auto', paint: {} };
   const KEY = 'horizon-club-unlimited'; // (migra as configurações do nome antigo, 'asfalto-livre')
   try { Object.assign(cfg, JSON.parse(localStorage.getItem(KEY) || localStorage.getItem('asfalto-livre') || '{}')); } catch (e) {}
   if (qs.get('q')) cfg.quality = qs.get('q');
@@ -51,16 +51,17 @@
   async function selectCar(id) {
     const c = CARS.find((x) => x.id === id); if (!c || carBusy || (veh && veh.carId === id)) return; carBusy = true; renderCars(id);
     try {
-      if (!c.man) { const kk = await fetchCar(c); await R.loadCar(kk.man, kk.buf, QUAL[qName].tex, carBase(c)); c.man = kk.man; }
+      if (!c.man) { const kk = await fetchCar(c); await R.loadCar(kk.man, kk.buf, QUAL[qName].tex, carBase(c), c.paint); c.man = kk.man; }
       const prev = veh, nv = makeVehicle(c), sp = city.spawn;
       if (prev) { nv.place(prev.p[0], prev.p[1] + 0.8, prev.p[2], prev.yaw); settle(nv); nv.safe = prev.safe || { x: nv.p[0], y: nv.p[1], z: nv.p[2], yaw: prev.yaw }; }
       else { nv.place(sp.pos[0], sp.pos[1] + 0.8, sp.pos[2], sp.yaw); settle(nv); nv.safe = { x: nv.p[0], y: nv.p[1], z: nv.p[2], yaw: sp.yaw }; }
-      veh = nv; R.setCar(c.man); cfg.car = id; save(); if (typeof FH2 !== 'undefined') { FH2.capture(R, veh, c); resize(); }
+      veh = nv; R.setCar(c.man); applyPaint(c); cfg.car = id; save(); if (typeof FH2 !== 'undefined') { FH2.capture(R, veh, c); resize(); }
     } catch (e) { console.error(e); toast('Não consegui carregar ' + c.name, 3000); }
     carBusy = false; renderCars();
   }
   function renderCars(loadingId) { // desenha os cartões de seleção (menu inicial e menu de pausa)
     const t = $('tagline'); if (t) t.textContent = 'Mundo aberto · ' + CARS.length + (CARS.length === 1 ? ' carro' : ' carros');
+    renderPaint();
     if (typeof FH2 !== 'undefined') FH2.update({ cars: CARS, current: veh && veh.carId, loading: loadingId, busy: carBusy });
     for (const box of [$('cars-start'), $('cars-pause')]) {
       if (!box) continue; box.hidden = CARS.length < 2; box.innerHTML = '';
@@ -73,6 +74,45 @@
     }
   }
   for (const id of ['cars-start', 'cars-pause']) $(id).addEventListener('click', (e) => { const b = e.target.closest('button.car'); if (b) selectCar(b.dataset.id); });
+
+  // ---------- pintura: troca so a cor da carroceria (rodas, vidros, luzes e interior nao mudam) ----------
+  const PAINT_COLORS = [['Branco', '#f2f2f2'], ['Preto', '#0d0d10'], ['Cinza', '#6f757d'], ['Prata', '#c3c7cd'], ['Vermelho', '#c8102e'], ['Laranja', '#f26b1d'], ['Amarelo', '#f2c200'], ['Verde', '#1f7a3a'], ['Azul', '#1f4fd1'], ['Azul-claro', '#3aa7e0'], ['Roxo', '#6a2cc9'], ['Rosa', '#e8478f']];
+  const paintOf = (id) => { const p = cfg.paint && cfg.paint[id]; return Array.isArray(p) ? p : []; };
+  const curCar = () => veh && CARS.find((x) => x.id === veh.carId);
+  function applyPaint(c) { if (!c || !c.man) return; (c.man.paintZones || []).forEach((z, i) => R.setPaint(c.man, i, paintOf(c.id)[i] || null)); }
+  let paintT = 0;
+  function setZoneColor(c, zi, hex, quiet) {
+    const arr = paintOf(c.id).slice(); arr[zi] = hex || null; cfg.paint = cfg.paint || {};
+    if (arr.every((v) => !v)) delete cfg.paint[c.id]; else cfg.paint[c.id] = Array.from(arr, (v) => v || null);
+    save(); applyPaint(c); if (!quiet) renderPaint();
+    clearTimeout(paintT); paintT = setTimeout(() => { if (veh && veh.carId === c.id && typeof FH2 !== 'undefined') { try { FH2.capture(R, veh, c); resize(); } catch (e) {} } }, 700); // atualiza a foto do carro na garagem
+  }
+  function renderPaint() {
+    const c = curCar(), zones = (c && c.man && c.man.paintZones) || [];
+    for (const box of [$('paint-start'), $('paint-pause')]) {
+      if (!box) continue; box.innerHTML = ''; box.hidden = !zones.length; if (!zones.length) continue;
+      const cur = paintOf(c.id), presets = c.paint && c.paint.colors ? c.paint.colors.map((x) => [x.name, x.hex]) : PAINT_COLORS;
+      const head = document.createElement('div'); head.className = 'ptitle'; head.textContent = 'Pintura · ' + c.name; box.appendChild(head);
+      zones.forEach((z, zi) => {
+        const row = document.createElement('div'); row.className = 'prow';
+        if (zones.length > 1) { const lb = document.createElement('span'); lb.textContent = z.name; row.appendChild(lb); }
+        const sw = document.createElement('div'); sw.className = 'swatches';
+        const mk = (label, hex) => {
+          const b = document.createElement('button'); b.type = 'button'; b.className = 'sw' + (hex ? '' : ' orig') + ((cur[zi] || '').toLowerCase() === (hex || '').toLowerCase() ? ' on' : '');
+          b.title = label; b.setAttribute('aria-label', label); if (hex) b.style.background = hex; b.dataset.zi = zi; b.dataset.hex = hex || ''; sw.appendChild(b);
+        };
+        mk('Original', null); for (const [n, h] of presets) mk(n, h);
+        const inp = document.createElement('input'); inp.type = 'color'; inp.className = 'swcustom'; inp.value = cur[zi] || '#808080'; inp.title = 'Outra cor'; inp.setAttribute('aria-label', 'Outra cor'); inp.dataset.zi = zi; sw.appendChild(inp);
+        row.appendChild(sw); box.appendChild(row);
+      });
+    }
+  }
+  for (const id of ['paint-start', 'paint-pause']) {
+    const box = $(id); if (!box) continue;
+    box.addEventListener('click', (e) => { const b = e.target.closest('button.sw'), c = curCar(); if (b && c) setZoneColor(c, +b.dataset.zi, b.dataset.hex || null); });
+    box.addEventListener('input', (e) => { const i = e.target.closest('input.swcustom'), c = curCar(); if (i && c) setZoneColor(c, +i.dataset.zi, i.value, true); });
+    box.addEventListener('change', (e) => { const i = e.target.closest('input.swcustom'), c = curCar(); if (i && c) { setZoneColor(c, +i.dataset.zi, i.value, true); renderPaint(); } });
+  }
 
   // ---------- carga ----------
   async function boot() {
@@ -88,12 +128,12 @@
       fetchCar(first, (g) => { gotK = g; upd(); }),
     ]);
     city = cm; setProg(0.56, 'Carregando texturas…'); await tick();
-    await R.loadCar(kk.man, kk.buf, q0.tex, carBase(first)); first.man = kk.man; setProg(0.66); await R.loadCity(cm, cb, q0.tex, (f) => setProg(0.66 + 0.2 * f));
+    await R.loadCar(kk.man, kk.buf, q0.tex, carBase(first), first.paint); first.man = kk.man; setProg(0.66); await R.loadCity(cm, cb, q0.tex, (f) => setProg(0.66 + 0.2 * f));
     try { const [pm, pb] = await Promise.all([fetch('assets/props.json').then((r) => r.json()), fetchBuf('assets/props.wasm')]); await R.loadProps(pm, pb, q0.tex); window.__props = pm; } catch (e) { console.warn('props indisponíveis', e); R.props = null; }
     setProg(0.88, 'Construindo colisão do mapa…'); await tick();
     const col = buildCollision(cm, cb, window.__props); world = new World(col.V, col.surf, 16);
     const sp = cm.spawn; veh = makeVehicle(first); veh.place(sp.pos[0], sp.pos[1] + 0.8, sp.pos[2], sp.yaw); settle(veh);
-    veh.safe = { x: veh.p[0], y: veh.p[1], z: veh.p[2], yaw: sp.yaw }; cfg.car = first.id; renderCars(); if (typeof FH2 !== 'undefined') FH2.capture(R, veh, first);
+    veh.safe = { x: veh.p[0], y: veh.p[1], z: veh.p[2], yaw: sp.yaw }; cfg.car = first.id; applyPaint(first); renderCars(); if (typeof FH2 !== 'undefined') FH2.capture(R, veh, first);
     minimapImg = new Image(); minimapImg.src = 'assets/' + cm.minimap.img;
     camYaw = sp.yaw; camPos = [veh.p[0] - Math.sin(sp.yaw) * 6, veh.p[1] + 2, veh.p[2] - Math.cos(sp.yaw) * 6]; camTgt = veh.p.slice();
     applyQuality(); setProg(1, 'Pronto');
@@ -276,6 +316,6 @@
     }
     if (qs.get('debug')) $('dbg').textContent = ema.toFixed(1) + ' ms · ' + R.stats.calls + ' draws · ' + W + 'x' + H + ' · ' + qName + ' x' + dynScale.toFixed(2);
   }
-  window.__game = { save, selectCar, get cars() { return CARS; }, get veh() { return veh; }, get world() { return world; }, get R() { return R; }, get mode() { return mode; }, cfg, start: startGame, setCam(m) { camMode = m; }, get frames() { return frames; }, get cam() { return camOut; } };
+  window.__game = { paintReport() { const c = curCar(), m = c && c.man; return m ? { car: c.id, zonas: (m.paintZones || []).map((z) => ({ nome: z.name, materiais: z.mats.map((i) => m.mats[i].name) })), materiais: m.mats.map((x, i) => i + ': ' + x.name + (x.pz !== undefined ? '  <== PINTURA' : '')) } : null; }, save, selectCar, get cars() { return CARS; }, get veh() { return veh; }, get world() { return world; }, get R() { return R; }, get mode() { return mode; }, cfg, start: startGame, setCam(m) { camMode = m; }, get frames() { return frames; }, get cam() { return camOut; } };
   boot().catch((e) => { console.error(e); $('ptxt').textContent = 'Erro ao carregar: ' + e.message; $('bar').style.background = 'var(--hot)'; });
 })();

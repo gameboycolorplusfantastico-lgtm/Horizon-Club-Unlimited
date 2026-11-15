@@ -69,12 +69,22 @@ void main(){
 const FS_CAR = `#version 300 es
 precision highp float;
 in vec3 v_wp; in vec3 v_n; in vec2 v_uv; in vec2 v_uv1; in float v_lz;
-uniform sampler2D u_tex; uniform vec4 u_color; uniform float u_hasTex, u_metal, u_rough, u_coat, u_emis, u_lamp, u_headE, u_tailE, u_len;
+uniform sampler2D u_tex; uniform vec4 u_color; uniform vec4 u_paint, u_paint2, u_pref, u_pref2; uniform float u_hasTex, u_metal, u_rough, u_coat, u_emis, u_lamp, u_headE, u_tailE, u_len;
 out vec4 o;
 ${GLSL_COMMON}
 void main(){
   vec4 t = u_hasTex > 0.5 ? texture(u_tex, v_uv) : vec4(1.);
   vec3 alb = u_color.rgb * t.rgb; float alpha = u_color.a * t.a;
+  if (u_pref.w > 0.5) { // troca de pintura: so os pixels parecidos com a cor original da pintura (rodas, vidros, emblemas, grade e lanternas ficam como estao)
+    // ate 2 tons por material (carro de duas cores): cada pixel vai para o tom mais proximo; u_paint.w / u_paint2.w = 1 quando aquele tom foi pintado
+    vec3 LU = vec3(.2126, .7152, .0722);
+    float d1 = length(alb - u_pref.rgb) / (length(u_pref.rgb) + 0.015), d2 = u_pref2.w > 0.5 ? length(alb - u_pref2.rgb) / (length(u_pref2.rgb) + 0.015) : 9.;
+    bool f1 = d1 <= d2; vec4 pc = f1 ? u_paint : u_paint2; vec3 rf = f1 ? u_pref.rgb : u_pref2.rgb; float dd = f1 ? d1 : d2;
+    if (pc.w > 0.5) {
+      float wp = 1. - smoothstep(0.35, 0.75, dd);
+      alb = mix(alb, pc.rgb * clamp(dot(alb, LU) / max(dot(rf, LU), 0.004), 0.55, 1.6), wp); // a razao de brilho mantem o relevo e a sujeira da textura original
+    }
+  }
   vec3 n = normalize(v_n); vec3 V = normalize(u_cam - v_wp); if (dot(n, V) < 0.) n = -n;
   float ndv = max(dot(n, V), 0.); float ndl = max(dot(n, u_sun), 0.);
   vec3 R = reflect(-V, n);
@@ -128,7 +138,7 @@ class Renderer {
     this.planes = new Float64Array(24); this.drawDist = 900; this.time = 0; this.stats = { calls: 0, prims: 0 };
     this.env = { sun: normalize3([-0.55, 0.52, 0.40]), sunCol: [2.5, 1.95, 1.4], zenith: [0.10, 0.26, 0.58], horizon: [0.55, 0.70, 0.88], ground: [0.16, 0.17, 0.19], ambSky: [0.38, 0.50, 0.72], ambGround: [0.24, 0.21, 0.18], exposure: 0.82 };
     this.progs.world = this.prog(VS_MESH, FS_WORLD, ['u_vp', 'u_model', 'u_pmin', 'u_psize', 'u_uvb0', 'u_uvb1', 'u_tex', 'u_ao', 'u_hasAo', 'u_alphaTest', 'u_water', 'u_time', 'u_aoStr']);
-    this.progs.car = this.prog(VS_MESH, FS_CAR, ['u_vp', 'u_model', 'u_pmin', 'u_psize', 'u_uvb0', 'u_uvb1', 'u_tex', 'u_color', 'u_hasTex', 'u_metal', 'u_rough', 'u_coat', 'u_emis', 'u_lamp', 'u_headE', 'u_tailE', 'u_len']);
+    this.progs.car = this.prog(VS_MESH, FS_CAR, ['u_vp', 'u_model', 'u_pmin', 'u_psize', 'u_uvb0', 'u_uvb1', 'u_tex', 'u_color', 'u_paint', 'u_paint2', 'u_pref', 'u_pref2', 'u_hasTex', 'u_metal', 'u_rough', 'u_coat', 'u_emis', 'u_lamp', 'u_headE', 'u_tailE', 'u_len']);
     this.progs.sky = this.prog(VS_SKY, FS_SKY, ['u_right', 'u_up', 'u_fwd', 'u_tanH', 'u_asp']);
     this.progs.quad = this.prog(VS_QUAD, FS_QUAD, ['u_vp', 'u_c', 'u_r', 'u_f', 'u_s', 'u_a']);
     this.progs.part = this.prog(VS_PART, FS_PART, ['u_vp', 'u_px', 'u_col']);
@@ -167,7 +177,12 @@ class Renderer {
     return t;
   }
   setAniso(level) { this.anisoLevel = level; const gl = this.gl; if (!this.aniso) return; for (const t of this.allTex || []) { gl.bindTexture(gl.TEXTURE_2D, t); gl.texParameterf(gl.TEXTURE_2D, this.aniso.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(level, this.maxAniso)); } }
-  async loadTex(url, srgb, scale) {
+  medianColor(bmp) { // cor mediana (linear) da textura, em 32x32: e a cor "de fabrica" da pintura quando ela vem numa textura
+    const c = document.createElement('canvas'); c.width = c.height = 32; const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(bmp, 0, 0, 32, 32);
+    const d = g.getImageData(0, 0, 32, 32).data, ch = [[], [], []]; for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 127) { ch[0].push(d[i]); ch[1].push(d[i + 1]); ch[2].push(d[i + 2]); }
+    return ch.map((a) => { a.sort((x, y) => x - y); return Math.pow((a[a.length >> 1] || 0) / 255, 2.2); });
+  }
+  async loadTex(url, srgb, scale, info) {
     const r = await fetch(url); const b = await r.blob(); let bmp;
     const o = { premultiplyAlpha: 'none', colorSpaceConversion: 'none', imageOrientation: 'none' };
     try {
@@ -176,6 +191,7 @@ class Renderer {
     } catch (e) {
       bmp = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = URL.createObjectURL(b); });
     }
+    if (info) { try { info.med = this.medianColor(bmp); } catch (e) {} }
     const t = this.texFromBitmap(bmp, srgb); (this.allTex = this.allTex || []).push(t); return t;
   }
   makeVAO(vbo, ibo, pr) {
@@ -216,7 +232,7 @@ class Renderer {
   }
   drawProps() {
     const man = this.props; if (!man) return; const gl = this.gl, p = this.progs.car, cp = this.camPos, lim = Math.min(this.drawDist, 520);
-    gl.useProgram(p.p); this.setEnv(p); gl.uniformMatrix4fv(p.u_vp, false, this.vp); gl.uniform1i(p.u_tex, 0); gl.uniform1f(p.u_lamp, 0); gl.uniform1f(p.u_coat, 0); gl.uniform1f(p.u_hasTex, 1);
+    gl.useProgram(p.p); this.setEnv(p); gl.uniformMatrix4fv(p.u_vp, false, this.vp); gl.uniform1i(p.u_tex, 0); gl.uniform1f(p.u_lamp, 0); gl.uniform1f(p.u_coat, 0); gl.uniform1f(p.u_hasTex, 1); gl.uniform4f(p.u_pref, 0, 0, 0, 0);
     gl.disable(gl.BLEND); gl.depthMask(true); const M = this.propM, T = this.time || 0;
     const run = (model, st) => {
       for (const pr of model.prims) {
@@ -260,12 +276,62 @@ class Renderer {
       if (/(^|_)(lights?|lamps?|leds?)(_|$)|light[a-z]?_?(material|mat)(_|$|\d)|light_?bucket|light_?emissive|^emiss[a-z_]*light/.test(nm)) { if (rear) m.brake = true; else if (front) m.head = true; else m.lamp = true; }
     });
   }
+  // Descobre sozinho quais materiais sao a PINTURA da carroceria (nunca roda, vidro, luz, pneu, interior, cromados). Vale para QUALQUER carro novo.
+  // Para mandar na mao, ponha no carro em cars.json:  "paint": false  (sem troca de cor)
+  //   "paint": { "mats": "REGEX" }  ou  { "mats": ["Nome1", "Nome2"] }  (um grupo de pintura)
+  //   "paint": { "zones": [ { "name": "Carroceria", "mats": "REGEX" }, { "name": "Detalhes", "mats": "REGEX" } ] }  (carros de duas cores: uma cor por zona)
+  //   "paint": { "exclude": "REGEX", "colors": [ { "name": "Azul Bugatti", "hex": "#1f3a93" } ] }  (tira pecas / cores oficiais do carro)
+  classifyPaint(man, hint) {
+    if (man.paintDone) return; man.paintDone = true; man.paintZones = [];
+    const h = hint === undefined ? man.paint : hint; if (h === false) return;
+    const mats = man.mats, bodyUse = {}, wheelUse = {}; let total = 0;
+    for (const pr of man.body) { bodyUse[pr.m] = (bodyUse[pr.m] || 0) + pr.ni; total += pr.ni; }
+    for (const k in man.wheels) for (const pr of man.wheels[k].prims) wheelUse[pr.m] = true; // material que tambem aparece na roda nunca e pintura
+    const nm = (m) => (m.name || '').replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+    const ok = (i) => bodyUse[i] && !wheelUse[i] && mats[i].mode !== 'blend' && !mats[i].brake && !mats[i].head && !mats[i].lamp;
+    const BAD = /glass|window|windshield|lens|light|lamp|(^|_)led|brake|calip|rotor|disc|disk|tyre|tire|rubber|wheel|(^|_)rim|chrom|trim|interior|(^|_)int(_|$)|(^|_)cab(_|$)|seat|leather|carbon|cockpit|gauge|dash|steering|badge|logo|emblem|plate|grill|exhaust|engine|(^|_)motor|under|chassis|misc|wood|reflect|mirror$|(^|_)mirror_?(glass|surr)|metal|plastic|detail/;
+    const want = (spec) => { if (Array.isArray(spec)) return (m) => spec.indexOf(m.name) >= 0; const re = new RegExp(spec, 'i'); return (m) => re.test(m.name || ''); };
+    let defs = []; const slots = {};
+    if (h && typeof h === 'object') {
+      if (Array.isArray(h.zones)) defs = h.zones.map((z) => ({ name: z.name || 'Pintura', sel: want(z.mats || '$^'), ref: z.ref, idx: [] }));
+      else if (h.mats) defs = [{ name: h.name || 'Pintura', sel: want(h.mats), ref: h.ref, idx: [] }];
+    }
+    // "ref" (opcional, '#rrggbb') = cor ORIGINAL dessa zona na textura. Carro de duas cores com os dois tons no mesmo material: duas zonas com o mesmo "mats" e um "ref" para cada.
+    if (defs.length) { for (let i = 0; i < mats.length; i++) if (ok(i)) { const ds = defs.filter((z) => z.sel(mats[i])).slice(0, 2); if (ds.length) { ds.forEach((d) => d.idx.push(i)); slots[i] = ds; } } }
+    else {
+      const ex = h && h.exclude ? new RegExp(h.exclude, 'i') : null, all = mats.map((m, i) => i).filter((i) => ok(i) && !(ex && ex.test(mats[i].name || '')));
+      let pick = all.filter((i) => /paint|lacquer|varnish|body_?colou?r|carroceria|pintura/.test(nm(mats[i])) && !/glass|light|wheel|rim|tire|tyre|brake|calip|plate|badge/.test(nm(mats[i])));
+      if (!pick.length) pick = all.filter((i) => /(^|_)(ext|exterior|body|bodywork|shell)(_|$)/.test(nm(mats[i])) && !BAD.test(nm(mats[i])));
+      if (!pick.length) { // sem nomes uteis: material com verniz (clearcoat) ou, senao, o maior material liso do corpo
+        const c = all.filter((i) => !BAD.test(nm(mats[i])) && bodyUse[i] >= 0.08 * total); // so materiais grandes: peca pequena nunca vira "a pintura"
+        let pool = c.filter((i) => mats[i].coat); if (!pool.length) pool = c.filter((i) => !mats[i].tex);
+        pool.sort((a, b) => bodyUse[b] - bodyUse[a]); if (pool.length) pick = [pool[0]];
+      }
+      if (pick.length) { defs = [{ name: 'Pintura', idx: pick }]; pick.forEach((i) => { slots[i] = [defs[0]]; }); }
+    }
+    const lin = (hex, c) => { const n = parseInt(String(hex).slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v, k) => Math.pow(v / 255, 2.2) * c[k]); };
+    for (const d of defs) if (d.idx.length) { d.zi = man.paintZones.length; man.paintZones.push({ name: d.name, mats: d.idx, tint: null }); }
+    for (const i in slots) {
+      const m = mats[i], c = m.color, [d1, d2] = slots[i], base = [c[0], c[1], c[2]];
+      m.pz = d1.zi; m.pref = d1.ref && /^#[0-9a-f]{6}$/i.test(d1.ref) ? lin(d1.ref, c) : base; m.pfix = !!(d1.ref && /^#[0-9a-f]{6}$/i.test(d1.ref));
+      if (d2) { m.pz2 = d2.zi; m.pref2 = d2.ref && /^#[0-9a-f]{6}$/i.test(d2.ref) ? lin(d2.ref, c) : base; }
+    }
+  }
+  // zi = zona de pintura (0 = a principal); hex = '#rrggbb' ou null para voltar a cor original
+  setPaint(man, zi, hex) {
+    const z = man && man.paintZones && man.paintZones[zi]; if (!z) return;
+    if (!hex || !/^#[0-9a-f]{6}$/i.test(hex)) { z.tint = null; return; }
+    const n = parseInt(hex.slice(1), 16); z.tint = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => Math.pow(v / 255, 2.2));
+  }
   // carrega um carro (geometria + texturas) sem trocar o carro em uso; base = pasta do carro, ex.: 'assets/cars/bmw-m3-gtr/'
-  async loadCar(man, buf, texScale, base) {
-    const vbo = this.uploadBin(buf); man.vbo = vbo; this.classifyLights(man);
+  async loadCar(man, buf, texScale, base, paintHint) {
+    const vbo = this.uploadBin(buf); man.vbo = vbo; this.classifyLights(man); this.classifyPaint(man, paintHint);
     for (const pr of man.body) this.prepPrim(vbo, pr);
     for (const k in man.wheels) for (const pr of man.wheels[k].prims) this.prepPrim(vbo, pr);
-    for (const m of man.mats) if (m.tex) m.glTex = await this.loadTex((base || 'assets/') + m.tex, true, texScale);
+    for (const m of man.mats) if (m.tex) {
+      const info = m.pz !== undefined && !m.pfix ? {} : null; m.glTex = await this.loadTex((base || 'assets/') + m.tex, true, texScale, info);
+      if (info && info.med) m.pref = [m.color[0] * info.med[0], m.color[1] * info.med[1], m.color[2] * info.med[2]]; // cor original da pintura = fator x cor mediana da textura
+    }
     if (!this.car) this.car = man;
     return man;
   }
@@ -377,6 +443,12 @@ class Renderer {
         const m = man.mats[pr.m]; if ((m.mode === 'blend') !== blendPass) continue;
         gl.uniform4f(p.u_color, m.color[0], m.color[1], m.color[2], m.color[3]); gl.uniform1f(p.u_metal, m.metal); gl.uniform1f(p.u_rough, m.rough); gl.uniform1f(p.u_coat, m.coat ? 1 : 0);
         const emis = (m.brake || m.name.indexOf('detailglassred') >= 0) ? (c.brake > 0.1 ? 0.55 : 0.08) : (m.head ? 0.2 : 0); gl.uniform1f(p.u_emis, emis);
+        const z1 = m.pz !== undefined && man.paintZones ? man.paintZones[m.pz] : null, z2 = m.pz2 !== undefined && man.paintZones ? man.paintZones[m.pz2] : null;
+        if ((z1 && z1.tint) || (z2 && z2.tint)) {
+          const t1 = z1 && z1.tint, t2 = z2 && z2.tint;
+          gl.uniform4f(p.u_paint, t1 ? t1[0] : 0, t1 ? t1[1] : 0, t1 ? t1[2] : 0, t1 ? 1 : 0); gl.uniform4f(p.u_pref, m.pref[0], m.pref[1], m.pref[2], 1);
+          if (z2) { gl.uniform4f(p.u_paint2, t2 ? t2[0] : 0, t2 ? t2[1] : 0, t2 ? t2[2] : 0, t2 ? 1 : 0); gl.uniform4f(p.u_pref2, m.pref2[0], m.pref2[1], m.pref2[2], 1); } else gl.uniform4f(p.u_pref2, 0, 0, 0, 0);
+        } else gl.uniform4f(p.u_pref, 0, 0, 0, 0);
         gl.uniform1f(p.u_lamp, m.lamp ? 1 : 0); if (m.lamp) { gl.uniform1f(p.u_headE, 0.2); gl.uniform1f(p.u_tailE, c.brake > 0.1 ? 0.55 : 0.08); gl.uniform1f(p.u_len, man.length || 4.49); }
         if (m.glTex) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, m.glTex); gl.uniform1f(p.u_hasTex, 1); } else gl.uniform1f(p.u_hasTex, 0);
         this.drawPrim(p, pr);

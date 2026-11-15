@@ -98,6 +98,15 @@ body.touch #toast { top: 74px; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 @media (max-width: 480px) { .grid2 { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { #toast, #bar, #hint { transition: none; } }
+/* Pintura do carro */
+.paintbox { display: grid; gap: 8px; border: 1px solid var(--line); border-radius: 14px; padding: 11px 13px; background: rgba(255,255,255,.04); }
+.ptitle { font: 600 10px var(--display); letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
+.prow { display: grid; gap: 6px; } .prow > span { font-size: 12px; color: var(--dim); }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.sw { width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(255,255,255,.28); padding: 0; cursor: pointer; }
+.sw.on { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(255,176,46,.4); }
+.sw.orig { background: conic-gradient(#e6e6e6 0 25%, #4a4f57 0 50%, #e6e6e6 0 75%, #4a4f57 0); }
+.swcustom { width: 36px; height: 32px; padding: 0; border: 2px solid rgba(255,255,255,.28); border-radius: 8px; background: none; cursor: pointer; }
 /*{{MODS_CSS}}*/
 </style>
 <canvas id="c" aria-label="Jogo de direção em cidade aberta"></canvas>
@@ -125,6 +134,7 @@ body.touch #toast { top: 74px; }
     <div class="card" id="p-start">
       <div><p class="sub num" id="tagline" style="letter-spacing:.2em;text-transform:uppercase;font-size:12px">Mundo aberto</p><h1 class="brand">Horizon Club <span>Unlimited</span></h1></div>
       <div class="cars" id="cars-start" role="radiogroup" aria-label="Escolha o carro" hidden></div>
+      <div class="paintbox" id="paint-start" hidden></div>
       <div><div class="prog"><div id="bar"></div></div><div id="ptxt">Preparando…</div></div>
       <div class="mlist" role="menu" aria-label="Menu principal">
         <button class="cta mitem" id="start" disabled>Carregando…</button>
@@ -153,6 +163,7 @@ body.touch #toast { top: 74px; }
     <div class="card" id="p-pause" hidden>
       <h2 class="brand" style="font-size:clamp(30px,7vw,44px)">Pausado</h2>
       <div class="cars" id="cars-pause" role="radiogroup" aria-label="Trocar de carro" hidden></div>
+      <div class="paintbox" id="paint-pause" hidden></div>
       <div class="row"><span>Qualidade gráfica</span><div class="seg seg-q"><button data-v="auto">Auto</button><button data-v="low">Baixa</button><button data-v="med">Média</button><button data-v="high">Alta</button></div></div>
       <div class="row"><span>Unidade de velocidade</span><div class="seg seg-u"><button data-v="kmh">km/h</button><button data-v="mph">mph</button></div></div>
       <div class="row"><span>Som</span><div class="seg seg-s"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
