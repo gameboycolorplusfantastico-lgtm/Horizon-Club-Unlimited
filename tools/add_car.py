@@ -6,7 +6,8 @@ Uso basico:
         --brand Ford --class Pickup --scale 1.225 --preset pickup --specs "V8 6.2 · 411 cv · 4x4"
 
 O que o script faz:
-  1. le o GLB, aplica as transformacoes dos nos e acha as 4 rodas (pelo nome dos objetos);
+  1. le o GLB, aplica as transformacoes dos nos e acha as 4 rodas (pelo nome do objeto; se nao achar, pelo nome dos
+     grupos pai, ex.: W1/wheel_104/Object_88; se ainda nao achar, pela GEOMETRIA: pecas redondas e finas nos 4 cantos);
   2. normaliza o carro para 4,49 m de comprimento, origem no chao entre os eixos (+Z frente, +X esquerda);
   3. grava assets/cars/<id>/car.json, car.wasm e tex/ (texturas reduzidas);
   4. registra o carro em assets/cars/cars.json -> ele aparece sozinho no menu do jogo.
@@ -27,8 +28,23 @@ UNIT_LEN = 4.49  # comprimento de referencia do formato (o jogo multiplica por "
 WHEEL_DEFAULT = r'(?i)(?<![a-z])(wheel|tyre|tire|rim|rotor|hub|brake_?disc)'
 
 
+def node_paths(g):
+    """Devolve f(i) -> 'avo/pai/no' (nomes da hierarquia). Muitos GLB (Sketchfab) so deixam o nome util nos nos pai."""
+    N = g.j['nodes']; parent = {}
+    for i, n in enumerate(N):
+        for c in n.get('children', []):
+            parent[c] = i
+    def path(i):
+        out = []
+        while i is not None:
+            out.append(N[i].get('name', '')); i = parent.get(i)
+        return '/'.join(reversed(out))
+    return path
+
+
 def load_parts(g, flip):
     parts = []
+    pathf = node_paths(g)
     for i, n, M in g.walk():
         if 'mesh' not in n:
             continue
@@ -43,12 +59,79 @@ def load_parts(g, flip):
             if flip:
                 P[:, [0, 2]] *= -1
                 N[:, [0, 2]] *= -1
-            parts.append({'name': n.get('name', ''), 'P': P, 'N': N, 'U': U, 'idx': idx, 'mat': pr.get('material', 0)})
+            parts.append({'name': n.get('name', ''), 'path': pathf(i), 'P': P, 'N': N, 'U': U, 'idx': idx, 'mat': pr.get('material', 0)})
     return parts
 
 
 def quad_name(sx, sz):
     return {(1, 1): 'FL', (-1, 1): 'FR', (1, -1): 'RL', (-1, -1): 'RR'}[(sx, sz)]
+
+
+def geom_wheels(parts):
+    """Acha as rodas pela forma, sem depender de nomes. Pneu = peca redonda (vista de lado), fina, longe do eixo central e
+    encostada no chao, um em cada canto do carro. Depois junta aros, discos e parafusos que estao dentro de cada pneu."""
+    bb = [(p['P'].min(0), p['P'].max(0)) for p in parts]
+    if not bb:
+        return []
+    allmn = np.min([b[0] for b in bb], 0); allmx = np.max([b[1] for b in bb], 0)
+    L = allmx[2] - allmn[2]; W = allmx[0] - allmn[0]; xc = (allmn[0] + allmx[0]) / 2
+    if L <= 0:
+        return []
+    seeds = []
+    for k, (mn, mx) in enumerate(bb):
+        dx, dy, dz = mx - mn
+        if not (0.09 * L <= dy <= 0.24 * L and 0.8 <= dy / max(dz, 1e-9) <= 1.25 and dx <= 0.75 * dy):
+            continue
+        if abs((mn[0] + mx[0]) / 2 - xc) < 0.25 * W:
+            continue
+        seeds.append(k)
+    if not seeds:
+        return []
+    low = min(bb[k][0][1] for k in seeds)
+    seeds = [k for k in seeds if bb[k][0][1] <= low + 0.04 * L]
+    cz = np.mean([(bb[k][0][2] + bb[k][1][2]) / 2 for k in seeds])
+    quad = {}
+    for k in seeds:
+        mn, mx = bb[k]; c = (mn + mx) / 2
+        q = (1 if c[0] > xc else -1, 1 if c[2] > cz else -1)
+        if q not in quad or (mx[1] - mn[1]) > (bb[quad[q]][1][1] - bb[quad[q]][0][1]):
+            quad[q] = k
+    if len(quad) != 4:
+        return []
+    wheels = []
+    for k in quad.values():
+        mn, mx = bb[k]; wheels.append(((mn + mx) / 2, (mx[1] - mn[1]) / 2, (mx[0] - mn[0]) / 2))
+    cand = set(seeds)
+    for k, (mn, mx) in enumerate(bb):
+        if k in cand:
+            continue
+        c = (mn + mx) / 2; d = mx - mn
+        for tc, r, hw in wheels:
+            if (abs(c[0] - tc[0]) <= hw * 1.6 and np.hypot(c[1] - tc[1], c[2] - tc[2]) <= r * 0.9
+                    and d[1] <= 2.3 * r and d[2] <= 2.3 * r and d[0] <= 3 * hw):
+                cand.add(k); break
+    return [parts[k] for k in sorted(cand)]
+
+
+def find_wheels(parts, a, drop_re):
+    """Tenta achar as rodas em 3 niveis. Devolve (pecas_de_roda, como_achou, pecas_atualizadas)."""
+    wre = re.compile(a.wheel_nodes); steer = re.compile(r'(?i)steer'); mode = a.wheel_mode
+    if mode in ('auto', 'name'):
+        cand = [p for p in parts if wre.search(p['name']) and not steer.search(p['name'])]
+        if cand:
+            return cand, 'nome', parts
+    # a partir daqui os nomes das pecas nao serviram: tambem descarta (caliper etc.) pelo caminho completo
+    pp = [p for p in parts if not drop_re.search(p['path'])]
+    if mode in ('auto', 'path'):
+        cand = [p for p in pp if wre.search(p['path']) and not steer.search(p['path'])]
+        # trava: se o "match" pegou quase o modelo inteiro (ex.: um grupo raiz chamado "wheels_and_body"), nao e roda
+        if cand and sum(len(p['P']) for p in cand) <= 0.6 * sum(len(p['P']) for p in pp):
+            return cand, 'caminho', pp
+    if mode in ('auto', 'geom'):
+        cand = geom_wheels(pp)
+        if cand:
+            return cand, 'geometria', pp
+    return [], None, parts
 
 
 def export_textures(g, outdir, texmax, blend_tex):
@@ -86,6 +169,8 @@ def main():
     ap.add_argument('--preset', default='esportivo', help='fisica base de tools/presets.json (esportivo, pickup)')
     ap.add_argument('--specs', default='', help='texto curto de ficha tecnica no menu')
     ap.add_argument('--wheel-nodes', default=WHEEL_DEFAULT, help='regex dos nomes de objetos que fazem parte das rodas')
+    ap.add_argument('--wheel-mode', default='auto', choices=['auto', 'name', 'path', 'geom'],
+                    help='como achar as rodas: auto (nome -> caminho -> geometria), name, path ou geom')
     ap.add_argument('--drop', default='', help='regex extra de pecas a descartar (deixa o carro mais leve)')
     ap.add_argument('--brake-nodes', default='', help='regex das pecas que acendem ao frear (lanternas vermelhas)')
     ap.add_argument('--rotate-y', type=int, default=0, choices=[0, 180], help='use 180 se o carro estiver virado para tras')
@@ -96,15 +181,15 @@ def main():
 
     g = GLB(a.glb)
     parts = load_parts(g, a.rotate_y == 180)
-    drop_re = re.compile(r'(?i)caliper|undercarriage' + ('|' + a.drop if a.drop else ''))
+    drop_re = re.compile(r'(?i)callip|caliper|undercarriage' + ('|' + a.drop if a.drop else ''))
     n0 = len(parts); parts = [p for p in parts if not drop_re.search(p['name'])]
     print('pecas:', len(parts), '(descartadas', n0 - len(parts), ')')
 
     # ---- rodas ----
-    wre = re.compile(a.wheel_nodes)
-    cand = [p for p in parts if wre.search(p['name']) and not re.search(r'(?i)steer', p['name'])]
+    cand, how, parts = find_wheels(parts, a, drop_re)
     if not cand:
-        sys.exit('Nenhuma peca de roda encontrada. Use --report e ajuste --wheel-nodes.')
+        sys.exit('Nenhuma peca de roda encontrada (tentei nome, caminho e geometria). Use --report e ajuste --wheel-nodes.')
+    print('rodas achadas por', how, '-', len(cand), 'pecas')
     allP = np.concatenate([p['P'] for p in cand])
     xc = (allP[:, 0].min() + allP[:, 0].max()) / 2; zc = (allP[:, 2].min() + allP[:, 2].max()) / 2
     wparts = {k: [] for k in ('FL', 'FR', 'RL', 'RR')}
@@ -125,6 +210,11 @@ def main():
             print(tag, '%-70s' % p['name'][:70], 'verts', len(p['P']), 'mat', p['mat'])
         for k, v in wparts.items():
             print(k, 'pecas', len(v), 'verts', sum(len(x['P']) for x in v))
+        if all(wparts.values()):
+            for k, v in wparts.items():
+                tire = max(v, key=lambda x: x['P'][:, 1].max() - x['P'][:, 1].min())
+                mn, mx = tire['P'].min(0), tire['P'].max(0)
+                print(k, 'centro', np.round((mn + mx) / 2, 3), 'raio', round(float((mx[1] - mn[1]) / 2), 3))
         return
     if any(len(v) == 0 for v in wparts.values()):
         sys.exit('Nao achei as 4 rodas: ' + str({k: len(v) for k, v in wparts.items()}) + '. Use --report e ajuste --wheel-nodes.')
@@ -177,7 +267,7 @@ def main():
     W = Writer(); body = []; wj = {}
     for p in body_parts:
         mid = mat_map[p['mat']]
-        if brake_re and brake_re.search(p['name']):
+        if brake_re and (brake_re.search(p['name']) or (how != 'nome' and brake_re.search(p['path']))):
             if p['mat'] not in brake_map:
                 brake_map[p['mat']] = add_mat(p['mat'], True)
             mid = brake_map[p['mat']]
