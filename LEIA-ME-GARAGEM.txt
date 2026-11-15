@@ -1,0 +1,2 @@
+Correcao da garagem: foto do carro nao passa mais das bordas, carrossel nao cobre os dados, layout se adapta a celular (em pe e deitado), tablet, PC e TV; foto recortada pelo contorno real do carro.
+Copie por cima do repositorio: index.html, src/mods/menu_pro.css, src/mods/menu_fh2.js (index.html ja vem recompilado).

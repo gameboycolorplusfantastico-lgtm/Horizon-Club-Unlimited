@@ -19,10 +19,28 @@ const FH2 = (() => {
   }
   const car = (id) => cars.find((c) => c.id === id);
   // ---- miniaturas 2D ----
+  // recorta a foto 2D pelo contorno real do carro (pixels não transparentes): ponta do pneu, teto, para-choques... ficam centralizados e nunca cortados
+  function trimThumb(src, done) {
+    const im = new Image();
+    im.onload = () => {
+      try {
+        const w = im.naturalWidth, h = im.naturalHeight; if (!w || !h) return done(src);
+        const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const x = cv.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0);
+        const d = x.getImageData(0, 0, w, h).data; let x0 = w, y0 = h, x1 = -1, y1 = -1;
+        for (let y = 0; y < h; y++) for (let xx = 0; xx < w; xx++) if (d[(y * w + xx) * 4 + 3] > 24) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+        if (x1 < 0 || (x0 === 0 && y0 === 0 && x1 === w - 1 && y1 === h - 1)) return done(src);
+        const pad = Math.max(2, Math.round(Math.max(x1 - x0, y1 - y0) * 0.015)); x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(w - 1, x1 + pad); y1 = Math.min(h - 1, y1 + pad);
+        const cw = x1 - x0 + 1, ch = y1 - y0 + 1, c2 = document.createElement('canvas'); c2.width = cw; c2.height = ch; c2.getContext('2d').drawImage(im, x0, y0, cw, ch, 0, 0, cw, ch);
+        done(c2.toDataURL('image/png'));
+      } catch (e) { done(src); }
+    };
+    im.onerror = () => done(src); im.src = src;
+  }
   function probe(c) {
     if (thumbs[c.id] !== undefined || probing[c.id]) return; probing[c.id] = 1;
-    const im = new Image(); im.onload = () => { thumbs[c.id] = im.src; delete probing[c.id]; paint(); };
-    im.onerror = () => { let v = null; try { v = localStorage.getItem('hcu-thumb:' + c.id); } catch (e) {} thumbs[c.id] = v || null; delete probing[c.id]; paint(); };
+    const fin = (u) => { thumbs[c.id] = u || null; delete probing[c.id]; paint(); };
+    const im = new Image(); im.onload = () => trimThumb(im.src, fin);
+    im.onerror = () => { let v = null; try { v = localStorage.getItem('hcu-thumb:' + c.id); } catch (e) {} if (v) trimThumb(v, fin); else fin(null); };
     im.src = 'assets/cars/' + c.dir + '/thumb.png';
   }
   function build() {
@@ -75,7 +93,7 @@ const FH2 = (() => {
       try {
         if (!c || this.hasThumb(c.id) || thumbs[c.id]) return;
         const url = R.captureCar({ R: [1, 0, 0, 0, 1, 0, 0, 0, 1], p: [0, 0, 0], wheels: veh.wheels.map((w) => ({ d: w.d, steer: w.steer, spin: 0 })), steerA: 0, hModel: veh.P.hCom, scale: veh.P.scale, anchorY: veh.P.anchorY, brake: 0, shadow: null }, { out: 560 });
-        if (url) { thumbs[c.id] = url; try { localStorage.setItem('hcu-thumb:' + c.id, url); } catch (e) {} paint(); }
+        if (url) { try { localStorage.setItem('hcu-thumb:' + c.id, url); } catch (e) {} trimThumb(url, (u) => { thumbs[c.id] = u; paint(); }); }
       } catch (e) { console.warn('captura 2D falhou', e); }
     },
     statsFor,

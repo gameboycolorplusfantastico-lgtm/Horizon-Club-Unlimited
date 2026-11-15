@@ -240,6 +240,44 @@ body.pad-ui .g-hints .kb { display: none; } body:not(.pad-ui) .g-hints .pd { dis
 #menu { padding-left: clamp(16px, 4vw, 56px); padding-right: clamp(16px, 4vw, 56px); } #p-pause { justify-self: center; }
 body.touch #p-start .keys div:not(:last-child) { display: none; }
 
+/* ===== GARAGEM: layout que cabe em qualquer tela (celular deitado/em pé, tablet, TV, PC) ===== */
+#garage { --th: clamp(64px, 17vh, 150px); grid-template-rows: auto minmax(0, 1fr) auto auto; }
+.g-main { min-height: 0; overflow: hidden; }
+.g-center { min-height: 0; overflow: hidden; grid-template-rows: auto minmax(0, 1fr) auto; }
+.g-left, .g-right { min-height: 0; }
+/* a foto grande ocupa exatamente o espaço dela: nunca passa das bordas nem entra no carrossel */
+.g-img { min-height: 0; overflow: hidden; padding: 0; }
+.g-img img { position: absolute; inset: 6px 10px; width: calc(100% - 20px); height: calc(100% - 12px); max-width: none; max-height: none; object-fit: contain; object-position: center; }
+/* carrossel: altura proporcional à tela, com folga para o cartão selecionado "subir" sem cortar */
+.g-strip { padding: 18px 8px 12px; gap: 10px; min-height: 0; align-items: flex-end; }
+.g-tile { flex: 0 0 auto; height: var(--th); width: auto; aspect-ratio: 16 / 9; box-sizing: border-box; padding: 16px 6px 5px; }
+.g-tile small { left: 7px; top: 3px; }
+.g-tile img { max-width: 100%; max-height: 100%; }
+@media (max-aspect-ratio: 1/1) {
+  #garage { --th: clamp(56px, 11vh, 110px); }
+  .g-main { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+  .g-right { grid-template-columns: minmax(96px, 34%) minmax(0, 1fr); gap: 4px 12px; align-items: start; max-height: 36vh; padding: 10px 12px; }
+  .g-right .g-class { grid-template-columns: 1fr; margin-bottom: 0; }
+  .g-bar { margin: 4px 0; }
+}
+@media (max-height: 520px) {
+  #garage { --th: clamp(52px, 19vh, 90px); padding-top: max(6px, env(safe-area-inset-top, 0px)); padding-bottom: max(4px, env(safe-area-inset-bottom, 0px)); }
+  .g-top { padding: 0 4px 4px; }
+  .g-main { grid-template-columns: minmax(0, 1fr) minmax(176px, 240px); gap: 8px; }
+  .g-head { gap: 10px; } .g-buy { font-size: 14px; padding: 5px 12px; box-shadow: 0 3px 0 #b9a400; }
+  .g-title span { font-size: 12px; } .g-title b { font-size: 18px; } .g-title em { font-size: 12px; }
+  .g-right { padding: 8px 10px; gap: 2px; }
+  .g-class { grid-template-columns: 1fr 1fr; margin-bottom: 2px; gap: 6px; } .g-ci b { font-size: 18px; padding: 2px 0; } .g-ci span { font-size: 15px; padding: 1px 0; }
+  .g-drive svg { width: 22px; height: 32px; } .g-drive b { font-size: 12px; }
+  .g-bar { margin: 3px 0; gap: 0 6px; } .g-bar span { font-size: 10px; } .g-bar b { font-size: 13px; } .g-bar i { height: 3px; }
+  .g-state { display: none; } .g-strip { padding-top: 14px; padding-bottom: 8px; } .g-hints { padding: 2px; font-size: 12px; gap: 12px; }
+}
+@media (max-height: 520px) {
+  #garage { --th: clamp(48px, 17vh, 84px); }
+  .g-right { padding: 6px 10px; } .g-class { margin-bottom: 0; } .g-ci b { font-size: 16px; } .g-ci span { font-size: 14px; }
+  .g-bar { margin: 2px 0; } .g-bar b { font-size: 12px; } .g-bar span { letter-spacing: .1em; }
+}
+
 
 </style>
 <canvas id="c" aria-label="Jogo de direção em cidade aberta"></canvas>
@@ -1345,10 +1383,28 @@ const FH2 = (() => {
   }
   const car = (id) => cars.find((c) => c.id === id);
   // ---- miniaturas 2D ----
+  // recorta a foto 2D pelo contorno real do carro (pixels não transparentes): ponta do pneu, teto, para-choques... ficam centralizados e nunca cortados
+  function trimThumb(src, done) {
+    const im = new Image();
+    im.onload = () => {
+      try {
+        const w = im.naturalWidth, h = im.naturalHeight; if (!w || !h) return done(src);
+        const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const x = cv.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0);
+        const d = x.getImageData(0, 0, w, h).data; let x0 = w, y0 = h, x1 = -1, y1 = -1;
+        for (let y = 0; y < h; y++) for (let xx = 0; xx < w; xx++) if (d[(y * w + xx) * 4 + 3] > 24) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+        if (x1 < 0 || (x0 === 0 && y0 === 0 && x1 === w - 1 && y1 === h - 1)) return done(src);
+        const pad = Math.max(2, Math.round(Math.max(x1 - x0, y1 - y0) * 0.015)); x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(w - 1, x1 + pad); y1 = Math.min(h - 1, y1 + pad);
+        const cw = x1 - x0 + 1, ch = y1 - y0 + 1, c2 = document.createElement('canvas'); c2.width = cw; c2.height = ch; c2.getContext('2d').drawImage(im, x0, y0, cw, ch, 0, 0, cw, ch);
+        done(c2.toDataURL('image/png'));
+      } catch (e) { done(src); }
+    };
+    im.onerror = () => done(src); im.src = src;
+  }
   function probe(c) {
     if (thumbs[c.id] !== undefined || probing[c.id]) return; probing[c.id] = 1;
-    const im = new Image(); im.onload = () => { thumbs[c.id] = im.src; delete probing[c.id]; paint(); };
-    im.onerror = () => { let v = null; try { v = localStorage.getItem('hcu-thumb:' + c.id); } catch (e) {} thumbs[c.id] = v || null; delete probing[c.id]; paint(); };
+    const fin = (u) => { thumbs[c.id] = u || null; delete probing[c.id]; paint(); };
+    const im = new Image(); im.onload = () => trimThumb(im.src, fin);
+    im.onerror = () => { let v = null; try { v = localStorage.getItem('hcu-thumb:' + c.id); } catch (e) {} if (v) trimThumb(v, fin); else fin(null); };
     im.src = 'assets/cars/' + c.dir + '/thumb.png';
   }
   function build() {
@@ -1401,7 +1457,7 @@ const FH2 = (() => {
       try {
         if (!c || this.hasThumb(c.id) || thumbs[c.id]) return;
         const url = R.captureCar({ R: [1, 0, 0, 0, 1, 0, 0, 0, 1], p: [0, 0, 0], wheels: veh.wheels.map((w) => ({ d: w.d, steer: w.steer, spin: 0 })), steerA: 0, hModel: veh.P.hCom, scale: veh.P.scale, anchorY: veh.P.anchorY, brake: 0, shadow: null }, { out: 560 });
-        if (url) { thumbs[c.id] = url; try { localStorage.setItem('hcu-thumb:' + c.id, url); } catch (e) {} paint(); }
+        if (url) { try { localStorage.setItem('hcu-thumb:' + c.id, url); } catch (e) {} trimThumb(url, (u) => { thumbs[c.id] = u; paint(); }); }
       } catch (e) { console.warn('captura 2D falhou', e); }
     },
     statsFor,

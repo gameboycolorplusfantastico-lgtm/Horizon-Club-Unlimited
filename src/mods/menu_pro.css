@@ -66,3 +66,41 @@ body.pad-ui .g-hints .kb { display: none; } body:not(.pad-ui) .g-hints .pd { dis
 #p-pause { gap: 8px; } #p-pause .row { padding: 5px 12px; }
 #menu { padding-left: clamp(16px, 4vw, 56px); padding-right: clamp(16px, 4vw, 56px); } #p-pause { justify-self: center; }
 body.touch #p-start .keys div:not(:last-child) { display: none; }
+
+/* ===== GARAGEM: layout que cabe em qualquer tela (celular deitado/em pé, tablet, TV, PC) ===== */
+#garage { --th: clamp(64px, 17vh, 150px); grid-template-rows: auto minmax(0, 1fr) auto auto; }
+.g-main { min-height: 0; overflow: hidden; }
+.g-center { min-height: 0; overflow: hidden; grid-template-rows: auto minmax(0, 1fr) auto; }
+.g-left, .g-right { min-height: 0; }
+/* a foto grande ocupa exatamente o espaço dela: nunca passa das bordas nem entra no carrossel */
+.g-img { min-height: 0; overflow: hidden; padding: 0; }
+.g-img img { position: absolute; inset: 6px 10px; width: calc(100% - 20px); height: calc(100% - 12px); max-width: none; max-height: none; object-fit: contain; object-position: center; }
+/* carrossel: altura proporcional à tela, com folga para o cartão selecionado "subir" sem cortar */
+.g-strip { padding: 18px 8px 12px; gap: 10px; min-height: 0; align-items: flex-end; }
+.g-tile { flex: 0 0 auto; height: var(--th); width: auto; aspect-ratio: 16 / 9; box-sizing: border-box; padding: 16px 6px 5px; }
+.g-tile small { left: 7px; top: 3px; }
+.g-tile img { max-width: 100%; max-height: 100%; }
+@media (max-aspect-ratio: 1/1) {
+  #garage { --th: clamp(56px, 11vh, 110px); }
+  .g-main { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+  .g-right { grid-template-columns: minmax(96px, 34%) minmax(0, 1fr); gap: 4px 12px; align-items: start; max-height: 36vh; padding: 10px 12px; }
+  .g-right .g-class { grid-template-columns: 1fr; margin-bottom: 0; }
+  .g-bar { margin: 4px 0; }
+}
+@media (max-height: 520px) {
+  #garage { --th: clamp(52px, 19vh, 90px); padding-top: max(6px, env(safe-area-inset-top, 0px)); padding-bottom: max(4px, env(safe-area-inset-bottom, 0px)); }
+  .g-top { padding: 0 4px 4px; }
+  .g-main { grid-template-columns: minmax(0, 1fr) minmax(176px, 240px); gap: 8px; }
+  .g-head { gap: 10px; } .g-buy { font-size: 14px; padding: 5px 12px; box-shadow: 0 3px 0 #b9a400; }
+  .g-title span { font-size: 12px; } .g-title b { font-size: 18px; } .g-title em { font-size: 12px; }
+  .g-right { padding: 8px 10px; gap: 2px; }
+  .g-class { grid-template-columns: 1fr 1fr; margin-bottom: 2px; gap: 6px; } .g-ci b { font-size: 18px; padding: 2px 0; } .g-ci span { font-size: 15px; padding: 1px 0; }
+  .g-drive svg { width: 22px; height: 32px; } .g-drive b { font-size: 12px; }
+  .g-bar { margin: 3px 0; gap: 0 6px; } .g-bar span { font-size: 10px; } .g-bar b { font-size: 13px; } .g-bar i { height: 3px; }
+  .g-state { display: none; } .g-strip { padding-top: 14px; padding-bottom: 8px; } .g-hints { padding: 2px; font-size: 12px; gap: 12px; }
+}
+@media (max-height: 520px) {
+  #garage { --th: clamp(48px, 17vh, 84px); }
+  .g-right { padding: 6px 10px; } .g-class { margin-bottom: 0; } .g-ci b { font-size: 16px; } .g-ci span { font-size: 14px; }
+  .g-bar { margin: 2px 0; } .g-bar b { font-size: 12px; } .g-bar span { letter-spacing: .1em; }
+}
