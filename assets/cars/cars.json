@@ -106,7 +106,8 @@
         "cyl": 8,
         "motor": "4.0 V8",
         "fonte": "Wikipedia(pt): BMW Série 3 (E46) + IA Gemini - M3 GTR (Race) 2001-2005"
-      }
+      },
+      "engine": "v8cross"
     },
     {
       "id": "ford-f150-raptor",
@@ -208,17 +209,18 @@
         ]
       },
       "bytes": 4250422,
-      "tris": 209298
+      "tris": 209298,
+      "engine": "v8cross"
     },
     {
       "id": "2002-mazda-rx-7-spirit-r",
       "name": "2002 Mazda Rx 7 Spirit R",
       "brand": "",
-      "class": "",
+      "class": "Esportivo",
       "dir": "2002-mazda-rx-7-spirit-r",
       "scale": 1.2,
-      "specs": "6 cil. · 627 cv · 4x4 · 450 km/h",
-      "cyl": 6,
+      "specs": "Rotativo 13B biturbo · 280 cv · tração traseira",
+      "cyl": 4,
       "params": {
         "torque": [
           [
@@ -319,16 +321,17 @@
         "awd": true,
         "cyl": 6,
         "fonte": "Wikipedia: Lista de carros de Gran Turismo 5"
-      }
+      },
+      "engine": "rotary2"
     },
     {
       "id": "2002-nissan-skyline-gt-r-v-spec-ii-nur-r34",
       "name": "2002 Nissan Skyline Gt R V Spec Ii Nur R34",
       "brand": "",
-      "class": "",
+      "class": "Esportivo",
       "dir": "2002-nissan-skyline-gt-r-v-spec-ii-nur-r34",
       "scale": 1.2,
-      "specs": "6 cil. · 627 cv · 4x4 · 450 km/h",
+      "specs": "6 cil. 2.6 biturbo · 280 cv · 4x4",
       "cyl": 6,
       "params": {
         "torque": [
@@ -430,203 +433,218 @@
         "awd": true,
         "cyl": 6,
         "fonte": "Wikipedia: Lista de carros de Gran Turismo 5"
-      }
+      },
+      "engine": "i6"
     },
     {
       "id": "2005-porsche-911-gt2",
       "name": "2005 Porsche 911 Gt2",
       "brand": "",
-      "class": "",
+      "class": "Esportivo",
       "dir": "2005-porsche-911-gt2",
       "scale": 1.2,
-      "specs": "",
+      "specs": "Flat-6 3.6 biturbo · 483 cv · tração traseira",
       "cyl": 6,
       "params": {},
       "bytes": 630564,
-      "tris": 32936
+      "tris": 32936,
+      "engine": "flat6"
     },
     {
       "id": "2008-chrysler-300c-srt-8",
       "name": "2008 Chrysler 300C Srt 8",
       "brand": "",
-      "class": "",
+      "class": "Muscle",
       "dir": "2008-chrysler-300c-srt-8",
       "scale": 1.2,
-      "specs": "4x4",
-      "cyl": 6,
+      "specs": "V8 6.1 · 425 cv · tração traseira",
+      "cyl": 8,
       "params": {
         "awd": true
       },
       "bytes": 3318012,
-      "tris": 178230
+      "tris": 178230,
+      "engine": "v8cross"
     },
     {
       "id": "2008-land-rover-range-rover-supercharged",
       "name": "2008 Land Rover Range Rover Supercharged",
       "brand": "",
-      "class": "",
+      "class": "SUV",
       "dir": "2008-land-rover-range-rover-supercharged",
       "scale": 1.2,
-      "specs": "4x4",
-      "cyl": 6,
+      "specs": "V8 4.2 supercharged · 400 cv · 4x4",
+      "cyl": 8,
       "params": {
         "awd": true
       },
       "bytes": 4067952,
-      "tris": 179652
+      "tris": 179652,
+      "engine": "v8cross"
     },
     {
       "id": "2011-lexus-lfa",
       "name": "2011 Lexus Lfa",
       "brand": "",
-      "class": "",
+      "class": "Superesportivo",
       "dir": "2011-lexus-lfa",
       "scale": 1.2,
-      "specs": "10 cil. · 1.579 kg",
+      "specs": "V10 4.8 · 560 cv · 1.579 kg",
       "cyl": 10,
       "params": {
         "mass": 1579
       },
       "bytes": 3793886,
-      "tris": 216281
+      "tris": 216281,
+      "engine": "v10"
     },
     {
       "id": "2011-nissan-gt-r",
       "name": "2011 Nissan Gt R",
       "brand": "",
-      "class": "",
+      "class": "Esportivo",
       "dir": "2011-nissan-gt-r",
       "scale": 1.2,
-      "specs": "6 cil. · 4x4",
+      "specs": "V6 3.8 biturbo · 530 cv · 4x4",
       "cyl": 6,
       "params": {
         "awd": true
       },
       "bytes": 504290,
-      "tris": 24420
+      "tris": 24420,
+      "engine": "v6tt"
     },
     {
       "id": "2011-pagani-huayra",
       "name": "2011 Pagani Huayra",
       "brand": "",
-      "class": "",
+      "class": "Superesportivo",
       "dir": "2011-pagani-huayra",
       "scale": 1.2,
-      "specs": "12 cil.",
+      "specs": "V12 6.0 biturbo · 720 cv · tração traseira",
       "cyl": 12,
       "params": {},
       "bytes": 604100,
-      "tris": 27452
+      "tris": 27452,
+      "engine": "v12"
     },
     {
       "id": "2016-koenigsegg-agera-rs",
       "name": "2016 Koenigsegg Agera Rs",
       "brand": "",
-      "class": "",
+      "class": "Superesportivo",
       "dir": "2016-koenigsegg-agera-rs",
       "scale": 1.2,
-      "specs": "8 cil.",
+      "specs": "V8 5.0 biturbo · 1.160 cv · tração traseira",
       "cyl": 8,
       "params": {},
       "bytes": 919988,
-      "tris": 41366
+      "tris": 41366,
+      "engine": "v8flat"
     },
     {
       "id": "1987-buick-grand-national-regal-gnx",
       "name": "1987 Buick Grand National Regal Gnx",
       "brand": "",
-      "class": "",
+      "class": "Muscle",
       "dir": "1987-buick-grand-national-regal-gnx",
       "scale": 1.2,
-      "specs": "",
+      "specs": "V6 3.8 turbo · 276 cv · tração traseira",
       "cyl": 6,
       "params": {},
       "bytes": 5537752,
-      "tris": 298206
+      "tris": 298206,
+      "engine": "v6tt"
     },
     {
       "id": "2006-lotus-elise",
       "name": "2006 Lotus Elise",
       "brand": "",
-      "class": "",
+      "class": "Esportivo",
       "dir": "2006-lotus-elise",
       "scale": 1.2,
-      "specs": "4 cil. · 712 kg",
+      "specs": "4 cil. 1.8 · 190 cv · 712 kg",
       "cyl": 4,
       "params": {
         "mass": 712
       },
       "bytes": 697856,
-      "tris": 34143
+      "tris": 34143,
+      "engine": "i4"
     },
     {
       "id": "2014-maserati-granturismo-mc-stradale",
       "name": "2014 Maserati Granturismo Mc Stradale",
       "brand": "",
-      "class": "",
+      "class": "Esportivo",
       "dir": "2014-maserati-granturismo-mc-stradale",
       "scale": 1.2,
-      "specs": "",
-      "cyl": 6,
+      "specs": "V8 4.7 · 450 cv · tração traseira",
+      "cyl": 8,
       "params": {},
       "bytes": 638226,
-      "tris": 28772
+      "tris": 28772,
+      "engine": "v8cross"
     },
     {
       "id": "2015-ford-mustang-gt",
       "name": "2015 Ford Mustang Gt",
       "brand": "",
-      "class": "",
+      "class": "Muscle",
       "dir": "2015-ford-mustang-gt",
       "scale": 1.2,
-      "specs": "",
-      "cyl": 6,
+      "specs": "V8 5.0 · 435 cv · tração traseira",
+      "cyl": 8,
       "params": {},
       "bytes": 622188,
-      "tris": 26398
+      "tris": 26398,
+      "engine": "v8cross"
     },
     {
       "id": "2015-lamborghini-huracan-lpi-610-4",
       "name": "2015 Lamborghini Huracan Lpi 610 4",
       "brand": "",
-      "class": "",
+      "class": "Superesportivo",
       "dir": "2015-lamborghini-huracan-lpi-610-4",
       "scale": 1.2,
-      "specs": "10 cil. · 4x4",
+      "specs": "V10 5.2 · 610 cv · 4x4",
       "cyl": 10,
       "params": {
         "awd": true
       },
       "bytes": 632854,
-      "tris": 26465
+      "tris": 26465,
+      "engine": "v10"
     },
     {
       "id": "2015-land-rover-range-rover-sport-svr",
       "name": "2015 Land Rover Range Rover Sport Svr",
       "brand": "",
-      "class": "",
+      "class": "SUV",
       "dir": "2015-land-rover-range-rover-sport-svr",
       "scale": 1.2,
-      "specs": "",
-      "cyl": 6,
+      "specs": "V8 5.0 supercharged · 550 cv · 4x4",
+      "cyl": 8,
       "params": {},
       "bytes": 1489700,
-      "tris": 73535
+      "tris": 73535,
+      "engine": "v8cross"
     },
     {
       "id": "2017-bugatti-chiron",
       "name": "2017 Bugatti Chiron",
       "brand": "",
-      "class": "",
+      "class": "Superesportivo",
       "dir": "2017-bugatti-chiron",
       "scale": 1.2,
-      "specs": "4x4",
-      "cyl": 6,
+      "specs": "W16 8.0 quadriturbo · 1.500 cv · 4x4",
+      "cyl": 16,
       "params": {
         "awd": true
       },
       "bytes": 941300,
-      "tris": 41586
+      "tris": 41586,
+      "engine": "v12"
     }
   ]
 }

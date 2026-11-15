@@ -58,8 +58,8 @@ const Sound = {
       try { const reg = await fetch('assets/cars/cars.json').then((r) => r.json()); this.carTable = {}; for (const k of reg.cars || []) this.carTable[k.id] = { specs: k.specs, cls: k.class, engine: k.engine, cyl: k.cyl }; } catch (e) {}
       const car = this.info(this.wantCar || { cyl: 6 });
       this.sim = new this.ES(this.ctx, { engine: pickEngine(car, this.ids), vehicle: pickVehicle(car), destination: this.simOut });
-      await this.sim.start(); this.curCar = (this.wantCar && this.wantCar.carId) || null; this.simReady = true; this.lastT = performance.now();
-    } catch (e) { console.warn('Engine_Sim indisponivel, usando motor simples:', e); this.simOff = true; this.sim = null; this.simReady = false; }
+      await this.sim.start(); console.info('[Engine_Sim] ativo: motor', car.engine || pickEngine(car, this.ids)); this.curCar = (this.wantCar && this.wantCar.carId) || null; this.simReady = true; this.lastT = performance.now();
+    } catch (e) { console.warn('[Engine_Sim] indisponivel, usando motor simples. Motivo:', e && (e.message || e)); this.simOff = true; this.sim = null; this.simReady = false; }
     this.simLoading = false;
   },
   // junta os dados do veiculo com a linha dele em cars.json (specs, class, engine, cyl)
@@ -67,7 +67,7 @@ const Sound = {
   // troca o motor quando o jogador troca de carro (hot-swap, sem recriar o grafo de audio)
   setCar(car) {
     this.wantCar = car; if (!this.simReady) return; const inf = this.info(car);
-    try { this.sim.setEngineType(pickEngine(inf, this.ids)); this.sim.setVehicle(pickVehicle(inf)); this.curCar = car.carId || null; } catch (e) { console.warn(e); this.simFail(e); }
+    try { this.sim.setEngineType(pickEngine(inf, this.ids)); this.sim.setVehicle(pickVehicle(inf)); this.curCar = car.carId || null; console.info('[Engine_Sim] motor:', pickEngine(inf, this.ids), '| chassi:', pickVehicle(inf)); } catch (e) { console.warn(e); this.simFail(e); }
   },
   simFail(e) { this.simOff = true; this.simReady = false; try { this.sim && this.sim.dispose(); } catch (x) {} this.sim = null; },
   setOn(v) { this.on = v; if (this.master) this.master.gain.setTargetAtTime(v ? 0.5 : 0, this.ctx.currentTime, 0.05); },
