@@ -175,6 +175,8 @@ def main():
                     help='como achar as rodas: auto (nome -> caminho -> geometria), name, path ou geom')
     ap.add_argument('--drop', default='', help='regex extra de pecas a descartar (deixa o carro mais leve). O fundo do carro (undercarriage) NAO e mais descartado por padrao; use --drop undercarriage se quiser')
     ap.add_argument('--brake-nodes', default='', help='regex das pecas que acendem ao frear (lanternas vermelhas)')
+    ap.add_argument('--paint', default='', help='regex dos materiais que sao a PINTURA da carroceria (so se o jogo nao achar sozinho; ver LEIA-ME-PINTURA.md)')
+    ap.add_argument('--no-paint', action='store_true', help='este carro nao tera troca de cor')
     ap.add_argument('--rotate-y', type=int, default=0, choices=[0, 180], help='use 180 se o carro estiver virado para tras')
     ap.add_argument('--tex-size', type=int, default=1024, help='lado maximo das texturas')
     ap.add_argument('--report', action='store_true', help='so lista as pecas e as rodas encontradas, sem gravar nada')
@@ -295,11 +297,17 @@ def main():
     reg = json.load(open(reg_path, encoding='utf-8')) if os.path.exists(reg_path) else {'cars': []}
     entry = {'id': a.id, 'name': a.name, 'brand': a.brand, 'class': a.klass, 'dir': a.id, 'scale': round(scale, 4), 'specs': a.specs,
              'cyl': presets[a.preset].get('cyl', 6), 'params': presets[a.preset]['params'], 'bytes': len(W.buf), 'tris': tris}
+    if a.no_paint:
+        entry['paint'] = False
+    elif a.paint:
+        entry['paint'] = {'mats': a.paint}
     old = next((c for c in reg['cars'] if c['id'] == a.id), None)
     if old:  # preserva ajustes manuais de fisica ja feitos no cars.json
         for key in ('params', 'cyl', 'specs', 'brand', 'class', 'name', 'scale'):
             if old.get(key) not in (None, '', {}) and getattr(a, key if key != 'class' else 'klass', None) in (None, '', {}):
                 entry[key] = old[key]
+        if old.get('paint') is not None and not (a.paint or a.no_paint):  # preserva o ajuste de pintura ja feito
+            entry['paint'] = old['paint']
         reg['cars'][reg['cars'].index(old)] = entry
     else:
         reg['cars'].append(entry)
