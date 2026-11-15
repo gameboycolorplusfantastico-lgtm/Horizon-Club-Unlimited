@@ -67,7 +67,7 @@ def quad_name(sx, sz):
     return {(1, 1): 'FL', (-1, 1): 'FR', (1, -1): 'RL', (-1, -1): 'RR'}[(sx, sz)]
 
 
-def geom_wheels(parts):
+def geom_wheels(parts, drop_re=None):
     """Acha as rodas pela forma, sem depender de nomes. Pneu = peca redonda (vista de lado), fina, longe do eixo central e
     encostada no chao, um em cada canto do carro. Depois junta aros, discos e parafusos que estao dentro de cada pneu."""
     bb = [(p['P'].min(0), p['P'].max(0)) for p in parts]
@@ -103,8 +103,8 @@ def geom_wheels(parts):
         mn, mx = bb[k]; wheels.append(((mn + mx) / 2, (mx[1] - mn[1]) / 2, (mx[0] - mn[0]) / 2))
     cand = set(seeds)
     for k, (mn, mx) in enumerate(bb):
-        if k in cand:
-            continue
+        if k in cand or (drop_re is not None and drop_re.search(parts[k]['path'])):
+            continue  # pinca de freio etc. que nao e pneu: nao entra na roda
         c = (mn + mx) / 2; d = mx - mn
         for tc, r, hw in wheels:
             if (abs(c[0] - tc[0]) <= hw * 1.6 and np.hypot(c[1] - tc[1], c[2] - tc[2]) <= r * 0.9
@@ -128,9 +128,11 @@ def find_wheels(parts, a, drop_re):
         if cand and sum(len(p['P']) for p in cand) <= 0.6 * sum(len(p['P']) for p in pp):
             return cand, 'caminho', pp
     if mode in ('auto', 'geom'):
-        cand = geom_wheels(pp)
+        # geometria olha TODAS as pecas: alguns modelos chamam a roda inteira de "BRAKE_CALIPER_..."; o pneu (forma) vence o nome
+        cand = geom_wheels(parts, drop_re)
         if cand:
-            return cand, 'geometria', pp
+            ids = {id(p) for p in cand}
+            return cand, 'geometria', [p for p in parts if id(p) in ids or not drop_re.search(p['path'])]
     return [], None, parts
 
 
