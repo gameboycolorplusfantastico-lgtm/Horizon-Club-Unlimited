@@ -114,6 +114,64 @@
       },
       "bytes": 4250422,
       "tris": 209298
+    },
+    {
+      "id": "2001-bmw-m3-gtr-straenversion",
+      "name": "2001 Bmw M3 Gtr Straenversion",
+      "brand": "",
+      "class": "",
+      "dir": "2001-bmw-m3-gtr-straenversion",
+      "scale": 1.2,
+      "specs": "",
+      "cyl": 6,
+      "params": {},
+      "bytes": 1005104,
+      "tris": 47748
+    },
+    {
+      "id": "2002-mazda-rx-7-spirit-r",
+      "name": "2002 Mazda Rx 7 Spirit R",
+      "brand": "",
+      "class": "",
+      "dir": "2002-mazda-rx-7-spirit-r",
+      "scale": 1.2,
+      "specs": "tração simples",
+      "cyl": 6,
+      "params": {
+        "awd": false
+      },
+      "bytes": 729624,
+      "tris": 33936
+    },
+    {
+      "id": "2002-nissan-skyline-gt-r-v-spec-ii-nur-r34",
+      "name": "2002 Nissan Skyline Gt R V Spec Ii Nur R34",
+      "brand": "",
+      "class": "",
+      "dir": "2002-nissan-skyline-gt-r-v-spec-ii-nur-r34",
+      "scale": 1.2,
+      "specs": "tração simples",
+      "cyl": 6,
+      "params": {
+        "awd": false
+      },
+      "bytes": 4312832,
+      "tris": 226046
+    },
+    {
+      "id": "2008-chrysler-300c-srt-8",
+      "name": "2008 Chrysler 300C Srt 8",
+      "brand": "",
+      "class": "",
+      "dir": "2008-chrysler-300c-srt-8",
+      "scale": 1.2,
+      "specs": "4x4",
+      "cyl": 6,
+      "params": {
+        "awd": true
+      },
+      "bytes": 3268360,
+      "tris": 176211
     }
   ]
 }
