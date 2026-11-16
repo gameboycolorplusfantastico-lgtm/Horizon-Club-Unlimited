@@ -166,6 +166,13 @@ class Vehicle {
     this.spheres = [];
     for (const z of [-1.8, -0.9, 0, 0.9, 1.8]) for (const x of [-0.55, 0.55]) this.spheres.push([x * S, 0.05 * S, z * S, 0.38 * S]);
     this.spheres.push([0, 0.1 * S, 1.25 * S, 0.4 * S], [0, 0.1 * S, -1.25 * S, 0.4 * S], [0, 0.42 * S, -0.5 * S, 0.38 * S], [0, 0.42 * S, 0.55 * S, 0.38 * S]);
+    // teto: esferas guiadas pela altura real do carro (opt.roof = altura do teto em unidades de jogo), para o teto colidir quando capotado
+    if (opt.roof) {
+      const rr = 0.38 * S, yc = Math.max(0.1 * S, opt.roof - P.hCom - rr), tall = opt.roof > 1.85;
+      const zs = tall ? [-0.75 * S, 0.1 * S, 0.9 * S] : [-0.5 * S, 0.55 * S];
+      this.spheres.splice(this.spheres.length - 2, 2);
+      for (const z of zs) for (const x of [-0.3 * S, 0.3 * S]) this.spheres.push([x, yc, z, rr]);
+    }
     this.invM = 1 / P.mass;
     this.manual = false; this.shiftReq = 0; // câmbio manual (ligado pelo jogo) e pedido de troca pendente
     this.gear = 1; this.rpm = 900; this.shiftT = 0; this.shiftCut = 0; this.throttle = 0; this.brake = 0; this.hb = 0; this.steerIn = 0; this.steerA = 0;

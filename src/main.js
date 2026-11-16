@@ -45,7 +45,7 @@
   function makeVehicle(c) {
     const man = c.man, S = c.scale || 1.2, FL = man.wheels.FL.pivot, RL = man.wheels.RL.pivot, FR = man.wheels.FR.pivot;
     const geo = { tx: (Math.abs(FL[0]) + Math.abs(FR[0])) / 2 * S, tz: (FL[2] - RL[2]) / 2 * S, wr: man.radius * S };
-    const v = new Vehicle(world, { scale: S, params: Object.assign(geo, c.params || {}) }); v.cyl = c.cyl || 6; v.carId = c.id; return v;
+    const v = new Vehicle(world, { scale: S, roof: c.realH ? c.realH * 1.2 : 0, params: Object.assign(geo, c.params || {}) }); v.cyl = c.cyl || 6; v.carId = c.id; return v;
   }
   const settle = (v) => { for (let i = 0; i < 180; i++) v.step(1 / 120, { throttle: 0, brake: 0, hb: 0, steer: 0 }); };
   async function selectCar(id) {
