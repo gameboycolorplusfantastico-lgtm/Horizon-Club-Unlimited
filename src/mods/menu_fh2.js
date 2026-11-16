@@ -4,6 +4,7 @@
 // na primeira vez que o carro é carregado neste aparelho e guarda no navegador.
 const FH2 = (() => {
   const $ = (id) => document.getElementById(id);
+  const THUMB_V = 7, THUMB_CACHE = 'hcu-thumbs-' + THUMB_V;
   let G = null, cars = [], cur = null, focus = null, loading = null, busy = false, built = false, open = false, thumbs = {}, probing = {};
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   // ---- status 0..10 a partir da física do jogo ----
@@ -39,9 +40,19 @@ const FH2 = (() => {
   function probe(c) {
     if (thumbs[c.id] !== undefined || probing[c.id]) return; probing[c.id] = 1;
     const fin = (u) => { thumbs[c.id] = u || null; delete probing[c.id]; paint(); };
-    const im = new Image(); im.onload = () => trimThumb(im.src, fin);
-    im.onerror = () => { let v = null; try { v = localStorage.getItem('hcu-thumb:' + c.id); } catch (e) {} if (v) trimThumb(v, fin); else fin(null); };
-    im.src = 'assets/cars/' + c.dir + '/thumb.png';
+    const url = 'assets/cars/' + c.dir + '/thumb.png?v=' + THUMB_V;
+    const fallback = () => { let v = null; try { v = localStorage.getItem('hcu-thumb:' + c.id); } catch (e) {} if (v) trimThumb(v, fin); else fin(null); };
+    const useBlob = (blob) => { const u = URL.createObjectURL(blob); const im = new Image(); im.onload = () => trimThumb(u, fin); im.onerror = fallback; im.src = u; };
+    // cache permanente do navegador (Cache Storage): na proxima visita as capas ja estao salvas, mesmo sem o carro ter sido baixado
+    const net = () => fetch(url).then((r) => { if (!r.ok) throw 0; const cl = r.clone(); return r.blob().then((b) => { try { if (window.caches) caches.open(THUMB_CACHE).then((ch) => ch.put(url, cl)).catch(() => {}); } catch (e) {} useBlob(b); }); }).catch(fallback);
+    try { if (window.caches) caches.open(THUMB_CACHE).then((ch) => ch.match(url)).then((hit) => (hit ? hit.blob().then(useBlob) : net())).catch(net); else net(); } catch (e) { net(); }
+  }
+  // baixa TODAS as capas em segundo plano (poucas por vez) assim que a lista de carros chega
+  let preloading = false;
+  function preloadAll() {
+    if (preloading) return; preloading = true;
+    try { if (window.caches) caches.keys().then((ks) => ks.forEach((k) => { if (k.indexOf('hcu-thumbs-') === 0 && k !== THUMB_CACHE) caches.delete(k); })); } catch (e) {}
+    const q = cars.slice(); let run = 0; const pump = () => { while (run < 4 && q.length) { const c = q.shift(); if (thumbs[c.id] !== undefined || probing[c.id]) continue; run++; const iv = setInterval(() => { if (thumbs[c.id] !== undefined) { clearInterval(iv); run--; pump(); } }, 80); probe(c); } }; pump();
   }
   function build() {
     if (built) return; const ui = $('ui'); if (!ui) return; built = true;
@@ -85,7 +96,7 @@ const FH2 = (() => {
     const sel = G.querySelector('.g-tile.sel'); if (sel && sel.scrollIntoView) sel.scrollIntoView({ block: 'nearest', inline: 'center' });
   }
   return {
-    update(o) { cars = o.cars || cars; cur = o.current; loading = o.loading || null; busy = !!o.busy; build(); if (!focus) focus = cur; if (open && cur && !loading && !busy && focus === cur) { /* carro trocado: continua aberto */ } paint(); },
+    update(o) { cars = o.cars || cars; preloadAll(); cur = o.current; loading = o.loading || null; busy = !!o.busy; build(); if (!focus) focus = cur; if (open && cur && !loading && !busy && focus === cur) { /* carro trocado: continua aberto */ } paint(); },
     get isOpen() { return open; }, open: openG, close,
     hasThumb(id) { return !!thumbs[id] || (() => { try { return !!localStorage.getItem('hcu-thumb:' + id); } catch (e) { return false; } })(); },
     // tira a foto 2D do carro atual (modelo já carregado no renderizador) e guarda no navegador
