@@ -1,0 +1,35 @@
+{
+ "2009-audi-q7-v12-tdi": {
+  "hp": 500,
+  "kg": 2650,
+  "awd": true,
+  "top_kmh": 250,
+  "cyl": 12,
+  "torque_nm": 1000,
+  "redline": 4500,
+  "motor": "V12 6.0 TDI",
+  "preset": "pickup"
+ },
+ "2013-ferrari-la-ferrari": {
+  "hp": 950,
+  "kg": 1255,
+  "awd": false,
+  "top_kmh": 350,
+  "cyl": 12,
+  "torque_nm": 900,
+  "redline": 9250,
+  "motor": "V12 6.3 + KERS",
+  "preset": "esportivo"
+ },
+ "2010-audi-r8-v10-5-2-fsi-quattro": {
+  "hp": 525,
+  "kg": 1620,
+  "awd": true,
+  "top_kmh": 316,
+  "cyl": 10,
+  "torque_nm": 530,
+  "redline": 8700,
+  "motor": "V10 5.2",
+  "preset": "esportivo"
+ }
+}

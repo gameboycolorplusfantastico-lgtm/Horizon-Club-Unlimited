@@ -63,6 +63,44 @@ def load_parts(g, flip):
     return parts
 
 
+def split_wheels(parts):
+    """Para modelos com as rodas FUNDIDAS em pecas grandes: separa por componentes conectados (malha soldada por posicao).
+    Acha os 4 componentes em formato de roda (redondos no plano y-z, finos em x, nos cantos) e leva para as rodas tambem
+    tudo que estiver perto do centro dessas rodas (disco, pinca). As pecas viram 'wheel_split' e entram no fluxo normal."""
+    from scipy.sparse import coo_matrix
+    from scipy.sparse.csgraph import connected_components
+    comps = []
+    for pi, p in enumerate(parts):
+        P = p['P']; tri = p['idx'].reshape(-1, 3)
+        key = np.round(P * 200).astype(np.int64); _, w = np.unique(key, axis=0, return_inverse=True); w = w.reshape(-1); t = w[tri]; n = int(w.max()) + 1
+        A = coo_matrix((np.ones(len(t) * 3), (t.reshape(-1), np.roll(t, 1, 1).reshape(-1))), shape=(n, n))
+        nc, lab = connected_components(A, directed=False); tl = lab[t[:, 0]]
+        for c in np.unique(tl):
+            m = tl == c; V = P[tri[m].reshape(-1)]; mn, mx = V.min(0), V.max(0)
+            comps.append({'pi': pi, 'mask': m, 'mn': mn, 'mx': mx, 'c': (mn + mx) / 2, 'sz': mx - mn})
+    z0 = np.median([c['c'][2] for c in comps])
+    cand = [c for c in comps if 0.45 < c['sz'][1] < 1.0 and 0.45 < c['sz'][2] < 1.0 and abs(c['sz'][1] - c['sz'][2]) < 0.12 and 0.12 < c['sz'][0] < 0.5 and abs(c['c'][0]) > 0.5]
+    cand.sort(key=lambda c: -(c['sz'][1] * c['sz'][2]))
+    cent = []
+    for c in cand:
+        if all(np.hypot(c['c'][0] - q[0], c['c'][2] - q[2]) > 0.3 for q in cent): cent.append(c['c'])
+    if len(cent) != 4:
+        print('split-wheels: achei', len(cent), 'rodas (esperava 4)'); return parts
+    out = []; nw = 0
+    for pi, p in enumerate(parts):
+        mine = [c for c in comps if c['pi'] == pi]; wmask = np.zeros(len(p['idx']) // 3, bool)
+        for c in mine:
+            if any(abs(c['c'][0] - q[0]) < 0.35 and abs(c['c'][1] - q[1]) < 0.35 and abs(c['c'][2] - q[2]) < 0.35 for q in cent) and max(c['sz']) < 1.0:
+                wmask |= c['mask']
+        tri = p['idx'].reshape(-1, 3)
+        for sel, nm in ((wmask, 'wheel_split ' + p['name']), (~wmask, p['name'])):
+            if not sel.any(): continue
+            t = tri[sel]; used, inv = np.unique(t.reshape(-1), return_inverse=True)
+            out.append({'name': nm, 'path': p['path'], 'P': p['P'][used], 'N': p['N'][used], 'U': p['U'][used], 'idx': inv.astype(np.int64), 'mat': p['mat']})
+            if sel is wmask: nw += 1
+    print('split-wheels: rodas separadas em', nw, 'pecas'); return out
+
+
 def quad_name(sx, sz):
     return {(1, 1): 'FL', (-1, 1): 'FR', (1, -1): 'RL', (-1, -1): 'RR'}[(sx, sz)]
 
@@ -176,6 +214,7 @@ def main():
     ap.add_argument('--drop', default='', help='regex extra de pecas a descartar (deixa o carro mais leve). O fundo do carro (undercarriage) NAO e mais descartado por padrao; use --drop undercarriage se quiser')
     ap.add_argument('--brake-nodes', default='', help='regex das pecas que acendem ao frear (lanternas vermelhas)')
     ap.add_argument('--paint', default='', help='regex dos materiais que sao a PINTURA da carroceria (so se o jogo nao achar sozinho; ver LEIA-ME-PINTURA.md)')
+    ap.add_argument('--split-wheels', action='store_true', help='rodas fundidas em pecas grandes: separa as rodas por geometria (componentes conectados)')
     ap.add_argument('--no-paint', action='store_true', help='este carro nao tera troca de cor')
     ap.add_argument('--rotate-y', type=int, default=0, choices=[0, 180], help='use 180 se o carro estiver virado para tras')
     ap.add_argument('--tex-size', type=int, default=1024, help='lado maximo das texturas')
@@ -187,6 +226,7 @@ def main():
     parts = load_parts(g, a.rotate_y == 180)
     drop_re = re.compile(r'(?i)callip|caliper' + ('|' + a.drop if a.drop else ''))
     n0 = len(parts); parts = [p for p in parts if not drop_re.search(p['name'])]
+    if a.split_wheels: parts = split_wheels(parts)
     print('pecas:', len(parts), '(descartadas', n0 - len(parts), ')')
 
     # ---- rodas ----

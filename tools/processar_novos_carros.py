@@ -29,7 +29,7 @@ import specs_reais
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 PASTA = os.path.join(ROOT, 'novos-carros')
 FLAGS = {'brand': '--brand', 'class': '--class', 'scale': '--scale', 'length': '--length', 'preset': '--preset', 'specs': '--specs',
-         'wheel_nodes': '--wheel-nodes', 'drop': '--drop', 'brake_nodes': '--brake-nodes', 'rotate_y': '--rotate-y', 'tex_size': '--tex-size', 'wheel_mode': '--wheel-mode'}
+         'wheel_nodes': '--wheel-nodes', 'drop': '--drop', 'brake_nodes': '--brake-nodes', 'rotate_y': '--rotate-y', 'tex_size': '--tex-size', 'wheel_mode': '--wheel-mode', 'split_wheels': '--split-wheels'}
 
 
 def slug(s):
@@ -143,7 +143,7 @@ def main():
                '--name', cfg.get('name') or re.sub(r'[_\-]+', ' ', stem).strip().title()]
         for k, flag in FLAGS.items():
             if cfg.get(k) not in (None, ''):
-                cmd += [flag, str(cfg[k])]
+                cmd += [flag] if k == 'split_wheels' else [flag, str(cfg[k])]
         print('==>', stem); print(' '.join(cmd))
         if subprocess.call(cmd, cwd=ROOT) != 0:
             falhas.append(stem); continue

@@ -70,6 +70,7 @@ body.touch #toast { top: 74px; }
 .card { width: min(560px, 100%); padding: 22px 0; display: grid; gap: 16px; }
 .brand { font: 700 clamp(38px, 9vw, 64px)/0.95 var(--display); letter-spacing: -.01em; margin: 0; text-wrap: balance; }
 .brand span { color: var(--accent); }
+.logo-h { margin: 0; line-height: 0; } .logo { display: block; width: min(560px, 82vw); height: auto; filter: drop-shadow(0 6px 22px rgba(255,40,160,.35)); }
 .sub { margin: 0; color: var(--dim); font-size: 14px; }
 .prog { height: 6px; border-radius: 3px; background: rgba(255,255,255,.1); overflow: hidden; }
 #bar { height: 100%; background: var(--accent); transform-origin: left; transform: scaleX(.02); transition: transform .25s; }
@@ -334,7 +335,7 @@ body.touch #tbtns #b-radio { font-size: 10px; }
   </div>
   <div id="menu">
     <div class="card" id="p-start">
-      <div><p class="sub num" id="tagline" style="letter-spacing:.2em;text-transform:uppercase;font-size:12px">Mundo aberto</p><h1 class="brand">Horizon Club <span>Unlimited</span></h1></div>
+      <div><p class="sub num" id="tagline" style="letter-spacing:.2em;text-transform:uppercase;font-size:12px">Mundo aberto</p><h1 class="brand logo-h"><img class="logo" src="assets/logo.png" alt="Horizon Club Unlimited"></h1></div>
       <div class="cars" id="cars-start" role="radiogroup" aria-label="Escolha o carro" hidden></div>
       <div class="paintbox" id="paint-start" hidden></div>
       <div><div class="prog"><div id="bar"></div></div><div id="ptxt">Preparando…</div></div>
