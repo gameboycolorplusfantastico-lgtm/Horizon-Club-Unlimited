@@ -104,6 +104,47 @@ def split_wheels(parts):
     print('split-wheels: rodas separadas em', nw, 'pecas'); return out
 
 
+def refine_wheels(wparts, body_parts, sc):
+    """Deixa em cada roda SO o pneu e a roda (aro, raios, calota, disco): analisa as pecas conectadas de cada canto, acha o pneu
+    (componente redondo no plano y-z e fino em x) e manda de volta para o CORPO tudo que nao gira junto com ele
+    (bracos de suspensao, amortecedor, mola, pinca, mangas, caixa de roda...): pecas fora do centro, compridas em x ou maiores que o pneu."""
+    from scipy.sparse import coo_matrix
+    from scipy.sparse.csgraph import connected_components
+    resumo = {}
+    for k, lst in wparts.items():
+        comps = []
+        for pi, p in enumerate(lst):
+            P = p['P'] * sc; tri = p['idx'].reshape(-1, 3)
+            key = np.round(P * 200).astype(np.int64); _, w = np.unique(key, axis=0, return_inverse=True); w = w.reshape(-1); t = w[tri]; n = int(w.max()) + 1
+            A = coo_matrix((np.ones(len(t) * 3), (t.reshape(-1), np.roll(t, 1, 1).reshape(-1))), shape=(n, n)); _, lab = connected_components(A, directed=False); tl = lab[t[:, 0]]
+            for c in np.unique(tl):
+                m = tl == c; V = P[tri[m].reshape(-1)]; mn, mx = V.min(0), V.max(0)
+                comps.append({'pi': pi, 'mask': m, 'c': (mn + mx) / 2, 'sz': mx - mn})
+        tires = [c for c in comps if 0.40 < c['sz'][1] < 1.1 and 0.40 < c['sz'][2] < 1.1 and abs(c['sz'][1] - c['sz'][2]) < 0.16 * max(c['sz'][1], c['sz'][2]) and 0.08 < c['sz'][0] < 0.55]
+        if not tires:
+            continue
+        t = max(tires, key=lambda c: c['sz'][1] * c['sz'][2]); cy, cz, cx = t['c'][1], t['c'][2], t['c'][0]; D = max(t['sz'][1], t['sz'][2])
+        out = [[] for _ in lst]; moved = tot = 0
+        for c in comps:
+            keep = abs(c['c'][1] - cy) < 0.09 and abs(c['c'][2] - cz) < 0.09 and max(c['sz'][1], c['sz'][2]) <= D * 1.08 and c['sz'][0] <= 0.55 and abs(c['c'][0] - cx) < 0.28
+            nt = int(c['mask'].sum()); tot += nt
+            if not keep:
+                moved += nt; p = lst[c['pi']]; tri = p['idx'].reshape(-1, 3)[c['mask']]; used, inv = np.unique(tri.reshape(-1), return_inverse=True)
+                body_parts.append({'name': p['name'] + ' (susp)', 'path': p.get('path', ''), 'P': p['P'][used], 'N': p['N'][used], 'U': p['U'][used], 'idx': inv.astype(np.int64), 'mat': p['mat']})
+            else:
+                out[c['pi']].append(c)
+        newl = []
+        for pi, p in enumerate(lst):
+            if not out[pi]: continue
+            mk = np.zeros(len(p['idx']) // 3, bool)
+            for c in out[pi]: mk |= c['mask']
+            tri = p['idx'].reshape(-1, 3)[mk]; used, inv = np.unique(tri.reshape(-1), return_inverse=True)
+            newl.append({'name': p['name'], 'P': p['P'][used], 'N': p['N'][used], 'U': p['U'][used], 'idx': inv.astype(np.int64), 'mat': p['mat']})
+        wparts[k] = newl; resumo[k] = (moved, tot)
+    if resumo:
+        print('refine-wheels (triangulos movidos para o corpo / total):', {k: '%d/%d' % v for k, v in resumo.items()})
+
+
 def quad_name(sx, sz):
     return {(1, 1): 'FL', (-1, 1): 'FR', (1, -1): 'RL', (-1, -1): 'RR'}[(sx, sz)]
 
@@ -218,6 +259,7 @@ def main():
     ap.add_argument('--brake-nodes', default='', help='regex das pecas que acendem ao frear (lanternas vermelhas)')
     ap.add_argument('--paint', default='', help='regex dos materiais que sao a PINTURA da carroceria (so se o jogo nao achar sozinho; ver LEIA-ME-PINTURA.md)')
     ap.add_argument('--split-wheels', action='store_true', help='rodas fundidas em pecas grandes: separa as rodas por geometria (componentes conectados)')
+    ap.add_argument('--keep-all-wheel-parts', action='store_true', help='nao filtra: leva para a roda tudo que foi achado (comportamento antigo)')
     ap.add_argument('--no-paint', action='store_true', help='este carro nao tera troca de cor')
     ap.add_argument('--rotate-y', type=int, default=0, choices=[0, 180], help='use 180 se o carro estiver virado para tras')
     ap.add_argument('--tex-size', type=int, default=1024, help='lado maximo das texturas')
@@ -254,6 +296,8 @@ def main():
                     continue
                 t = tri[sel]; used, inv = np.unique(t.reshape(-1), return_inverse=True)
                 wparts[quad_name(sx, sz)].append({'name': p['name'], 'P': p['P'][used], 'N': p['N'][used], 'U': p['U'][used], 'idx': inv.astype(np.int64), 'mat': p['mat']})
+    if not a.keep_all_wheel_parts:
+        allz = np.concatenate([q['P'][:, 2] for q in parts]); refine_wheels(wparts, body_parts, 4.5 / max(1e-9, allz.max() - allz.min()))
     if a.report:
         for p in parts:
             tag = 'RODA' if id(p) in cand_ids else '    '
