@@ -1,0 +1,25 @@
+104.9 APEX FM — Pure Velocity, Zero Static
+Coloque aqui os arquivos de audio com estes nomes (mp3, ogg, m4a ou wav):
+
+01.mp3  =  The Chemical Brothers - Galaxy Bounce
+02.mp3  =  Junkie XL - Action Radius
+03.mp3  =  Overseer - Supermoves
+04.mp3  =  Fluke - Absurd (Whitewash Edit)
+05.mp3  =  Azzido Da Bass - Dooms Night (Stanton Warriors Remix)
+06.mp3  =  Gorillaz - 19-2000 (Soulchild Remix)
+07.mp3  =  Junior Sanchez - Slave Beat
+08.mp3  =  Modjo - Lady (Hear Me Tonight)
+09.mp3  =  Photek - Junk
+10.mp3  =  Omni Trio - First Contact
+11.mp3  =  Rom Di Prisco - Liquid Plasma
+12.mp3  =  Saki Kaskas - Callista
+13.mp3  =  The Crystal Method - Keep Hope Alive
+14.mp3  =  Apollo 440 - Stop the Rock
+15.mp3  =  Artful Dodger feat. Craig David - Re-Rewind
+16.mp3  =  Rui Da Silva - Touch Me
+17.mp3  =  Stardust - Music Sounds Better With You
+18.mp3  =  Slyder - Score (Original Mix)
+19.mp3  =  Roni Size / Reprazent - Brown Paper Bag
+20.mp3  =  Scapegoat Wax - Aisle 10 (Hello Allison)
+
+Vinhetas (opcional, 4 a 8 s, tocam a cada 3 musicas): vinheta-1.mp3, vinheta-2.mp3, vinheta-3.mp3 ...

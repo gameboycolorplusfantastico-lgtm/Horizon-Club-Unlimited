@@ -1,0 +1,25 @@
+94.7 SOLSTICE FM — The Soundtrack to the Sunset
+Coloque aqui os arquivos de audio com estes nomes (mp3, ogg, m4a ou wav):
+
+01.mp3  =  Porter Robinson - Language
+02.mp3  =  Empire of the Sun - Walking On A Dream
+03.mp3  =  M83 - Midnight City
+04.mp3  =  Passion Pit - Take a Walk
+05.mp3  =  Two Door Cinema Club - What You Know
+06.mp3  =  Phoenix - 1901
+07.mp3  =  The Naked and Famous - Young Blood
+08.mp3  =  Chromeo - Don't Turn The Lights On
+09.mp3  =  Friendly Fires - Hawaiian Air
+10.mp3  =  Bag Raiders - Shooting Stars
+11.mp3  =  La Roux - Bulletproof
+12.mp3  =  Madeon - Icarus
+13.mp3  =  Miike Snow - Paddling Out
+14.mp3  =  MGMT - Kids
+15.mp3  =  Avicii - Levels
+16.mp3  =  Calvin Harris - Feel So Close
+17.mp3  =  Nero - Me & You
+18.mp3  =  Robyn - Dancing On My Own
+19.mp3  =  Justice - D.A.N.C.E.
+20.mp3  =  Kavinsky - Nightcall
+
+Vinhetas (opcional, 4 a 8 s, tocam a cada 3 musicas): vinheta-1.mp3, vinheta-2.mp3, vinheta-3.mp3 ...

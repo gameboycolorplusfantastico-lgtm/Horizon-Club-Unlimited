@@ -1,0 +1,25 @@
+93.7 BLACKTOP RADIO — Heavy Bass, Heavy Metal
+Coloque aqui os arquivos de audio com estes nomes (mp3, ogg, m4a ou wav):
+
+01.mp3  =  Styles of Beyond - Nine Thou (Superstars Remix)
+02.mp3  =  T.I. - 24's
+03.mp3  =  Snoop Dogg feat. The Doors - Riders on the Storm (Fredwreck Remix)
+04.mp3  =  Petey Pablo - Need For Speed
+05.mp3  =  Hush - Fired Up
+06.mp3  =  The Perceptionists - Let's Move
+07.mp3  =  Mannie Fresh - Real Big
+08.mp3  =  Chamillionaire feat. Krayzie Bone - Ridin'
+09.mp3  =  Ludacris - Act a Fool
+10.mp3  =  The Game feat. 50 Cent - How We Do
+11.mp3  =  OutKast - B.O.B. (Bombs Over Baghdad)
+12.mp3  =  Fabolous - Breathe
+13.mp3  =  Lil Jon & The East Side Boyz feat. Ying Yang Twins - Get Low
+14.mp3  =  Terror Squad feat. Fat Joe & Remy Ma - Lean Back
+15.mp3  =  50 Cent - If I Can't
+16.mp3  =  DMX - X Gon' Give It To Ya
+17.mp3  =  Xzibit - Multiply
+18.mp3  =  Clipse - Grindin'
+19.mp3  =  N.E.R.D - Rockstar
+20.mp3  =  Dr. Dre feat. Snoop Dogg - Still D.R.E.
+
+Vinhetas (opcional, 4 a 8 s, tocam a cada 3 musicas): vinheta-1.mp3, vinheta-2.mp3, vinheta-3.mp3 ...

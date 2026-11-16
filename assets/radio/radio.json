@@ -1,0 +1,446 @@
+{
+ "_ajuda": "Coloque os MP3 em assets/radio/<id>/NN.mp3 (NN = numero da faixa, ex.: 01.mp3). Vinhetas opcionais: assets/radio/<id>/vinheta-1.mp3, vinheta-2.mp3... (tambem aceita ogg, m4a, wav). Para trocar/adicionar musicas edite esta lista.",
+ "vinhetteEvery": 3,
+ "stations": [
+  {
+   "id": "apex",
+   "name": "APEX FM",
+   "freq": "104.9",
+   "slogan": "Pure Velocity, Zero Static",
+   "genre": "Eletrônica / Breakbeat / Drum & Bass",
+   "color": "#35e0ff",
+   "tracks": [
+    {
+     "file": "01",
+     "artist": "The Chemical Brothers",
+     "title": "Galaxy Bounce"
+    },
+    {
+     "file": "02",
+     "artist": "Junkie XL",
+     "title": "Action Radius"
+    },
+    {
+     "file": "03",
+     "artist": "Overseer",
+     "title": "Supermoves"
+    },
+    {
+     "file": "04",
+     "artist": "Fluke",
+     "title": "Absurd (Whitewash Edit)"
+    },
+    {
+     "file": "05",
+     "artist": "Azzido Da Bass",
+     "title": "Dooms Night (Stanton Warriors Remix)"
+    },
+    {
+     "file": "06",
+     "artist": "Gorillaz",
+     "title": "19-2000 (Soulchild Remix)"
+    },
+    {
+     "file": "07",
+     "artist": "Junior Sanchez",
+     "title": "Slave Beat"
+    },
+    {
+     "file": "08",
+     "artist": "Modjo",
+     "title": "Lady (Hear Me Tonight)"
+    },
+    {
+     "file": "09",
+     "artist": "Photek",
+     "title": "Junk"
+    },
+    {
+     "file": "10",
+     "artist": "Omni Trio",
+     "title": "First Contact"
+    },
+    {
+     "file": "11",
+     "artist": "Rom Di Prisco",
+     "title": "Liquid Plasma"
+    },
+    {
+     "file": "12",
+     "artist": "Saki Kaskas",
+     "title": "Callista"
+    },
+    {
+     "file": "13",
+     "artist": "The Crystal Method",
+     "title": "Keep Hope Alive"
+    },
+    {
+     "file": "14",
+     "artist": "Apollo 440",
+     "title": "Stop the Rock"
+    },
+    {
+     "file": "15",
+     "artist": "Artful Dodger feat. Craig David",
+     "title": "Re-Rewind"
+    },
+    {
+     "file": "16",
+     "artist": "Rui Da Silva",
+     "title": "Touch Me"
+    },
+    {
+     "file": "17",
+     "artist": "Stardust",
+     "title": "Music Sounds Better With You"
+    },
+    {
+     "file": "18",
+     "artist": "Slyder",
+     "title": "Score (Original Mix)"
+    },
+    {
+     "file": "19",
+     "artist": "Roni Size / Reprazent",
+     "title": "Brown Paper Bag"
+    },
+    {
+     "file": "20",
+     "artist": "Scapegoat Wax",
+     "title": "Aisle 10 (Hello Allison)"
+    }
+   ]
+  },
+  {
+   "id": "redline",
+   "name": "REDLINE RADIO",
+   "freq": "96.3",
+   "slogan": "Loud Pipes, Louder Guitars",
+   "genre": "Rock / Pop Punk / Hard Rock",
+   "color": "#ff4b3a",
+   "tracks": [
+    {
+     "file": "01",
+     "artist": "Live",
+     "title": "Deep Enough"
+    },
+    {
+     "file": "02",
+     "artist": "Paramore",
+     "title": "Misery Business"
+    },
+    {
+     "file": "03",
+     "artist": "Fall Out Boy",
+     "title": "Dance, Dance"
+    },
+    {
+     "file": "04",
+     "artist": "Yellowcard",
+     "title": "Breathing"
+    },
+    {
+     "file": "05",
+     "artist": "Rise Against",
+     "title": "Give It All"
+    },
+    {
+     "file": "06",
+     "artist": "Billy Talent",
+     "title": "Red Flag"
+    },
+    {
+     "file": "07",
+     "artist": "Autopilot Off",
+     "title": "Make a Sound"
+    },
+    {
+     "file": "08",
+     "artist": "Taking Back Sunday",
+     "title": "MakeDamnSure"
+    },
+    {
+     "file": "09",
+     "artist": "Story of the Year",
+     "title": "And the Hero Will Drown"
+    },
+    {
+     "file": "10",
+     "artist": "Queens of the Stone Age",
+     "title": "Go With the Flow"
+    },
+    {
+     "file": "11",
+     "artist": "The Hives",
+     "title": "Hate to Say I Told You So"
+    },
+    {
+     "file": "12",
+     "artist": "Zebrahead",
+     "title": "Falling Apart"
+    },
+    {
+     "file": "13",
+     "artist": "Bullet For My Valentine",
+     "title": "Hand of Blood"
+    },
+    {
+     "file": "14",
+     "artist": "Sum 41",
+     "title": "Still Waiting"
+    },
+    {
+     "file": "15",
+     "artist": "The Offspring",
+     "title": "You're Gonna Go Far, Kid"
+    },
+    {
+     "file": "16",
+     "artist": "Avenged Sevenfold",
+     "title": "Blinded in Chains"
+    },
+    {
+     "file": "17",
+     "artist": "Audioslave",
+     "title": "Cochise"
+    },
+    {
+     "file": "18",
+     "artist": "The Strokes",
+     "title": "Reptilia"
+    },
+    {
+     "file": "19",
+     "artist": "Foo Fighters",
+     "title": "All My Life"
+    },
+    {
+     "file": "20",
+     "artist": "Breaking Benjamin",
+     "title": "Blow Me Away"
+    }
+   ]
+  },
+  {
+   "id": "solstice",
+   "name": "SOLSTICE FM",
+   "freq": "94.7",
+   "slogan": "The Soundtrack to the Sunset",
+   "genre": "Pop / Synthpop / Indie Dance",
+   "color": "#ffb347",
+   "tracks": [
+    {
+     "file": "01",
+     "artist": "Porter Robinson",
+     "title": "Language"
+    },
+    {
+     "file": "02",
+     "artist": "Empire of the Sun",
+     "title": "Walking On A Dream"
+    },
+    {
+     "file": "03",
+     "artist": "M83",
+     "title": "Midnight City"
+    },
+    {
+     "file": "04",
+     "artist": "Passion Pit",
+     "title": "Take a Walk"
+    },
+    {
+     "file": "05",
+     "artist": "Two Door Cinema Club",
+     "title": "What You Know"
+    },
+    {
+     "file": "06",
+     "artist": "Phoenix",
+     "title": "1901"
+    },
+    {
+     "file": "07",
+     "artist": "The Naked and Famous",
+     "title": "Young Blood"
+    },
+    {
+     "file": "08",
+     "artist": "Chromeo",
+     "title": "Don't Turn The Lights On"
+    },
+    {
+     "file": "09",
+     "artist": "Friendly Fires",
+     "title": "Hawaiian Air"
+    },
+    {
+     "file": "10",
+     "artist": "Bag Raiders",
+     "title": "Shooting Stars"
+    },
+    {
+     "file": "11",
+     "artist": "La Roux",
+     "title": "Bulletproof"
+    },
+    {
+     "file": "12",
+     "artist": "Madeon",
+     "title": "Icarus"
+    },
+    {
+     "file": "13",
+     "artist": "Miike Snow",
+     "title": "Paddling Out"
+    },
+    {
+     "file": "14",
+     "artist": "MGMT",
+     "title": "Kids"
+    },
+    {
+     "file": "15",
+     "artist": "Avicii",
+     "title": "Levels"
+    },
+    {
+     "file": "16",
+     "artist": "Calvin Harris",
+     "title": "Feel So Close"
+    },
+    {
+     "file": "17",
+     "artist": "Nero",
+     "title": "Me & You"
+    },
+    {
+     "file": "18",
+     "artist": "Robyn",
+     "title": "Dancing On My Own"
+    },
+    {
+     "file": "19",
+     "artist": "Justice",
+     "title": "D.A.N.C.E."
+    },
+    {
+     "file": "20",
+     "artist": "Kavinsky",
+     "title": "Nightcall"
+    }
+   ]
+  },
+  {
+   "id": "blacktop",
+   "name": "BLACKTOP RADIO",
+   "freq": "93.7",
+   "slogan": "Heavy Bass, Heavy Metal",
+   "genre": "Hip Hop / Street Racing",
+   "color": "#b080ff",
+   "tracks": [
+    {
+     "file": "01",
+     "artist": "Styles of Beyond",
+     "title": "Nine Thou (Superstars Remix)"
+    },
+    {
+     "file": "02",
+     "artist": "T.I.",
+     "title": "24's"
+    },
+    {
+     "file": "03",
+     "artist": "Snoop Dogg feat. The Doors",
+     "title": "Riders on the Storm (Fredwreck Remix)"
+    },
+    {
+     "file": "04",
+     "artist": "Petey Pablo",
+     "title": "Need For Speed"
+    },
+    {
+     "file": "05",
+     "artist": "Hush",
+     "title": "Fired Up"
+    },
+    {
+     "file": "06",
+     "artist": "The Perceptionists",
+     "title": "Let's Move"
+    },
+    {
+     "file": "07",
+     "artist": "Mannie Fresh",
+     "title": "Real Big"
+    },
+    {
+     "file": "08",
+     "artist": "Chamillionaire feat. Krayzie Bone",
+     "title": "Ridin'"
+    },
+    {
+     "file": "09",
+     "artist": "Ludacris",
+     "title": "Act a Fool"
+    },
+    {
+     "file": "10",
+     "artist": "The Game feat. 50 Cent",
+     "title": "How We Do"
+    },
+    {
+     "file": "11",
+     "artist": "OutKast",
+     "title": "B.O.B. (Bombs Over Baghdad)"
+    },
+    {
+     "file": "12",
+     "artist": "Fabolous",
+     "title": "Breathe"
+    },
+    {
+     "file": "13",
+     "artist": "Lil Jon & The East Side Boyz feat. Ying Yang Twins",
+     "title": "Get Low"
+    },
+    {
+     "file": "14",
+     "artist": "Terror Squad feat. Fat Joe & Remy Ma",
+     "title": "Lean Back"
+    },
+    {
+     "file": "15",
+     "artist": "50 Cent",
+     "title": "If I Can't"
+    },
+    {
+     "file": "16",
+     "artist": "DMX",
+     "title": "X Gon' Give It To Ya"
+    },
+    {
+     "file": "17",
+     "artist": "Xzibit",
+     "title": "Multiply"
+    },
+    {
+     "file": "18",
+     "artist": "Clipse",
+     "title": "Grindin'"
+    },
+    {
+     "file": "19",
+     "artist": "N.E.R.D",
+     "title": "Rockstar"
+    },
+    {
+     "file": "20",
+     "artist": "Dr. Dre feat. Snoop Dogg",
+     "title": "Still D.R.E."
+    }
+   ]
+  }
+ ]
+}

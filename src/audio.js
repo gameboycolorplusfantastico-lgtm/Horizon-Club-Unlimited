@@ -82,7 +82,7 @@ const Sound = {
   async loadSim() {
     if (this.simLoading || this.simReady || this.simOff) return; this.simLoading = true;
     try {
-      try { const reg = await fetch('assets/cars/cars.json').then((r) => r.json()); this.carTable = {}; for (const k of reg.cars || []) this.carTable[k.id] = { specs: k.specs, cls: k.class, engine: k.engine, cyl: k.cyl }; } catch (e) {}
+      try { const reg = await fetch('assets/cars/cars.json').then((r) => r.json()); this.carTable = {}; for (const k of reg.cars || []) this.carTable[k.id] = { specs: k.specs, cls: k.class, engine: k.engine, cyl: k.cyl, electric: !!k.electric }; } catch (e) {}
       const mod = await import(this.ENGINE_PATH); this.ES = mod.EngineSim; this.ids = new Set(this.ES.engines().map((e) => e.id));
       const car = this.info(this.wantCar || { cyl: 6 }), id = pickEngine(car, this.ids);
       this.sim = new this.ES(this.ctx, { engine: id, vehicle: pickVehicle(car), destination: this.simOut });
@@ -140,14 +140,26 @@ const Sound = {
     this.bankFor = id; this.bankLoading = false;
     if (this.carId && this.carId !== this.bankFor) this.loadBank(this.carId);
   },
+  // carro eletrico (cars.json: "electric": true): sem motor a combustao, so um zumbido agudo e baixo que sobe com a velocidade
+  updateElectric(car, paused, elec, t) {
+    const c = this.ctx; if (!this.ew) {
+      const g = c.createGain(); g.gain.value = 0; g.connect(this.bus); const mk = (type, m) => { const o = c.createOscillator(); o.type = type; const og = c.createGain(); og.gain.value = m; o.connect(og).connect(g); o.start(); return o; };
+      this.ew = { g, a: mk('sine', 0.6), b: mk('sine', 0.25), c: mk('triangle', 0.08) };
+    }
+    const w = this.ew; if (!elec || paused) { w.g.gain.setTargetAtTime(0, t, 0.08); return; }
+    const sp = Math.abs(car.speed || 0), thr = car.throttle || 0, f = 180 + sp * 14 + (car.rpm || 900) * 0.05;
+    w.a.frequency.setTargetAtTime(f, t, 0.05); w.b.frequency.setTargetAtTime(f * 2.0, t, 0.05); w.c.frequency.setTargetAtTime(f * 3.02, t, 0.05);
+    w.g.gain.setTargetAtTime(Math.min(1, sp / 6) * (0.018 + 0.03 * Math.min(1, sp / 60) + 0.03 * thr), t, 0.08);
+  },
   setOn(v) { this.on = v; if (this.master) this.master.gain.setTargetAtTime(v ? 0.5 : 0, this.ctx.currentTime, 0.05); },
   update(car, paused) {
     if (!this.ok) return; const c = this.ctx, t = c.currentTime;
     // f0 = frequência das explosões do motor = cilindros / 2 por volta
     if (car.carId && car.carId !== this.carId) { this.carId = car.carId; if (this.bankFor !== this.carId) this.loadBank(this.carId); }
-    const hasBank = !!this.bank; let useSim = false;
+    const elec = !!(this.carTable && this.carTable[car.carId] && this.carTable[car.carId].electric); const hasBank = !!this.bank && !elec; let useSim = false;
+    this.updateElectric(car, paused, elec, t);
     if (car.carId && car.carId !== this.simCar) this.setSimCar(car);
-    if (this.simReady && !this.simOff && !hasBank) {
+    if (this.simReady && !this.simOff && !hasBank && !elec) {
       try {
         const now = performance.now(), dt = Math.min(0.05, Math.max(0.001, (now - this.lastT) / 1000)); this.lastT = now;
         const P = car.P || {}, idle = P.idle || 950, rmax = P.rpmMax || 8200, h = this.host, shifting = (car.shiftT || 0) > 0, cut = (car.shiftCut || 0) > 0, thr = paused ? 0 : (car.throttle || 0);
@@ -157,7 +169,7 @@ const Sound = {
         this.simOut.gain.setTargetAtTime(paused ? 0 : 1, t, 0.05);
         this.sim.setThrottle(thr); this.sim.setBrake(paused ? 0 : Math.max(0, car.brake || 0)); this.sim.update(dt); useSim = true;
       } catch (e) { console.warn(e); this.simOff = true; this.simReady = false; try { this.sim.dispose(); } catch (x) {} }
-    } else if (this.simReady && hasBank) this.simOut.gain.setTargetAtTime(0, t, 0.05);
+    } else if (this.simReady && (hasBank || elec)) this.simOut.gain.setTargetAtTime(0, t, 0.05);
     if (hasBank) {
       const cl = this.bank.clips, r = car.rpm || 900, n = cl.length; let i = 0; while (i < n - 1 && r > cl[i + 1].rpm) i++;
       const a = cl[i], b = cl[Math.min(i + 1, n - 1)], f = b.rpm > a.rpm ? Math.min(1, Math.max(0, (r - a.rpm) / (b.rpm - a.rpm))) : 0;
@@ -177,7 +189,7 @@ const Sound = {
     const rpm = car.rpm, thr = car.throttle, f0 = rpm / 60 * (car.cyl || 6) / 2; const load = 0.35 + 0.65 * thr;
     this.o1.frequency.setTargetAtTime(f0, t, 0.03); this.o2.frequency.setTargetAtTime(f0 * 0.5, t, 0.03); this.o3.frequency.setTargetAtTime(f0 * 2.01, t, 0.03);
     this.lp.frequency.setTargetAtTime(260 + rpm * 0.38 + thr * 500, t, 0.05);
-    this.eng.gain.setTargetAtTime(paused || hasBank || useSim ? 0 : (0.16 + 0.22 * load) * (0.5 + rpm / 16000), t, 0.05);
+    this.eng.gain.setTargetAtTime(paused || hasBank || useSim || elec ? 0 : (0.16 + 0.22 * load) * (0.5 + rpm / 16000), t, 0.05);
     const sk = Math.max(car.skidAmt, 0); this.tire.g.gain.setTargetAtTime(paused ? 0 : Math.min(0.4, sk * 0.5), t, 0.05); this.tire.fl.frequency.setTargetAtTime(900 + car.speed * 14, t, 0.1);
     this.wind.g.gain.setTargetAtTime(paused ? 0 : Math.min(0.35, Math.pow(car.speed / 70, 1.6) * 0.4), t, 0.1); this.wind.fl.frequency.setTargetAtTime(300 + car.speed * 8, t, 0.1);
     this.road.g.gain.setTargetAtTime(paused ? 0 : Math.min(0.25, car.speed / 80 * 0.25) * (car.onGround ? 1 : 0), t, 0.1);

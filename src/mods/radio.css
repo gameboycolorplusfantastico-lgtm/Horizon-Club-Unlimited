@@ -1,0 +1,6 @@
+#radio-ui { position: fixed; left: 50%; bottom: 18px; transform: translate(-50%, 20px); z-index: 30; min-width: 220px; max-width: 86vw; padding: 8px 16px 9px; border-radius: 12px; background: rgba(10,12,18,.78); border: 1px solid var(--rc, #888); border-left-width: 4px; color: #fff; pointer-events: none; opacity: 0; transition: opacity .25s, transform .25s; font: 600 13px var(--display, system-ui); display: flex; flex-direction: column; gap: 1px; }
+#radio-ui.on { opacity: 1; transform: translate(-50%, 0); }
+#radio-ui small { font-size: 10px; letter-spacing: .14em; color: var(--rc); }
+#radio-ui b { font-size: 15px; letter-spacing: .05em; }
+#radio-ui span { font-weight: 500; opacity: .85; font-size: 12px; }
+body.touch #tbtns #b-radio { font-size: 10px; }

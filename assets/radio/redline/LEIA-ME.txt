@@ -1,0 +1,25 @@
+96.3 REDLINE RADIO — Loud Pipes, Louder Guitars
+Coloque aqui os arquivos de audio com estes nomes (mp3, ogg, m4a ou wav):
+
+01.mp3  =  Live - Deep Enough
+02.mp3  =  Paramore - Misery Business
+03.mp3  =  Fall Out Boy - Dance, Dance
+04.mp3  =  Yellowcard - Breathing
+05.mp3  =  Rise Against - Give It All
+06.mp3  =  Billy Talent - Red Flag
+07.mp3  =  Autopilot Off - Make a Sound
+08.mp3  =  Taking Back Sunday - MakeDamnSure
+09.mp3  =  Story of the Year - And the Hero Will Drown
+10.mp3  =  Queens of the Stone Age - Go With the Flow
+11.mp3  =  The Hives - Hate to Say I Told You So
+12.mp3  =  Zebrahead - Falling Apart
+13.mp3  =  Bullet For My Valentine - Hand of Blood
+14.mp3  =  Sum 41 - Still Waiting
+15.mp3  =  The Offspring - You're Gonna Go Far, Kid
+16.mp3  =  Avenged Sevenfold - Blinded in Chains
+17.mp3  =  Audioslave - Cochise
+18.mp3  =  The Strokes - Reptilia
+19.mp3  =  Foo Fighters - All My Life
+20.mp3  =  Breaking Benjamin - Blow Me Away
+
+Vinhetas (opcional, 4 a 8 s, tocam a cada 3 musicas): vinheta-1.mp3, vinheta-2.mp3, vinheta-3.mp3 ...
