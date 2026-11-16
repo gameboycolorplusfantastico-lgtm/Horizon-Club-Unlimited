@@ -394,12 +394,13 @@ class Renderer {
   // foto 2D do carro com fundo transparente: renderiza sobre fundo preto e sobre fundo branco e calcula o alfa pela diferença
   captureCar(car, o) {
     o = o || {}; const gl = this.gl, cv = this.canvas, oW = cv.width, oH = cv.height, W = 1280, H = 640, S = car.scale || 1;
-    const az = o.az == null ? -0.62 : o.az, el = o.el == null ? 0.14 : o.el, dist = (o.dist || 11.5) * S, tgt = [0, 0.62 * S, 0];
+    // vista LATERAL padrao (frente para a direita), lente quase telefoto: todos os carros ficam com o mesmo enquadramento
+    const az = o.az == null ? -Math.PI / 2 : o.az, el = o.el == null ? 0.04 : o.el, dist = (o.dist || 19) * S, tgt = [0, 0.6 * S, 0];
     const pos = [tgt[0] + Math.sin(az) * Math.cos(el) * dist, tgt[1] + Math.sin(el) * dist, tgt[2] + Math.cos(az) * Math.cos(el) * dist];
     const f = normalize3([tgt[0] - pos[0], tgt[1] - pos[1], tgt[2] - pos[2]]), r = normalize3([-f[2], 0, f[0]]), up = [r[1] * f[2] - r[2] * f[1], r[2] * f[0] - r[0] * f[2], r[0] * f[1] - r[1] * f[0]];
     cv.width = W; cv.height = H; this.aspect = W / H; gl.viewport(0, 0, W, H);
     const px = [new Uint8Array(W * H * 4), new Uint8Array(W * H * 4)], fr = Object.assign({}, car, { p: [0, car.hModel, 0] });
-    for (let i = 0; i < 2; i++) { this.render({ cam: { pos, right: r, up, fwd: f, fov: o.fov || 0.5 }, time: 0, car: fr, studio: { bg: i } }); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px[i]); }
+    for (let i = 0; i < 2; i++) { this.render({ cam: { pos, right: r, up, fwd: f, fov: o.fov || 0.3 }, time: 0, car: fr, studio: { bg: i } }); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px[i]); }
     cv.width = oW; cv.height = oH; this.aspect = oW / oH; gl.viewport(0, 0, oW, oH);
     const out = new Uint8ClampedArray(W * H * 4); let x0 = W, y0 = H, x1 = -1, y1 = -1;
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
