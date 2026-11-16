@@ -178,7 +178,7 @@ body.touch #bshift.man #b-up, body.touch #bshift.man #b-dn { min-width: 58px; mi
 .g-buy { appearance: none; border: 0; background: var(--fy); color: #111; font: 700 clamp(16px, 3vmin, 28px) var(--display); font-style: italic; padding: 8px 18px; cursor: pointer; text-transform: uppercase; letter-spacing: .02em; box-shadow: 0 4px 0 #b9a400; }
 .g-buy:disabled { background: #777; box-shadow: none; cursor: default; }
 .g-title { display: grid; line-height: 1.05; } .g-title span { font: 500 clamp(14px, 3vmin, 26px) var(--display); color: #dfe6ee; text-transform: uppercase; } .g-title b { font: 700 clamp(20px, 4.4vmin, 40px) var(--display); text-transform: uppercase; } .g-title em { font-style: normal; font: 700 clamp(13px, 2.4vmin, 20px) var(--display); color: var(--fy); }
-.g-img { position: relative; display: grid; place-items: center; min-height: 0; padding: 6px; } .g-img img { position: absolute; inset: 6px; width: calc(100% - 12px); height: calc(100% - 12px); object-fit: contain; filter: drop-shadow(0 14px 22px rgba(0,0,0,.65)); }
+.g-img { position: relative; display: grid; place-items: center; min-height: 0; padding: 6px; } .g-img img { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 14px 22px rgba(0,0,0,.65)); }
 #g-noimg { display: grid; justify-items: center; gap: 10px; color: #7d8795; font: 500 12px var(--body); text-align: center; } #g-noimg svg { width: min(52%, 300px); fill: rgba(255,255,255,.12); stroke: rgba(255,255,255,.2); }
 .g-state { text-align: center; color: #9aa6b4; font: 500 12px var(--body); min-height: 1.2em; padding-bottom: 4px; }
 .g-class { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
@@ -188,7 +188,7 @@ body.touch #bshift.man #b-up, body.touch #bshift.man #b-dn { min-width: 58px; mi
 .g-bar { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; margin: 8px 0; align-items: end; } .g-bar span { font-size: 12px; letter-spacing: .14em; color: #cfd8e3; } .g-bar b { font-size: 18px; } .g-bar i { grid-column: 1 / -1; height: 5px; background: rgba(255,255,255,.18); } .g-bar u { display: block; height: 100%; background: #fff; text-decoration: none; }
 .g-strip { display: flex; gap: 8px; overflow-x: auto; padding: 12px 2px 8px; scroll-snap-type: x proximity; }
 .g-tile { flex: 0 0 clamp(120px, 17vw, 200px); aspect-ratio: 16 / 9; background: #fff; border: 0; border-bottom: 5px solid transparent; padding: 4px; position: relative; display: grid; place-items: center; cursor: pointer; color: #111; scroll-snap-align: center; transition: transform .12s; }
-.g-tile img { position: absolute; left: 6px; right: 6px; top: 20px; bottom: 6px; width: calc(100% - 12px); height: calc(100% - 26px); object-fit: contain; } .g-tile small { position: absolute; left: 6px; top: 4px; font: 600 10px var(--display); letter-spacing: .06em; text-transform: uppercase; color: #333; max-width: 90%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.g-tile img { max-width: 100%; max-height: 100%; object-fit: contain; } .g-tile small { position: absolute; left: 6px; top: 4px; font: 600 10px var(--display); letter-spacing: .06em; text-transform: uppercase; color: #333; max-width: 90%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .g-tile .g-ph { font: 700 28px var(--display); color: #b7bfca; } .g-tile.cur::after { content: '●'; position: absolute; right: 6px; top: 2px; color: var(--fo); font-size: 12px; }
 .g-tile.sel { border-bottom-color: var(--fo); transform: translateY(-6px) scale(1.04); box-shadow: 0 10px 18px rgba(0,0,0,.5); }
 .g-hints { display: flex; gap: 18px; align-items: center; padding: 6px 2px 2px; font: 500 14px var(--display); color: #dfe6ee; } .g-hints button { appearance: none; background: none; border: 0; color: inherit; font: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; } .g-hints i { font-style: normal; font-size: 11px; border: 2px solid #9aa6b4; border-radius: 50%; padding: 1px 7px; min-width: 14px; text-align: center; margin-right: 4px; }
@@ -1252,13 +1252,12 @@ class Renderer {
   // foto 2D do carro com fundo transparente: renderiza sobre fundo preto e sobre fundo branco e calcula o alfa pela diferença
   captureCar(car, o) {
     o = o || {}; const gl = this.gl, cv = this.canvas, oW = cv.width, oH = cv.height, W = 1280, H = 640, S = car.scale || 1;
-    // vista LATERAL padrao (frente para a direita), lente quase telefoto: todos os carros ficam com o mesmo enquadramento
-    const az = o.az == null ? -Math.PI / 2 : o.az, el = o.el == null ? 0.04 : o.el, dist = (o.dist || 19) * S, tgt = [0, 0.6 * S, 0];
+    const az = o.az == null ? -0.62 : o.az, el = o.el == null ? 0.14 : o.el, dist = (o.dist || 11.5) * S, tgt = [0, 0.62 * S, 0];
     const pos = [tgt[0] + Math.sin(az) * Math.cos(el) * dist, tgt[1] + Math.sin(el) * dist, tgt[2] + Math.cos(az) * Math.cos(el) * dist];
     const f = normalize3([tgt[0] - pos[0], tgt[1] - pos[1], tgt[2] - pos[2]]), r = normalize3([-f[2], 0, f[0]]), up = [r[1] * f[2] - r[2] * f[1], r[2] * f[0] - r[0] * f[2], r[0] * f[1] - r[1] * f[0]];
     cv.width = W; cv.height = H; this.aspect = W / H; gl.viewport(0, 0, W, H);
     const px = [new Uint8Array(W * H * 4), new Uint8Array(W * H * 4)], fr = Object.assign({}, car, { p: [0, car.hModel, 0] });
-    for (let i = 0; i < 2; i++) { this.render({ cam: { pos, right: r, up, fwd: f, fov: o.fov || 0.3 }, time: 0, car: fr, studio: { bg: i } }); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px[i]); }
+    for (let i = 0; i < 2; i++) { this.render({ cam: { pos, right: r, up, fwd: f, fov: o.fov || 0.5 }, time: 0, car: fr, studio: { bg: i } }); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px[i]); }
     cv.width = oW; cv.height = oH; this.aspect = oW / oH; gl.viewport(0, 0, oW, oH);
     const out = new Uint8ClampedArray(W * H * 4); let x0 = W, y0 = H, x1 = -1, y1 = -1;
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
