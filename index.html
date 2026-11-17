@@ -302,6 +302,10 @@ body.touch #p-start .keys div:not(:last-child) { display: none; }
   .g-bar { margin: 2px 0; } .g-bar b { font-size: 12px; } .g-bar span { letter-spacing: .1em; }
 }
 
+/* o item focado nunca fica escondido atras da barra de dicas de botoes */
+#menu button { scroll-margin: 90px 0; }
+#menu .mitem:focus, #menu .seg button:focus, #menu .ghost:focus, #menu .cta:focus { position: relative; z-index: 4; }
+
 #radio-ui { position: fixed; left: 50%; bottom: 18px; transform: translate(-50%, 20px); z-index: 30; min-width: 220px; max-width: 86vw; padding: 8px 16px 9px; border-radius: 12px; background: rgba(10,12,18,.78); border: 1px solid var(--rc, #888); border-left-width: 4px; color: #fff; pointer-events: none; opacity: 0; transition: opacity .25s, transform .25s; font: 600 13px var(--display, system-ui); display: flex; flex-direction: column; gap: 1px; }
 #radio-ui.on { opacity: 1; transform: translate(-50%, 0); }
 #radio-ui small { font-size: 10px; letter-spacing: .14em; color: var(--rc); }
@@ -1954,7 +1958,7 @@ const FH2 = (() => {
     if (id === 'p-pause') return L.find((b) => b.id === 'resume') || L[0];
     return L[0];
   }
-  function focusEl(el) { if (!el) return; body.classList.add('navmode'); try { el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) {} }
+  function focusEl(el) { if (!el) return; body.classList.add('navmode'); try { el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'center', inline: 'nearest' }); } catch (e) {} }
   function showPanel(id) { for (const k of ['p-start', 'p-opts']) { const p = $(k); if (p) p.hidden = k !== id; } }
   const oo = $('open-opts'), ob = $('opts-back');
   if (oo) oo.addEventListener('click', () => { showPanel('p-opts'); focusEl(items()[0]); });
@@ -2069,7 +2073,7 @@ const FH2 = (() => {
       } else hold.dir = null;
     }
     if (on) {
-      if (body.classList.contains('navmode') && !garageOpen()) { const L = items(); if (L.length && !L.includes(doc.activeElement)) focusEl(defaultItem(L)); }
+      if ((body.classList.contains('navmode') || body.classList.contains('pad-ui')) && !garageOpen()) { const L = items(); if (L.length && !L.includes(doc.activeElement)) focusEl(defaultItem(L)); }
       renderHints();
     }
   }

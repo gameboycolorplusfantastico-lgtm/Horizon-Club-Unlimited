@@ -104,3 +104,7 @@ body.touch #p-start .keys div:not(:last-child) { display: none; }
   .g-right { padding: 6px 10px; } .g-class { margin-bottom: 0; } .g-ci b { font-size: 16px; } .g-ci span { font-size: 14px; }
   .g-bar { margin: 2px 0; } .g-bar b { font-size: 12px; } .g-bar span { letter-spacing: .1em; }
 }
+
+/* o item focado nunca fica escondido atras da barra de dicas de botoes */
+#menu button { scroll-margin: 90px 0; }
+#menu .mitem:focus, #menu .seg button:focus, #menu .ghost:focus, #menu .cta:focus { position: relative; z-index: 4; }

@@ -54,7 +54,7 @@
     if (id === 'p-pause') return L.find((b) => b.id === 'resume') || L[0];
     return L[0];
   }
-  function focusEl(el) { if (!el) return; body.classList.add('navmode'); try { el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) {} }
+  function focusEl(el) { if (!el) return; body.classList.add('navmode'); try { el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'center', inline: 'nearest' }); } catch (e) {} }
   function showPanel(id) { for (const k of ['p-start', 'p-opts']) { const p = $(k); if (p) p.hidden = k !== id; } }
   const oo = $('open-opts'), ob = $('opts-back');
   if (oo) oo.addEventListener('click', () => { showPanel('p-opts'); focusEl(items()[0]); });
@@ -169,7 +169,7 @@
       } else hold.dir = null;
     }
     if (on) {
-      if (body.classList.contains('navmode') && !garageOpen()) { const L = items(); if (L.length && !L.includes(doc.activeElement)) focusEl(defaultItem(L)); }
+      if ((body.classList.contains('navmode') || body.classList.contains('pad-ui')) && !garageOpen()) { const L = items(); if (L.length && !L.includes(doc.activeElement)) focusEl(defaultItem(L)); }
       renderHints();
     }
   }
