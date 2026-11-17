@@ -3,7 +3,7 @@
   const $ = (id) => document.getElementById(id);
   const qs = new URLSearchParams(location.search);
   const isTouch = (matchMedia && matchMedia('(pointer:coarse)').matches) || 'ontouchstart' in window;
-  const cfg = { quality: 'auto', units: 'kmh', sound: true, camStyle: 'mlc', fx: 'on', mirror: 'on', trans: 'auto', paint: {} };
+  const cfg = { quality: 'auto', units: 'kmh', sound: true, camStyle: 'mlc', fx: 'on', mirror: 'on', shadows: 'on', trans: 'auto', paint: {} };
   const KEY = 'horizon-club-unlimited'; // (migra as configurações do nome antigo, 'asfalto-livre')
   try { Object.assign(cfg, JSON.parse(localStorage.getItem(KEY) || localStorage.getItem('asfalto-livre') || '{}')); } catch (e) {}
   if (qs.get('q')) cfg.quality = qs.get('q');
@@ -247,6 +247,7 @@
     $('camname').textContent = CAMS[camMode].n;
     for (const b of document.querySelectorAll('.seg-cs button')) b.classList.toggle('on', b.dataset.v === (camMode === 0 ? 'mlc' : 'simple'));
     for (const b of document.querySelectorAll('.seg-fx button')) b.classList.toggle('on', b.dataset.v === (cfg.fx === 'off' ? 'off' : 'on'));
+    for (const b of document.querySelectorAll('.seg-sh button')) b.classList.toggle('on', b.dataset.v === (cfg.shadows === 'off' ? 'off' : 'on'));
     for (const b of document.querySelectorAll('.seg-mr button')) b.classList.toggle('on', b.dataset.v === (cfg.mirror === 'off' ? 'off' : 'on'));
     for (const b of document.querySelectorAll('.seg-tr button')) b.classList.toggle('on', b.dataset.v === (cfg.trans === 'manual' ? 'manual' : 'auto'));
     document.body.classList.toggle('manual', cfg.trans === 'manual');
@@ -258,7 +259,7 @@
     if (b.id === 'b-trans') setTrans(cfg.trans === 'manual' ? 'auto' : 'manual', true); else Input.edge[b.id === 'b-up' ? 'shUp' : 'shDn'] = 1;
   });
   const segBind = (cls, key, fn) => { for (const box of document.querySelectorAll(cls)) box.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; cfg[key] = key === 'sound' ? b.dataset.v === 'on' : b.dataset.v; save(); if (key === 'sound') Sound.setOn(cfg.sound); sync(); fn && fn(); }); };
-  segBind('.seg-q', 'quality', () => { dynScale = 1; R && applyQuality(); }); segBind('.seg-u', 'units'); segBind('.seg-s', 'sound'); segBind('.seg-fx', 'fx'); segBind('.seg-mr', 'mirror');
+  segBind('.seg-q', 'quality', () => { dynScale = 1; R && applyQuality(); }); segBind('.seg-u', 'units'); segBind('.seg-s', 'sound'); segBind('.seg-fx', 'fx'); segBind('.seg-mr', 'mirror'); segBind('.seg-sh', 'shadows');
   segBind('.seg-tr', 'trans');
   segBind('.seg-cs', 'camStyle', () => { camMode = cfg.camStyle === 'mlc' ? 0 : 1; if (typeof CamMLC !== 'undefined') CamMLC.reset(); sync(); });
   $('cam-btn').addEventListener('click', () => { camMode = (camMode + 1) % CAMS.length; if (camMode < 2) { cfg.camStyle = camMode === 0 ? 'mlc' : 'simple'; save(); } sync(); });
@@ -304,6 +305,7 @@
       const h = world.hit, n = [h.nx, h.ny, h.nz], Rm = veh.R; let f = [Rm[2], Rm[5], Rm[8]]; const d = f[0] * n[0] + f[1] * n[1] + f[2] * n[2]; f = nrm([f[0] - n[0] * d, f[1] - n[1] * d, f[2] - n[2] * d]);
       shadow = { c: [veh.p[0], veh.p[1] - h.t, veh.p[2]], n, f, r: nrm(cross(f, n)), a: clamp(0.62 - (h.t - 0.55) * 0.09, 0, 0.62) };
     }
+    if (cfg.shadows === 'off') shadow = null;
     R.render({ cam: camOut, time: now / 1000, particles: P, car: { R: veh.R, p: veh.p, wheels: veh.wheels, steerA: veh.steerA, hModel: veh.P.hCom, scale: veh.P.scale, anchorY: veh.P.anchorY, brake: mode === 'play' ? (veh.gear < 0 ? veh.throttle : veh.brake) : 0, shadow, hideBody: mode === 'play' && !!CAMS[camMode].drv } });
     if (mode === 'play' || mode === 'pause') {
       const rc = typeof HudBlur !== 'undefined' ? HudBlur.mirrorRect(cfg, mode) : null; if (rc && (qName !== 'low' || qs.get('mirror'))) { const dd = R.drawDist; R.drawDist = Math.min(dd, 380); R.render({ cam: HudBlur.mirrorCam(veh), time: now / 1000, rect: rc, flipX: true, car: Object.assign({}, { R: veh.R, p: veh.p, wheels: veh.wheels, steerA: veh.steerA, hModel: veh.P.hCom, scale: veh.P.scale, anchorY: veh.P.anchorY, brake: 0, shadow: null, hideBody: true }) }); R.drawDist = dd; }
