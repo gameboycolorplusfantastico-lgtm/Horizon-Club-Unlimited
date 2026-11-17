@@ -1136,7 +1136,7 @@ class Renderer {
     }
     for (const s of man.sigs) {
       if (!near(s[0], s[1], s[2], 14)) continue;
-      M[0] = -s[4]; M[2] = s[3]; M[8] = -s[3]; M[10] = -s[4]; M[12] = s[0]; M[13] = s[1]; M[14] = s[2]; gl.uniformMatrix4fv(p.u_model, false, M); run(man.sig, this.sigState(s[5], s[6], T));
+      M[0] = s[4]; M[2] = -s[3]; M[8] = -s[3]; M[10] = -s[4]; M[12] = s[0]; /* modelo espelhado em X: poste no canto DIREITO de quem chega (mao direita), braco sobre a pista */ M[13] = s[1]; M[14] = s[2]; gl.uniformMatrix4fv(p.u_model, false, M); run(man.sig, this.sigState(s[5], s[6], T));
     }
   }
 
