@@ -42,6 +42,14 @@ void main(){
   v_uv = u_uvb0.xy + a_uv0 * (u_uvb0.zw - u_uvb0.xy); v_uv1 = u_uvb1.xy + a_uv1 * (u_uvb1.zw - u_uvb1.xy);
   gl_Position = u_vp * wp;
 }`;
+const VS_SHAD = `#version 300 es
+precision highp float;
+layout(location=0) in vec4 a_pos; layout(location=1) in vec4 a_nrm; layout(location=2) in vec2 a_uv0; layout(location=3) in vec2 a_uv1;
+uniform mat4 u_vp, u_model, u_proj; uniform vec3 u_pmin, u_psize;
+void main(){ vec3 p = u_pmin + a_pos.xyz * u_psize; gl_Position = u_vp * (u_proj * (u_model * vec4(p, 1.))); }`;
+const FS_SHAD = `#version 300 es
+precision mediump float; uniform float u_a; out vec4 o;
+void main(){ o = vec4(0., 0., 0.02, u_a); }`;
 const FS_WORLD = `#version 300 es
 precision highp float;
 in vec3 v_wp; in vec3 v_n; in vec2 v_uv; in vec2 v_uv1;
@@ -69,7 +77,7 @@ void main(){
 const FS_CAR = `#version 300 es
 precision highp float;
 in vec3 v_wp; in vec3 v_n; in vec2 v_uv; in vec2 v_uv1; in float v_lz; in vec3 v_lp;
-uniform vec4 u_zh[3], u_zt[3]; uniform float u_nzh, u_nzt, u_zhE, u_ztE; // zonas de luz (car.json -> lightZones): brilho por POSICAO no modelo, para carros cujas luzes estao pintadas dentro da textura da carroceria
+uniform vec3 u_etint; uniform vec4 u_zh[3], u_zt[3]; uniform float u_nzh, u_nzt, u_zhE, u_ztE; // zonas de luz (car.json -> lightZones): brilho por POSICAO no modelo, para carros cujas luzes estao pintadas dentro da textura da carroceria
 uniform sampler2D u_tex; uniform vec4 u_color; uniform vec4 u_paint, u_paint2, u_pref, u_pref2; uniform float u_atest; uniform float u_hasTex, u_metal, u_rough, u_coat, u_emis, u_lamp, u_headE, u_tailE, u_len;
 out vec4 o;
 ${GLSL_COMMON}
@@ -101,7 +109,7 @@ void main(){
   vec3 diff = alb * (1. - u_metal) * (u_sunCol * ndl + amb);
   vec3 col = diff + env * fres * mix(0.55, 1.0, 1. - u_rough) + spec;
   if (u_coat > 0.5) col += env * (0.04 + 0.96 * pow(1. - ndv, 5.)) * 0.55;
-  col += u_emis * alb * 6.;
+  col += u_emis * alb * u_etint * 6.;
   if (u_lamp > 0.5) { // material de luzes (atlas) com farol e lanterna juntos: frente acende branco, traseira acende vermelho
     float fz = smoothstep(0.32 * u_len, 0.38 * u_len, v_lz), rz = smoothstep(0.32 * u_len, 0.38 * u_len, -v_lz);
     col += alb * 6. * (fz * u_headE * vec3(1., 0.95, 0.82) + rz * u_tailE * vec3(1., 0.14, 0.09));
@@ -137,7 +145,7 @@ void main(){ vec2 q = gl_PointCoord * 2. - 1.; float d = dot(q, q); if (d > 1.) 
 class Renderer {
   constructor(canvas, opt) {
     this.canvas = canvas; this.opt = opt || {};
-    const gl = this.gl = canvas.getContext('webgl2', { antialias: !!this.opt.aa, alpha: false, depth: true, stencil: false, powerPreference: 'high-performance', preserveDrawingBuffer: !!this.opt.preserve });
+    const gl = this.gl = canvas.getContext('webgl2', { antialias: !!this.opt.aa, alpha: false, depth: true, stencil: true, powerPreference: 'high-performance', preserveDrawingBuffer: !!this.opt.preserve });
     if (!gl) throw new Error('WebGL2 indisponível');
     this.aniso = gl.getExtension('EXT_texture_filter_anisotropic'); this.maxAniso = this.aniso ? gl.getParameter(this.aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT) : 1;
     this.anisoLevel = 4;
@@ -146,8 +154,9 @@ class Renderer {
     this.planes = new Float64Array(24); this.drawDist = 900; this.time = 0; this.stats = { calls: 0, prims: 0 };
     this.env = { sun: normalize3([-0.55, 0.52, 0.40]), sunCol: [2.5, 1.95, 1.4], zenith: [0.10, 0.26, 0.58], horizon: [0.55, 0.70, 0.88], ground: [0.16, 0.17, 0.19], ambSky: [0.38, 0.50, 0.72], ambGround: [0.24, 0.21, 0.18], exposure: 0.82 };
     this.progs.world = this.prog(VS_MESH, FS_WORLD, ['u_vp', 'u_model', 'u_pmin', 'u_psize', 'u_uvb0', 'u_uvb1', 'u_tex', 'u_ao', 'u_hasAo', 'u_alphaTest', 'u_water', 'u_time', 'u_aoStr']);
-    this.progs.car = this.prog(VS_MESH, FS_CAR, ['u_vp', 'u_model', 'u_pmin', 'u_psize', 'u_uvb0', 'u_uvb1', 'u_tex', 'u_color', 'u_paint', 'u_paint2', 'u_pref', 'u_pref2', 'u_atest', 'u_hasTex', 'u_metal', 'u_rough', 'u_coat', 'u_emis', 'u_lamp', 'u_headE', 'u_tailE', 'u_len', 'u_zh[0]', 'u_zt[0]', 'u_nzh', 'u_nzt', 'u_zhE', 'u_ztE']);
+    this.progs.car = this.prog(VS_MESH, FS_CAR, ['u_vp', 'u_model', 'u_pmin', 'u_psize', 'u_uvb0', 'u_uvb1', 'u_tex', 'u_color', 'u_paint', 'u_paint2', 'u_pref', 'u_pref2', 'u_atest', 'u_hasTex', 'u_metal', 'u_rough', 'u_coat', 'u_emis', 'u_etint', 'u_lamp', 'u_headE', 'u_tailE', 'u_len', 'u_zh[0]', 'u_zt[0]', 'u_nzh', 'u_nzt', 'u_zhE', 'u_ztE']);
     this.progs.sky = this.prog(VS_SKY, FS_SKY, ['u_right', 'u_up', 'u_fwd', 'u_tanH', 'u_asp']);
+    this.progs.shad = this.prog(VS_SHAD, FS_SHAD, ['u_vp', 'u_model', 'u_proj', 'u_pmin', 'u_psize', 'u_a']);
     this.progs.quad = this.prog(VS_QUAD, FS_QUAD, ['u_vp', 'u_c', 'u_r', 'u_f', 'u_s', 'u_a']);
     this.progs.part = this.prog(VS_PART, FS_PART, ['u_vp', 'u_px', 'u_col']);
     this.quadVao = gl.createVertexArray(); gl.bindVertexArray(this.quadVao);
@@ -246,7 +255,7 @@ class Renderer {
       for (const pr of model.prims) {
         if (pr.lens >= 0) { const lit = pr.lens === st; if ((pr.on ? 1 : 0) !== (lit ? 1 : 0)) continue; }
         const m = man.mats[pr.m]; gl.uniform4f(p.u_color, 1, 1, 1, 1); gl.uniform1f(p.u_metal, m.metal); gl.uniform1f(p.u_rough, m.rough);
-        gl.uniform1f(p.u_emis, pr.lens >= 0 ? (pr.on ? 0.55 : 0) : m.emis);
+        gl.uniform1f(p.u_emis, pr.lens >= 0 ? (pr.on ? 0.55 : 0) : m.emis); gl.uniform3f(p.u_etint, 1, 1, 1);
         gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, m.glTex); this.drawPrim(p, pr);
       }
     };
@@ -459,7 +468,7 @@ class Renderer {
         const zOn = hasZ && m.pz === undefined; // a zona de luz nunca acende a PINTURA, so lente/carcaca/cromado (assim um erro de posicao nao suja a carroceria)
         gl.uniform1f(p.u_nzh, zOn ? Math.min(3, zh.length) : 0); gl.uniform1f(p.u_nzt, zOn ? Math.min(3, zt.length) : 0);
         gl.uniform4f(p.u_color, m.color[0], m.color[1], m.color[2], m.color[3]); gl.uniform1f(p.u_metal, m.metal); gl.uniform1f(p.u_rough, m.rough); gl.uniform1f(p.u_coat, m.coat ? 1 : 0);
-        const emis = (m.brake || m.name.indexOf('detailglassred') >= 0) ? (c.brake > 0.1 ? 0.55 : 0.08) : (m.head ? 0.2 : 0); gl.uniform1f(p.u_emis, emis);
+        const isB = m.brake || m.name.indexOf('detailglassred') >= 0, emis = isB ? (c.brake > 0.1 ? 1.15 : 0.16) : (m.head ? 0.85 : 0); gl.uniform1f(p.u_emis, emis); if (isB) gl.uniform3f(p.u_etint, 1, 0.2, 0.14); else if (m.head) gl.uniform3f(p.u_etint, 1, 0.96, 0.84); else gl.uniform3f(p.u_etint, 1, 1, 1);
         const z1 = m.pz !== undefined && man.paintZones ? man.paintZones[m.pz] : null, z2 = m.pz2 !== undefined && man.paintZones ? man.paintZones[m.pz2] : null;
         if ((z1 && z1.tint) || (z2 && z2.tint)) {
           const t1 = z1 && z1.tint, t2 = z2 && z2.tint;
@@ -467,7 +476,7 @@ class Renderer {
           if (z2) { gl.uniform4f(p.u_paint2, t2 ? t2[0] : 0, t2 ? t2[1] : 0, t2 ? t2[2] : 0, t2 ? 1 : 0); gl.uniform4f(p.u_pref2, m.pref2[0], m.pref2[1], m.pref2[2], 1); } else gl.uniform4f(p.u_pref2, 0, 0, 0, 0);
         } else gl.uniform4f(p.u_pref, 0, 0, 0, 0);
         gl.uniform1f(p.u_atest, m.mode === 'mask' ? 0.5 : 0);
-        gl.uniform1f(p.u_lamp, m.lamp ? 1 : 0); if (m.lamp) { gl.uniform1f(p.u_headE, 0.2); gl.uniform1f(p.u_tailE, c.brake > 0.1 ? 0.55 : 0.08); gl.uniform1f(p.u_len, man.length || 4.49); }
+        gl.uniform1f(p.u_lamp, m.lamp ? 1 : 0); if (m.lamp) { gl.uniform1f(p.u_headE, 0.85); gl.uniform1f(p.u_tailE, c.brake > 0.1 ? 1.15 : 0.16); gl.uniform1f(p.u_len, man.length || 4.49); }
         if (m.glTex) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, m.glTex); gl.uniform1f(p.u_hasTex, 1); } else gl.uniform1f(p.u_hasTex, 0);
         this.drawPrim(p, pr);
       }
@@ -477,9 +486,27 @@ class Renderer {
     const names = ['FL', 'FR', 'RL', 'RR']; if (!c.hideBody) for (let i = 0; i < 4; i++) drawGroup(man.wheels[names[i]].prims, mats.wheels[i]);
     gl.disable(gl.BLEND); gl.depthMask(true);
   }
+  // sombra projetada no chao (silhueta real do carro, na direcao do sol). stencil: cada pixel escurece uma vez so. 2 passadas com sol levemente deslocado = borda suave
+  drawCarShadow(c) {
+    const gl = this.gl, s = c.shadow, man = this.car, p = this.progs.shad; if (!s || !man || c.noShadow) return; const e = this.env; if (!e || !e.sun) return;
+    let L = [-e.sun[0], -Math.min(e.sun[1], -0.0) , -e.sun[2]]; L = [-e.sun[0], -Math.max(e.sun[1], 0.42), -e.sun[2]]; const ln = Math.hypot(L[0], L[1], L[2]); L = [L[0] / ln, L[1] / ln, L[2] / ln];
+    const n = s.n, mats = this.carMats(c), passes = this.opt.ao === false ? 1 : 2, alpha = (s.a || 0) * 0.78 / passes * (passes === 2 ? 1.25 : 1);
+    gl.useProgram(p.p); gl.uniformMatrix4fv(p.u_vp, false, this.vp);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(-3, -3); gl.enable(gl.STENCIL_TEST);
+    const d0 = n[0] * s.c[0] + n[1] * s.c[1] + n[2] * s.c[2];
+    for (let k = 0; k < passes; k++) {
+      const j = passes === 1 ? 0 : (k ? 0.07 : -0.07), Lk = [L[0] + j, L[1], L[2] + j * 0.6], nl = n[0] * Lk[0] + n[1] * Lk[1] + n[2] * Lk[2]; if (nl > -0.05) continue;
+      const m = new Float32Array(16); for (let i = 0; i < 3; i++) { for (let jx = 0; jx < 3; jx++) m[jx * 4 + i] = (i === jx ? 1 : 0) - Lk[i] * n[jx] / nl; m[12 + i] = Lk[i] * d0 / nl; } m[15] = 1;
+      gl.uniformMatrix4fv(p.u_proj, false, m); gl.uniform1f(p.u_a, alpha);
+      gl.clear(gl.STENCIL_BUFFER_BIT); gl.stencilFunc(gl.EQUAL, 0, 0xff); gl.stencilOp(gl.KEEP, gl.KEEP, gl.INCR);
+      const draw = (prims, model) => { gl.uniformMatrix4fv(p.u_model, false, model); for (const pr of prims) { const mt = man.mats[pr.m]; if (mt.mode === 'blend') continue; this.drawPrim(p, pr); } };
+      if (!c.hideBodyShadow) draw(man.body, mats.body); const names = ['FL', 'FR', 'RL', 'RR']; for (let i = 0; i < 4; i++) draw(man.wheels[names[i]].prims, mats.wheels[i]);
+    }
+    gl.disable(gl.STENCIL_TEST); gl.disable(gl.BLEND); gl.depthMask(true); gl.disable(gl.POLYGON_OFFSET_FILL);
+  }
   drawShadow(c) {
-    if (!c.shadow) return; const gl = this.gl, p = this.progs.quad, s = c.shadow; gl.useProgram(p.p); gl.uniformMatrix4fv(p.u_vp, false, this.vp);
-    gl.uniform3f(p.u_c, s.c[0] + s.n[0] * 0.05, s.c[1] + s.n[1] * 0.05, s.c[2] + s.n[2] * 0.05); gl.uniform3fv(p.u_r, s.r); gl.uniform3fv(p.u_f, s.f); gl.uniform2f(p.u_s, 1.35 * (c.scale || 1), 2.7 * (c.scale || 1)); gl.uniform1f(p.u_a, s.a);
+    if (!c.shadow) return; const gl = this.gl, p = this.progs.quad, s = c.shadow; this.drawCarShadow(c); gl.useProgram(p.p); gl.uniformMatrix4fv(p.u_vp, false, this.vp);
+    gl.uniform3f(p.u_c, s.c[0] + s.n[0] * 0.05, s.c[1] + s.n[1] * 0.05, s.c[2] + s.n[2] * 0.05); gl.uniform3fv(p.u_r, s.r); gl.uniform3fv(p.u_f, s.f); gl.uniform2f(p.u_s, 1.2 * (c.scale || 1), 2.45 * (c.scale || 1)); gl.uniform1f(p.u_a, s.a * 0.6);
     gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(-2, -2);
     gl.bindVertexArray(this.quadVao); gl.drawArrays(gl.TRIANGLES, 0, 6); gl.disable(gl.BLEND); gl.depthMask(true); gl.disable(gl.POLYGON_OFFSET_FILL);
   }

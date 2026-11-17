@@ -283,7 +283,9 @@ class Vehicle {
         if (brakeIn > 0.1 || (wh.drive && this.hb > 0.5)) om *= (1 - 8 * dt); wh.om = om; wh.spin += om * dt; continue;
       }
       const cv = (wh.dPrev - wh.d) / dt; // velocidade de compressão (m/s)
-      let sf = P.k * wh.c + (cv > 0 ? P.cBump : P.cReb) * cv + arbF[i];
+      // mola progressiva (endurece perto do fim do curso) + amortecedor com blow-off (alivia em impactos bruscos: buracos, zebras, saltos)
+      const cvK = cv > 0 ? (cv > 0.35 ? 0.35 + (cv - 0.35) * 0.5 : cv) : (cv < -0.5 ? -0.5 + (cv + 0.5) * 0.6 : cv);
+      let sf = P.k * wh.c * (1 + 0.35 * Math.min(1.5, wh.c / P.L0)) + (cv > 0 ? P.cBump : P.cReb) * cvK + arbF[i];
       if (wh.d < P.bumpZ) sf += P.bumpK * (P.bumpZ - wh.d);
       if (sf < 0) sf = 0; wh.Fz = sf; wh.sprF = sf;
       const nx = wh.nx, ny = wh.ny, nz = wh.nz;
