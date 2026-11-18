@@ -132,6 +132,7 @@ class World {
 
 // ===================== VEÍCULO =====================
 // Eixos locais: +X esquerda, +Y cima, +Z frente (iguais ao modelo do carro).
+const WATER_Y = 0; // nivel do mar (y do jogo)
 const SURF_GRIP = [1.0, 1.0, 0.62, 0.72]; // 0 outro, 1 asfalto, 2 grama, 3 terra/areia/rocha
 const GEARS = [0, 3.55, 2.30, 1.66, 1.28, 1.00, 0.80], FINAL = 3.46, REV = 3.4;
 // Escala do carro em relação ao modelo original (4,49 m). 1 = tamanho original. Tudo (render, rodas, colisão, câmera) deriva deste valor.
@@ -173,6 +174,9 @@ class Vehicle {
       this.spheres.splice(this.spheres.length - 2, 2);
       for (const z of zs) for (const x of [-0.3 * S, 0.3 * S]) this.spheres.push([x, yc, z, rr]);
     }
+    // casco flutuante: 8 pontos de empuxo (x,y,z locais) na altura da soleira
+    { const yb = -Math.max(0.12 * S, P.hCom - 0.22 * S); this.buoy = []; for (const z of [-1.7, -0.55, 0.55, 1.7]) for (const x of [-0.8, 0.8]) this.buoy.push([x * S, yb, z * S]); }
+    this.floatT = 0; this.sub = 0;
     this.invM = 1 / P.mass;
     this.manual = false; this.shiftReq = 0; // câmbio manual (ligado pelo jogo) e pedido de troca pendente
     this.gear = 1; this.rpm = 900; this.shiftT = 0; this.shiftCut = 0; this.throttle = 0; this.brake = 0; this.hb = 0; this.steerIn = 0; this.steerA = 0;
@@ -298,7 +302,7 @@ class Vehicle {
       fwx -= nx * dn; fwy -= ny * dn; fwz -= nz * dn; const fl = Math.hypot(fwx, fwy, fwz) || 1; fwx /= fl; fwy /= fl; fwz /= fl;
       const lx = ny * fwz - nz * fwy, ly = nz * fwx - nx * fwz, lz = nx * fwy - ny * fwx; // esquerda = n x f
       const vlong = vcx * fwx + vcy * fwy + vcz * fwz, vlat = vcx * lx + vcy * ly + vcz * lz;
-      const grip = P.mu * SURF_GRIP[wh.surf] * (wh.surf >= 2 ? P.offroad : 1);
+      const grip = P.mu * SURF_GRIP[wh.surf] * (wh.surf >= 2 ? P.offroad : 1) * (wh.py < WATER_Y + 0.03 ? (wh.py < WATER_Y - 0.25 ? 0.05 : 0.3) : 1); // pneu na agua: quase sem aderencia
       // freios / freio de mão (ABS limita o torque ao que o pneu aguenta)
       let Tb = 0; const isRear = !wh.steer;
       const brkBias = isRear ? 0.4 : 0.6;
@@ -335,9 +339,28 @@ class Vehicle {
     // ---- aerodinâmica ----
     const dragK = 0.5 * 1.2 * P.cdA * spd; Fx -= dragK * v[0]; Fy -= dragK * v[1]; Fz -= dragK * v[2];
     const down = 0.5 * 1.2 * P.clA * spd * spd; Fx -= ux * down; Fy -= uy * down; Fz -= uz * down;
-    // ---- água ----
-    this.inWater = p[1] < 0.15 && grounded < 2 ? this.inWater + dt : (p[1] < -0.5 ? this.inWater + dt : 0);
-    if (this.inWater > 0) { const dk = 4000 * Math.min(1, this.inWater * 2); Fx -= dk * v[0]; Fy -= dk * v[1] * 0.5; Fz -= dk * v[2]; }
+    // ---- água: flutuação (empuxo em 8 pontos do casco, com amortecimento), arrasto e uma "hélice" fraca para voltar à margem ----
+    let sub = 0;
+    if (p[1] < WATER_Y + 1.6 * P.scale) {
+      const d0 = 0.25 * P.scale, kB = P.mass * 9.81 / (8 * d0), cB = 2 * 0.4 * Math.sqrt(kB * P.mass / 8);
+      for (const bp of this.buoy) {
+        const rx = R[0] * bp[0] + R[1] * bp[1] + R[2] * bp[2], ry = R[3] * bp[0] + R[4] * bp[1] + R[5] * bp[2], rz = R[6] * bp[0] + R[7] * bp[1] + R[8] * bp[2];
+        const d = WATER_Y - (p[1] + ry); if (d <= 0) continue;
+        const vy = v[1] + w[2] * rx - w[0] * rz; let f = kB * Math.min(d, 1.4 * P.scale) - cB * vy; if (f < 0) f = 0;
+        Fy += f; Tx -= rz * f; Tz += rx * f; sub += Math.min(1, d / d0) / 8;
+      }
+    }
+    this.sub = sub; this.inWater = sub > 0.03 ? this.inWater + dt : 0;
+    this.floatT = sub > 0.3 && grounded < 2 ? this.floatT + dt : Math.max(0, this.floatT - 2 * dt);
+    if (sub > 0) {
+      const lin = P.mass * (0.25 + 0.9 * sub), quad = P.mass * 0.02 * sub;
+      Fx -= (lin + quad * Math.abs(v[0])) * v[0]; Fz -= (lin + quad * Math.abs(v[2])) * v[2]; Fy -= P.mass * 0.15 * sub * v[1];
+      const wd = 1 - Math.min(0.9, 1.5 * sub * dt * 8); w[0] *= wd; w[1] *= wd; w[2] *= wd;
+      if (sub > 0.25 && grounded < 3) { // propulsão improvisada (rodas/jato): acelera para frente (ou ré) e esterça devagar
+        const fl = Math.hypot(R[2], R[8]) || 1, fx = R[2] / fl, fz = R[8] / fl, thr = ((rev ? -1 : 1) * driveIn) * P.mass * 3.2 * sub;
+        Fx += fx * thr; Fz += fz * thr; Ty += this.steerA * P.mass * 30 * Math.min(1, Math.abs(this.fwdSpeed) / 3 + 0.25) * sub * (rev ? -1 : 1);
+      }
+    }
     // ---- integração ----
     const im = this.invM;
     v[0] += Fx * im * dt; v[1] += Fy * im * dt; v[2] += Fz * im * dt;

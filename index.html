@@ -108,6 +108,31 @@ body.touch #toast { top: 74px; }
 .sw.on { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(255,176,46,.4); }
 .sw.orig { background: conic-gradient(#e6e6e6 0 25%, #4a4f57 0 50%, #e6e6e6 0 75%, #4a4f57 0); }
 .swcustom { width: 36px; height: 32px; padding: 0; border: 2px solid rgba(255,255,255,.28); border-radius: 8px; background: none; cursor: pointer; }
+/* ===== mapa grande ===== */
+#bigmap { position: fixed; inset: 0; z-index: 80; background: #0e2c4c; color: #fff; touch-action: none; user-select: none; -webkit-user-select: none; }
+#bigmap[hidden] { display: none; }
+#bm-cv { position: absolute; inset: 0; display: block; cursor: grab; }
+#bm-cv:active { cursor: grabbing; }
+.bm-top { position: absolute; left: 0; right: 0; top: 0; display: flex; justify-content: space-between; align-items: flex-start; padding: max(12px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); pointer-events: none; background: linear-gradient(#0a1420cc, transparent); height: 84px; box-sizing: border-box; }
+.bm-title { display: flex; flex-direction: column; gap: 2px; }
+.bm-title b { font: 800 28px var(--display, sans-serif); letter-spacing: .14em; }
+.bm-title span { font: 600 11px var(--display, sans-serif); letter-spacing: .12em; color: #9fb4c8; text-transform: uppercase; }
+.bm-x, .bm-tools button, .bm-wp button { pointer-events: auto; font: 800 14px var(--display, sans-serif); letter-spacing: .08em; color: #fff; background: rgba(0,0,0,.55); border: 2px solid #fff; border-radius: 4px; cursor: pointer; }
+.bm-x { padding: 10px 18px; min-height: 44px; }
+.bm-x:hover, .bm-tools button:hover, .bm-wp button:hover, .bm-x:focus-visible { background: #e53935; outline: none; }
+.bm-tools { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 8px; }
+.bm-tools button { width: 46px; height: 46px; font-size: 22px; line-height: 1; padding: 0; }
+.bm-legend { position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); bottom: 62px; display: flex; flex-direction: column; gap: 5px; padding: 10px 12px; background: rgba(8,16,26,.72); border: 1px solid #ffffff33; border-radius: 4px; font: 600 11px var(--display, sans-serif); letter-spacing: .06em; pointer-events: none; }
+.bm-legend span { display: flex; align-items: center; gap: 8px; } .bm-legend i { width: 22px; height: 8px; border-radius: 2px; border: 1px solid #0006; display: inline-block; }
+.lg-hw { background: #fababa; background: #fab940 !important; } .lg-rd { background: #cdd8e4; } .lg-gr { background: #2e4e3e; } .lg-bd { background: #4a5a70; } .lg-wt { background: #0e2c4c; border-color: #fff4 !important; }
+.bm-wp { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 8px 12px; background: rgba(8,16,26,.85); border: 2px solid #ffe21a; border-radius: 4px; font: 700 14px var(--display, sans-serif); }
+.bm-wp b { color: #ffe21a; letter-spacing: .12em; } .bm-wp button { font-size: 12px; padding: 6px 10px; }
+.bm-hints { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; gap: 22px; flex-wrap: wrap; padding: 10px 16px max(10px, env(safe-area-inset-bottom, 0px)); background: linear-gradient(transparent, #0a1420dd); font: 600 12px var(--display, sans-serif); letter-spacing: .06em; pointer-events: none; }
+.bm-hints span { display: flex; align-items: center; gap: 6px; } .bm-hints i { font-style: normal; font-weight: 700; padding: 3px 8px; border: 1px solid #ffffff88; border-radius: 4px; background: #0008; }
+.bm-hints .pd { display: none; border-radius: 50%; } body.pad-ui .bm-hints .pd { display: inline-block; } body.pad-ui .bm-hints .kb { display: none; }
+.bm-hints .a { background: #3a9d3a; } .bm-hints .y { background: #c9a017; }
+@media (max-width: 640px) { .bm-hints { display: none; } .bm-legend { bottom: 14px; } .bm-title b { font-size: 22px; } }
+
 /* ===== HUD estilo Blur ===== */
 :root { --bl: #3fd0ff; --bl2: rgba(8, 22, 38, .72); --gold: #ffc43d; }
 body.blurhud #speedo { display: none !important; }
@@ -330,7 +355,7 @@ body.touch #tbtns #b-radio { font-size: 10px; }
     </div>
     <div id="toast" role="status"></div>
     <div id="radio-ui"></div>
-    <div id="hint"><span><b>W A S D</b>dirigir</span><span><b>Espaço</b>freio de mão</span><span><b>C</b>câmera</span><span><b>R</b>desvirar</span><span><b>G</b>câmbio</span><span><b>N</b>rádio</span><span><b>E / Q</b>marcha</span><span><b>T</b>voltar à rua</span><span><b>Esc</b>pausa</span></div>
+    <div id="hint"><span><b>W A S D</b>dirigir</span><span><b>Espaço</b>freio de mão</span><span><b>C</b>câmera</span><span><b>R</b>desvirar</span><span><b>G</b>câmbio</span><span><b>N</b>rádio</span><span><b>M</b>mapa</span><span><b>E / Q</b>marcha</span><span><b>T</b>voltar à rua</span><span><b>Esc</b>pausa</span></div>
     <button id="b-pause" aria-label="Pausar"><svg viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg></button>
     <div id="tbtns"><button id="b-cam">CAM</button><button id="b-reset">DESV.</button><button id="b-radio">RÁDIO</button></div>
     <div id="dbg"></div>
@@ -385,7 +410,7 @@ body.touch #tbtns #b-radio { font-size: 10px; }
       <div class="row"><span>Sombras</span><div class="seg seg-sh"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
       <div class="row"><span>Câmbio</span><div class="seg seg-tr"><button data-v="auto">Automático</button><button data-v="manual">Manual</button></div></div>
       <div class="row"><span>Câmera atual: <b id="camname"></b></span><button class="ghost" id="cam-btn">Trocar câmera</button></div>
-      <div class="grid2"><button class="ghost" id="garage-btn">Garagem</button><button class="ghost" id="reset-btn">Desvirar o carro</button><button class="ghost" id="home-btn">Voltar ao ponto inicial</button><button class="ghost" id="fs-btn" data-fs>Tela cheia</button><button class="cta" id="resume">Continuar</button></div>
+      <div class="grid2"><button class="ghost" id="garage-btn">Garagem</button><button class="ghost" id="map-btn">Mapa</button><button class="ghost" id="reset-btn">Desvirar o carro</button><button class="ghost" id="home-btn">Voltar ao ponto inicial</button><button class="ghost" id="fs-btn" data-fs>Tela cheia</button><button class="cta" id="resume">Continuar</button></div>
     </div>
     <button class="fs-float" id="fs-float" data-fs-icon aria-label="Tela cheia" title="Tela cheia (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="fs-in" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><path class="fs-out" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button>
     <div class="mhints" id="mhints" aria-hidden="true"></div>
@@ -526,6 +551,7 @@ class World {
 
 // ===================== VEÍCULO =====================
 // Eixos locais: +X esquerda, +Y cima, +Z frente (iguais ao modelo do carro).
+const WATER_Y = 0; // nivel do mar (y do jogo)
 const SURF_GRIP = [1.0, 1.0, 0.62, 0.72]; // 0 outro, 1 asfalto, 2 grama, 3 terra/areia/rocha
 const GEARS = [0, 3.55, 2.30, 1.66, 1.28, 1.00, 0.80], FINAL = 3.46, REV = 3.4;
 // Escala do carro em relação ao modelo original (4,49 m). 1 = tamanho original. Tudo (render, rodas, colisão, câmera) deriva deste valor.
@@ -567,6 +593,9 @@ class Vehicle {
       this.spheres.splice(this.spheres.length - 2, 2);
       for (const z of zs) for (const x of [-0.3 * S, 0.3 * S]) this.spheres.push([x, yc, z, rr]);
     }
+    // casco flutuante: 8 pontos de empuxo (x,y,z locais) na altura da soleira
+    { const yb = -Math.max(0.12 * S, P.hCom - 0.22 * S); this.buoy = []; for (const z of [-1.7, -0.55, 0.55, 1.7]) for (const x of [-0.8, 0.8]) this.buoy.push([x * S, yb, z * S]); }
+    this.floatT = 0; this.sub = 0;
     this.invM = 1 / P.mass;
     this.manual = false; this.shiftReq = 0; // câmbio manual (ligado pelo jogo) e pedido de troca pendente
     this.gear = 1; this.rpm = 900; this.shiftT = 0; this.shiftCut = 0; this.throttle = 0; this.brake = 0; this.hb = 0; this.steerIn = 0; this.steerA = 0;
@@ -692,7 +721,7 @@ class Vehicle {
       fwx -= nx * dn; fwy -= ny * dn; fwz -= nz * dn; const fl = Math.hypot(fwx, fwy, fwz) || 1; fwx /= fl; fwy /= fl; fwz /= fl;
       const lx = ny * fwz - nz * fwy, ly = nz * fwx - nx * fwz, lz = nx * fwy - ny * fwx; // esquerda = n x f
       const vlong = vcx * fwx + vcy * fwy + vcz * fwz, vlat = vcx * lx + vcy * ly + vcz * lz;
-      const grip = P.mu * SURF_GRIP[wh.surf] * (wh.surf >= 2 ? P.offroad : 1);
+      const grip = P.mu * SURF_GRIP[wh.surf] * (wh.surf >= 2 ? P.offroad : 1) * (wh.py < WATER_Y + 0.03 ? (wh.py < WATER_Y - 0.25 ? 0.05 : 0.3) : 1); // pneu na agua: quase sem aderencia
       // freios / freio de mão (ABS limita o torque ao que o pneu aguenta)
       let Tb = 0; const isRear = !wh.steer;
       const brkBias = isRear ? 0.4 : 0.6;
@@ -729,9 +758,28 @@ class Vehicle {
     // ---- aerodinâmica ----
     const dragK = 0.5 * 1.2 * P.cdA * spd; Fx -= dragK * v[0]; Fy -= dragK * v[1]; Fz -= dragK * v[2];
     const down = 0.5 * 1.2 * P.clA * spd * spd; Fx -= ux * down; Fy -= uy * down; Fz -= uz * down;
-    // ---- água ----
-    this.inWater = p[1] < 0.15 && grounded < 2 ? this.inWater + dt : (p[1] < -0.5 ? this.inWater + dt : 0);
-    if (this.inWater > 0) { const dk = 4000 * Math.min(1, this.inWater * 2); Fx -= dk * v[0]; Fy -= dk * v[1] * 0.5; Fz -= dk * v[2]; }
+    // ---- água: flutuação (empuxo em 8 pontos do casco, com amortecimento), arrasto e uma "hélice" fraca para voltar à margem ----
+    let sub = 0;
+    if (p[1] < WATER_Y + 1.6 * P.scale) {
+      const d0 = 0.25 * P.scale, kB = P.mass * 9.81 / (8 * d0), cB = 2 * 0.4 * Math.sqrt(kB * P.mass / 8);
+      for (const bp of this.buoy) {
+        const rx = R[0] * bp[0] + R[1] * bp[1] + R[2] * bp[2], ry = R[3] * bp[0] + R[4] * bp[1] + R[5] * bp[2], rz = R[6] * bp[0] + R[7] * bp[1] + R[8] * bp[2];
+        const d = WATER_Y - (p[1] + ry); if (d <= 0) continue;
+        const vy = v[1] + w[2] * rx - w[0] * rz; let f = kB * Math.min(d, 1.4 * P.scale) - cB * vy; if (f < 0) f = 0;
+        Fy += f; Tx -= rz * f; Tz += rx * f; sub += Math.min(1, d / d0) / 8;
+      }
+    }
+    this.sub = sub; this.inWater = sub > 0.03 ? this.inWater + dt : 0;
+    this.floatT = sub > 0.3 && grounded < 2 ? this.floatT + dt : Math.max(0, this.floatT - 2 * dt);
+    if (sub > 0) {
+      const lin = P.mass * (0.25 + 0.9 * sub), quad = P.mass * 0.02 * sub;
+      Fx -= (lin + quad * Math.abs(v[0])) * v[0]; Fz -= (lin + quad * Math.abs(v[2])) * v[2]; Fy -= P.mass * 0.15 * sub * v[1];
+      const wd = 1 - Math.min(0.9, 1.5 * sub * dt * 8); w[0] *= wd; w[1] *= wd; w[2] *= wd;
+      if (sub > 0.25 && grounded < 3) { // propulsão improvisada (rodas/jato): acelera para frente (ou ré) e esterça devagar
+        const fl = Math.hypot(R[2], R[8]) || 1, fx = R[2] / fl, fz = R[8] / fl, thr = ((rev ? -1 : 1) * driveIn) * P.mass * 3.2 * sub;
+        Fx += fx * thr; Fz += fz * thr; Ty += this.steerA * P.mass * 30 * Math.min(1, Math.abs(this.fwdSpeed) / 3 + 0.25) * sub * (rev ? -1 : 1);
+      }
+    }
     // ---- integração ----
     const im = this.invM;
     v[0] += Fx * im * dt; v[1] += Fy * im * dt; v[2] += Fz * im * dt;
@@ -920,6 +968,13 @@ void main(){ vec3 p = u_pmin + a_pos.xyz * u_psize; gl_Position = u_vp * (u_proj
 const FS_SHAD = `#version 300 es
 precision mediump float; uniform float u_a; out vec4 o;
 void main(){ o = vec4(0., 0., 0.02, u_a); }`;
+// mar infinito: um quadrado que acompanha a camera (y = nivel do mar) ate sumir na neblina; usa a mesma textura/ondas do mar do mapa
+const VS_SEA = `#version 300 es
+precision highp float;
+uniform mat4 u_vp; uniform vec2 u_c; uniform float u_r, u_y;
+out vec3 v_wp; out vec3 v_n; out vec2 v_uv; out vec2 v_uv1;
+const vec2 Q[6] = vec2[6](vec2(-1.,-1.), vec2(1.,-1.), vec2(-1.,1.), vec2(-1.,1.), vec2(1.,-1.), vec2(1.,1.));
+void main(){ vec2 q = Q[gl_VertexID]; vec3 wp = vec3(u_c.x + q.x * u_r, u_y, u_c.y + q.y * u_r); v_wp = wp; v_n = vec3(0., 1., 0.); v_uv = vec2(wp.x * 0.01512, -wp.z * 0.01512); v_uv1 = v_uv; gl_Position = u_vp * vec4(wp, 1.); }`;
 const FS_WORLD = `#version 300 es
 precision highp float;
 in vec3 v_wp; in vec3 v_n; in vec2 v_uv; in vec2 v_uv1;
@@ -944,6 +999,7 @@ void main(){
   col = applyFog(col, v_wp);
   o = vec4(tonemap(col), t.a);
 }`;
+const FS_SEA = FS_WORLD.replace('in vec3 v_wp; in vec3 v_n; in vec2 v_uv; in vec2 v_uv1;', 'in vec3 v_wp; in vec3 v_n; in vec2 v_uv; in vec2 v_uv1;'); // mesmo fragmento do mundo, com u_water=1
 const FS_CAR = `#version 300 es
 precision highp float;
 in vec3 v_wp; in vec3 v_n; in vec2 v_uv; in vec2 v_uv1; in float v_lz; in vec3 v_lp;
@@ -1026,6 +1082,7 @@ class Renderer {
     this.progs.world = this.prog(VS_MESH, FS_WORLD, ['u_vp', 'u_model', 'u_pmin', 'u_psize', 'u_uvb0', 'u_uvb1', 'u_tex', 'u_ao', 'u_hasAo', 'u_alphaTest', 'u_water', 'u_time', 'u_aoStr']);
     this.progs.car = this.prog(VS_MESH, FS_CAR, ['u_vp', 'u_model', 'u_pmin', 'u_psize', 'u_uvb0', 'u_uvb1', 'u_tex', 'u_color', 'u_paint', 'u_paint2', 'u_pref', 'u_pref2', 'u_atest', 'u_hasTex', 'u_metal', 'u_rough', 'u_coat', 'u_emis', 'u_etint', 'u_lamp', 'u_headE', 'u_tailE', 'u_len', 'u_zh[0]', 'u_zt[0]', 'u_nzh', 'u_nzt', 'u_zhE', 'u_ztE']);
     this.progs.sky = this.prog(VS_SKY, FS_SKY, ['u_right', 'u_up', 'u_fwd', 'u_tanH', 'u_asp']);
+    this.progs.sea = this.prog(VS_SEA, FS_SEA, ['u_vp', 'u_c', 'u_r', 'u_y', 'u_tex', 'u_ao', 'u_hasAo', 'u_alphaTest', 'u_water', 'u_time', 'u_aoStr']);
     this.progs.shad = this.prog(VS_SHAD, FS_SHAD, ['u_vp', 'u_model', 'u_proj', 'u_pmin', 'u_psize', 'u_a']);
     this.progs.quad = this.prog(VS_QUAD, FS_QUAD, ['u_vp', 'u_c', 'u_r', 'u_f', 'u_s', 'u_a']);
     this.progs.part = this.prog(VS_PART, FS_PART, ['u_vp', 'u_px', 'u_col']);
@@ -1257,7 +1314,7 @@ class Renderer {
     let s = this.progs.sky; if (!F.studio) { gl.useProgram(s.p); this.setEnv(s); gl.uniform3fv(s.u_right, cam.right); gl.uniform3fv(s.u_up, cam.up); gl.uniform3fv(s.u_fwd, cam.fwd);
     gl.uniform1f(s.u_tanH, Math.tan(cam.fov / 2)); gl.uniform1f(s.u_asp, aspect); gl.depthMask(false); gl.bindVertexArray(this.emptyVao); gl.drawArrays(gl.TRIANGLES, 0, 3); gl.depthMask(true); }
     // cidade
-    if (this.city && !F.studio) this.drawCity(false);
+    if (this.city && !F.studio) { this.drawSea(); this.drawCity(false); }
     // sombra
     if (this.props && !F.studio) this.drawProps();
     if (F.car && !F.studio) this.drawShadow(F.car);
@@ -1294,6 +1351,13 @@ class Renderer {
     return c2.toDataURL('image/png');
   }
 
+  drawSea() {
+    const gl = this.gl, p = this.progs.sea, man = this.city, mt = man.mats.find((m) => m.name === 'sea'); if (!mt || !mt.glTex) return; const cp = this.camPos;
+    gl.useProgram(p.p); this.setEnv(p); gl.uniformMatrix4fv(p.u_vp, false, this.vp); gl.uniform2f(p.u_c, cp[0], cp[2]); gl.uniform1f(p.u_r, Math.min(3400, this.drawDist * 1.5)); gl.uniform1f(p.u_y, -0.03);
+    gl.uniform1f(p.u_time, this.time); gl.uniform1f(p.u_water, 1); gl.uniform1f(p.u_alphaTest, 0); gl.uniform1f(p.u_hasAo, 0); gl.uniform1f(p.u_aoStr, 0); gl.uniform1i(p.u_tex, 0); gl.uniform1i(p.u_ao, 1);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, mt.glTex); gl.disable(gl.BLEND); gl.depthMask(true); gl.disable(gl.CULL_FACE);
+    gl.bindVertexArray(null); gl.drawArrays(gl.TRIANGLES, 0, 6);
+  }
   drawCity(blendPass) {
     const gl = this.gl, p = this.progs.world, man = this.city, cp = this.camPos, dd = this.drawDist; gl.useProgram(p.p); this.setEnv(p);
     gl.uniformMatrix4fv(p.u_vp, false, this.vp); gl.uniformMatrix4fv(p.u_model, false, this.ident); gl.uniform1f(p.u_time, this.time); gl.uniform1f(p.u_aoStr, this.opt.ao === false ? 0 : 0.9);
@@ -1399,7 +1463,7 @@ const Input = {
       this.keys[e.code] = 1; this.lastDevice = 'kbd';
       if (e.code === 'KeyE' || e.code === 'PageUp') this.edge.shUp = 1; if (e.code === 'KeyQ' || e.code === 'PageDown') this.edge.shDn = 1; if (e.code === 'KeyG') this.edge.trans = 1; // câmbio: E sobe, Q desce, G troca auto/manual
       if (e.code === 'KeyC') this.edge.cam = 1; if (e.code === 'KeyR') this.edge.reset = 1; if (e.code === 'KeyT') this.edge.respawn = 1;
-      if (e.code === 'Escape' || e.code === 'KeyP' || e.code === 'Enter') this.edge.pause = 1; if (e.code === 'KeyM') this.edge.mute = 1; if (e.code === 'KeyH') this.edge.hud = 1;
+      if (e.code === 'Escape' || e.code === 'KeyP' || e.code === 'Enter') this.edge.pause = 1; if (e.code === 'KeyU') this.edge.mute = 1; if (e.code === 'KeyM' && !e.repeat) this.edge.map = 1; /* M = mapa, U = som liga/desliga */ if (e.code === 'KeyH') this.edge.hud = 1;
       if (this.isGameKey(e.code)) e.preventDefault();
     });
     addEventListener('keyup', (e) => { this.keys[e.code] = 0; });
@@ -1429,7 +1493,7 @@ const Input = {
       if (any) this.lastDevice = 'pad';
       if (this.lastDevice === 'pad') { thr = Math.max(thr, rt, up); brk = Math.max(brk, lt, down); hb = Math.max(hb, a > 0.5 || x > 0.5 ? 1 : 0); if (Math.abs(ax) > 0.001 || !(kL || kR)) st = ax; }
       const pb = this.prevBtn; const rise = (i, v) => (v > 0.5 && !(pb[i] > 0.5));
-      if (rise(3, y)) this.edge.cam = 1; if (rise(1, b)) this.edge.reset = 1; if (rise(9, start)) this.edge.pause = 1; if (rise(8, back)) this.edge.respawn = 1; if (rise(0, a)) this.edge.padA = 1;
+      if (rise(3, y)) this.edge.cam = 1; if (rise(1, b)) this.edge.reset = 1; if (rise(9, start)) this.edge.pause = 1; if (back > 0.5) { this.backT = (this.backT || 0) + dt; if (this.backT > 0.7 && !this.backFired) { this.edge.respawn = 1; this.backFired = true; } } else { if (this.backT > 0 && !this.backFired) this.edge.map = 1; this.backT = 0; this.backFired = false; } // Back/View: toque = mapa, segurar = voltar à rua if (rise(0, a)) this.edge.padA = 1;
       const lb = this.padBtn(g, 4), rb = this.padBtn(g, 5); if (rise(5, rb)) this.edge.shUp = 1; if (rise(4, lb)) this.edge.shDn = 1; pb[5] = rb; pb[4] = lb; // RB sobe, LB desce (câmbio manual)
       pb[3] = y; pb[1] = b; pb[9] = start; pb[8] = back; pb[0] = a;
       orbit = Math.abs(g.axes[2] || 0) > 0.2 ? g.axes[2] : 0;
@@ -1666,6 +1730,100 @@ const Sound = {
     const o = c.createOscillator(); o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(38, t + 0.35); const g2 = c.createGain(); g2.gain.setValueAtTime(a * 0.8, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.4); o.connect(g2).connect(this.bus); o.start(t); o.stop(t + 0.45);
   },
 };
+
+// ===================== MAPA GRANDE (estilo Forza Horizon) =====================
+// M (teclado) · toque no minimapa · Back/View do controle · botão "Mapa" na pausa. Arrastar/rolar/pinça = mover e dar zoom.
+// Clique/toque (ou Enter/A no centro da mira) marca um destino, que aparece no minimapa. Imagem: assets/map_full.webp (gerada de tools/mapgen.py).
+const BigMap = (() => {
+  const $ = (id) => document.getElementById(id);
+  let root, cv, cx, img = null, meta = null, loaded = false, shown = false, raf = 0, menuWas = false, lastT = 0;
+  const V = { x: 1200, z: -1500, s: 0.5 }, keys = {}, ptr = new Map(); let pinch = 0, moved = 0, padPrev = {}, dpr = 1, W = 0, H = 0;
+  const G = () => window.__game;
+  function build() {
+    if (root) return; const ui = document.body;
+    root = document.createElement('div'); root.id = 'bigmap'; root.hidden = true;
+    root.innerHTML = '<canvas id="bm-cv"></canvas>' +
+      '<div class="bm-top"><div class="bm-title"><b>MAPA</b><span id="bm-pos"></span></div><button class="bm-x" id="bm-x" aria-label="Fechar mapa">✕ FECHAR</button></div>' +
+      '<div class="bm-tools"><button id="bm-in" aria-label="Aproximar">+</button><button id="bm-out" aria-label="Afastar">−</button><button id="bm-me" aria-label="Centralizar no carro" title="Centralizar no carro">◎</button><button id="bm-all" aria-label="Mapa todo" title="Ver o mapa todo">▦</button></div>' +
+      '<div class="bm-legend"><span><i class="lg-hw"></i>Via expressa / viaduto</span><span><i class="lg-rd"></i>Ruas</span><span><i class="lg-gr"></i>Parques</span><span><i class="lg-bd"></i>Prédios</span><span><i class="lg-wt"></i>Mar</span></div>' +
+      '<div class="bm-wp" id="bm-wp" hidden><b>DESTINO</b><span id="bm-wpd"></span><button id="bm-wpx">Remover</button></div>' +
+      '<div class="bm-hints"><span><i class="kb">M</i><i class="pd">▭</i>Fechar</span><span><i class="kb">Arrastar</i><i class="pd">✛</i>Mover</span><span><i class="kb">Roda</i><i class="pd">LB·RB</i>Zoom</span><span><i class="kb">Clique</i><i class="pd a">A</i>Marcar destino</span><span><i class="kb">C</i><i class="pd y">Y</i>Meu carro</span></div>';
+    ui.appendChild(root); cv = $('bm-cv'); cx = cv.getContext('2d');
+    $('bm-x').onclick = () => G().closeMap(); $('bm-in').onclick = () => zoom(1.4); $('bm-out').onclick = () => zoom(1 / 1.4); $('bm-me').onclick = center; $('bm-all').onclick = fitAll;
+    $('bm-wpx').onclick = () => { G().waypoint = null; };
+    cv.addEventListener('wheel', (e) => { e.preventDefault(); zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
+    cv.addEventListener('pointerdown', (e) => { cv.setPointerCapture(e.pointerId); ptr.set(e.pointerId, { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY }); moved = 0; pinch = 0; });
+    cv.addEventListener('pointermove', (e) => {
+      const p = ptr.get(e.pointerId); if (!p) return; const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
+      if (ptr.size === 1) { V.x -= dx / V.s; V.z -= dy / V.s; moved += Math.abs(dx) + Math.abs(dy); }
+      else if (ptr.size === 2) { const [a, b] = [...ptr.values()], d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch) zoomAt((a.x + b.x) / 2, (a.y + b.y) / 2, d / pinch); pinch = d; moved += 99; }
+    });
+    const up = (e) => { const p = ptr.get(e.pointerId); ptr.delete(e.pointerId); if (ptr.size < 2) pinch = 0; if (p && moved < 8 && ptr.size === 0 && e.type === 'pointerup') setWaypointAt(...toWorld(e.clientX, e.clientY)); };
+    cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+    addEventListener('keydown', (e) => { if (!shown) return; if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'Equal', 'Minus', 'NumpadAdd', 'NumpadSubtract', 'Enter', 'Space'].includes(e.code)) e.preventDefault();
+      keys[e.code] = 1; if (e.repeat) return; if (e.code === 'KeyC') center(); if (e.code === 'Enter' || e.code === 'Space') setWaypointAt(V.x, V.z); if (e.code === 'KeyF') fitAll(); }, true);
+    addEventListener('keyup', (e) => { keys[e.code] = 0; });
+    addEventListener('resize', size);
+    const mb = $('map-btn'); if (mb) mb.addEventListener('click', () => G().openMap());
+    const mm = $('mmwrap'); if (mm) { mm.style.cursor = 'pointer'; mm.style.pointerEvents = 'auto'; mm.addEventListener('pointerdown', (e) => { e.stopPropagation(); }); mm.addEventListener('click', () => { const g = G(); if (g && g.mode === 'play') g.openMap(); }); }
+  }
+  function size() { if (!cv) return; dpr = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.width = W + 'px'; cv.style.height = H + 'px'; }
+  const mapW = () => (meta ? 2502 : 2500), mapH = () => (meta ? 3060 : 3000);
+  const minS = () => Math.min(W / mapW(), H / mapH()) * 0.96;
+  const clampV = () => { V.s = Math.max(minS(), Math.min(2.2, V.s)); const ox = meta ? meta.ox : 8, oz = meta ? meta.oz : -3040; V.x = Math.max(ox - 200, Math.min(ox + mapW() + 200, V.x)); V.z = Math.max(oz - 200, Math.min(oz + mapH() + 200, V.z)); };
+  const toWorld = (px, py) => [V.x + (px - W / 2) / V.s, V.z + (py - H / 2) / V.s];
+  function zoomAt(px, py, k) { const [wx, wz] = toWorld(px, py); V.s = Math.max(minS(), Math.min(2.2, V.s * k)); V.x = wx - (px - W / 2) / V.s; V.z = wz - (py - H / 2) / V.s; clampV(); }
+  function zoom(k) { V.s = Math.max(minS(), Math.min(2.2, V.s * k)); clampV(); }
+  function center() { const v = G().veh; if (v) { V.x = v.p[0]; V.z = v.p[2]; } }
+  function fitAll() { V.s = minS(); V.x = (meta ? meta.ox : 8) + mapW() / 2; V.z = (meta ? meta.oz : -3040) + mapH() / 2; clampV(); }
+  function setWaypointAt(x, z) { const g = G(), w = g.waypoint; if (w && Math.hypot(w.x - x, w.z - z) < 14 / V.s) g.waypoint = null; else g.waypoint = { x, z }; }
+  const fmt = (m) => (m >= 1000 ? (m / 1000).toFixed(1) + ' km' : Math.round(m) + ' m');
+  function frame(t) {
+    if (!shown) return; raf = requestAnimationFrame(frame); const dt = Math.min(0.05, (t - lastT) / 1000 || 0.016); lastT = t; const g = G();
+    // teclado: mover (WASD/setas) e zoom (+/−)
+    const sp = 700 / V.s * dt; if (keys.ArrowLeft || keys.KeyA) V.x -= sp; if (keys.ArrowRight || keys.KeyD) V.x += sp; if (keys.ArrowUp || keys.KeyW) V.z -= sp; if (keys.ArrowDown || keys.KeyS) V.z += sp;
+    if (keys.Equal || keys.NumpadAdd) zoom(Math.exp(1.4 * dt)); if (keys.Minus || keys.NumpadSubtract) zoom(Math.exp(-1.4 * dt));
+    // controle: analógico move, LB/RB (e gatilhos) dão zoom, A marca, Y centraliza, B fecha
+    let pad = null; try { for (const p of (navigator.getGamepads ? navigator.getGamepads() : [])) if (p && p.connected) { pad = p; break; } } catch (e) {}
+    if (pad) {
+      const dz = (v) => (Math.abs(v) < 0.18 ? 0 : v), b = (i) => !!(pad.buttons[i] && pad.buttons[i].pressed), ed = (i) => { const v = b(i), r = v && !padPrev[i]; padPrev[i] = v; return r; };
+      V.x += dz(pad.axes[0] || 0) * 900 / V.s * dt; V.z += dz(pad.axes[1] || 0) * 900 / V.s * dt; V.z += dz(pad.axes[3] || 0) * 0; 
+      if (b(5) || (pad.buttons[7] && pad.buttons[7].value > 0.2)) zoom(Math.exp(1.5 * dt)); if (b(4) || (pad.buttons[6] && pad.buttons[6].value > 0.2)) zoom(Math.exp(-1.5 * dt));
+      if (b(12)) V.z -= 700 / V.s * dt; if (b(13)) V.z += 700 / V.s * dt; if (b(14)) V.x -= 700 / V.s * dt; if (b(15)) V.x += 700 / V.s * dt;
+      if (ed(0)) setWaypointAt(V.x, V.z); if (ed(3)) center(); if (ed(1)) g.closeMap();
+    }
+    clampV(); draw(g);
+  }
+  function draw(g) {
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0); cx.fillStyle = '#0e2c4c'; cx.fillRect(0, 0, W, H); const v = g.veh; if (!v) return;
+    const ox = meta ? meta.ox : 8, oz = meta ? meta.oz : -3040, res = meta ? meta.bigRes || 1 : 1, X = (x) => W / 2 + (x - V.x) * V.s, Y = (z) => H / 2 + (z - V.z) * V.s;
+    if (img && loaded) { cx.save(); cx.imageSmoothingEnabled = true; cx.imageSmoothingQuality = 'high'; cx.translate(X(ox), Y(oz)); cx.scale(V.s * res, V.s * res); cx.drawImage(img, 0, 0); cx.restore(); }
+    else { cx.fillStyle = '#cfe3f5'; cx.font = '600 14px sans-serif'; cx.textAlign = 'center'; cx.fillText('Carregando mapa…', W / 2, H / 2); }
+    // destino
+    const wp = g.waypoint; const bar = $('bm-wp');
+    if (wp) { const px = X(wp.x), py = Y(wp.z); cx.save(); cx.translate(px, py); cx.fillStyle = '#ffe21a'; cx.strokeStyle = '#0a0e14'; cx.lineWidth = 3; cx.beginPath(); cx.arc(0, -22, 10, Math.PI * 0.8, Math.PI * 2.2); cx.lineTo(0, 0); cx.closePath(); cx.stroke(); cx.fill(); cx.fillStyle = '#0a0e14'; cx.beginPath(); cx.arc(0, -22, 3.5, 0, 7); cx.fill(); cx.restore();
+      $('bm-wpd').textContent = fmt(Math.hypot(wp.x - v.p[0], wp.z - v.p[2])); bar.hidden = false; } else bar.hidden = true;
+    // carro: seta amarela com brilho, apontando para onde ele olha
+    const px = X(v.p[0]), py = Y(v.p[2]), pul = 0.5 + 0.5 * Math.sin(performance.now() / 280); cx.save(); cx.translate(px, py);
+    cx.strokeStyle = 'rgba(255,176,46,' + (0.55 - 0.35 * pul) + ')'; cx.lineWidth = 2; cx.beginPath(); cx.arc(0, 0, 14 + 10 * pul, 0, 7); cx.stroke();
+    cx.rotate(Math.PI - v.yaw); cx.shadowColor = 'rgba(0,0,0,.6)'; cx.shadowBlur = 6; cx.fillStyle = '#ffb02e'; cx.strokeStyle = '#0a0e14'; cx.lineWidth = 2.5; cx.beginPath(); cx.moveTo(0, -14); cx.lineTo(10, 11); cx.lineTo(0, 6); cx.lineTo(-10, 11); cx.closePath(); cx.stroke(); cx.fill(); cx.restore();
+    // mira central (onde o Enter/A marca o destino)
+    cx.strokeStyle = 'rgba(255,255,255,.55)'; cx.lineWidth = 1.5; cx.beginPath(); cx.moveTo(W / 2 - 9, H / 2); cx.lineTo(W / 2 + 9, H / 2); cx.moveTo(W / 2, H / 2 - 9); cx.lineTo(W / 2, H / 2 + 9); cx.stroke();
+    $('bm-pos').textContent = 'zoom ' + Math.round(V.s / minS() * 100) + '%';
+  }
+  function load() {
+    if (img) return; const g = G(), c = g && g.city; if (!c || !c.minimap) return; meta = Object.assign({ ox: 8, oz: -3040, bigRes: 1 }, c.minimap);
+    img = new Image(); img.onload = () => { loaded = true; }; img.onerror = () => { img.onerror = null; img.src = 'assets/' + meta.img; meta.bigRes = meta.res; }; img.src = 'assets/' + (meta.big || meta.img);
+  }
+  function show(on) {
+    build(); if (on === shown) return; shown = on; const menu = $('menu');
+    if (on) { load(); size(); center(); V.s = Math.max(minS() * 2.6, 0.32); clampV(); root.hidden = false; menuWas = menu && !menu.hidden; if (menuWas) menu.hidden = true; lastT = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(frame); }
+    else { root.hidden = true; cancelAnimationFrame(raf); for (const k in keys) keys[k] = 0; ptr.clear(); if (menuWas && menu) menu.hidden = false; menuWas = false; }
+  }
+  const boot = () => { build(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+  return { show, get open() { return shown; } };
+})();
 
 // ===================== CÂMERA ESTILO MIDNIGHT CLUB LOS ANGELES =====================
 // Perseguição baixa e colada no carro: a câmera "arrasta" atrás nas curvas (mostra a lateral do carro),
@@ -2370,6 +2528,9 @@ Radio.init();
       const k = 1 - Math.exp(-dt * 16); camPos[0] += (des[0] - camPos[0]) * k; camPos[1] += (des[1] - camPos[1]) * (1 - Math.exp(-dt * 9)); camPos[2] += (des[2] - camPos[2]) * k;
       pos = camPos.slice(); f = nrm([tg[0] - pos[0], tg[1] - 0.3 - pos[1], tg[2] - pos[2]]);
     }
+    if (mode !== 'menu' && pos[1] < 1.3) { // a camera nunca desce para dentro da agua: sobre o mar, fica pelo menos 1,1 m acima da superficie
+      const over = !world.raycast(pos[0], pos[1] + 0.5, pos[2], 0, -1, 0, 80, 0.3) || (pos[1] + 0.5 - world.hit.t) < 0.2; if (over) pos[1] = Math.max(pos[1], 1.1);
+    }
     if (shake > 0.001) { pos[0] += (Math.random() - 0.5) * shake * 0.25; pos[1] += (Math.random() - 0.5) * shake * 0.25; pos[2] += (Math.random() - 0.5) * shake * 0.25; shake *= Math.exp(-dt * 6); }
     const r = nrm(cross(f, up)); up = cross(r, f);
     camOut.pos = pos; camOut.fwd = f; camOut.right = r; camOut.up = up; camOut.fov = fovCur;
@@ -2398,14 +2559,25 @@ Radio.init();
 
   // ---------- HUD ----------
   const mm = $('mm'), mctx = mm.getContext('2d');
+  // destino marcado no mapa grande (aparece no minimapa); { x, z } em metros do jogo, ou null
+  let waypoint = null, mapOpen = false, mapFrom = 'play';
   function drawMinimap() {
     const dpr = Math.min(2, window.devicePixelRatio || 1), css = mm.clientWidth || 150, px = Math.round(css * dpr); if (mm.width !== px) mm.width = mm.height = px;
-    const s = px / 2; mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.clearRect(0, 0, px, px); mctx.fillStyle = '#0b1628'; mctx.fillRect(0, 0, px, px);
+    const s = px / 2; mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.clearRect(0, 0, px, px); mctx.fillStyle = '#0e2c4c'; mctx.fillRect(0, 0, px, px);
+    const spdK = Math.hypot(veh.v[0], veh.v[2]) * 3.6, span = 420 + Math.min(300, spdK * 1.5), kpm = px / span, rot = veh.yaw - Math.PI; // o mapa afasta com a velocidade
     if (minimapImg && minimapImg.complete && city) {
-      const res = city.minimap.res, mx = (veh.p[0] - city.bounds[0]) / res, my = (veh.p[2] - city.bounds[2]) / res, scale = (px / 520) * res;
-      mctx.save(); mctx.translate(s, s); mctx.rotate(veh.yaw - Math.PI); mctx.scale(scale, scale); mctx.translate(-mx, -my); mctx.drawImage(minimapImg, 0, 0); mctx.restore();
+      const mi = city.minimap, res = mi.res, ox = mi.ox !== undefined ? mi.ox : city.bounds[0], oz = mi.oz !== undefined ? mi.oz : city.bounds[2], mx = (veh.p[0] - ox) / res, my = (veh.p[2] - oz) / res, scale = kpm * res;
+      mctx.save(); mctx.imageSmoothingQuality = 'high'; mctx.translate(s, s); mctx.rotate(rot); mctx.scale(scale, scale); mctx.translate(-mx, -my); mctx.drawImage(minimapImg, 0, 0); mctx.restore();
     }
-    mctx.fillStyle = '#ffb02e'; mctx.strokeStyle = '#0a0e14'; mctx.lineWidth = 2 * dpr; mctx.beginPath(); mctx.moveTo(s, s - 9 * dpr); mctx.lineTo(s + 6 * dpr, s + 7 * dpr); mctx.lineTo(s, s + 3.5 * dpr); mctx.lineTo(s - 6 * dpr, s + 7 * dpr); mctx.closePath(); mctx.fill(); mctx.stroke();
+    if (waypoint) { // marcador de destino: pino sobre o mapa ou seta na borda quando fora de alcance
+      const dx = (waypoint.x - veh.p[0]) * kpm, dz = (waypoint.z - veh.p[2]) * kpm, c = Math.cos(rot), sn = Math.sin(rot); let wx = dx * c - dz * sn, wy = dx * sn + dz * c; const d = Math.hypot(wx, wy), Rm = s - 12 * dpr;
+      mctx.save(); mctx.translate(s, s);
+      if (d > Rm) { const a = Math.atan2(wy, wx); mctx.rotate(a); mctx.fillStyle = '#ffe21a'; mctx.strokeStyle = '#0a0e14'; mctx.lineWidth = 2 * dpr; mctx.beginPath(); mctx.moveTo(Rm + 6 * dpr, 0); mctx.lineTo(Rm - 6 * dpr, -6 * dpr); mctx.lineTo(Rm - 6 * dpr, 6 * dpr); mctx.closePath(); mctx.stroke(); mctx.fill(); }
+      else { mctx.fillStyle = '#ffe21a'; mctx.strokeStyle = '#0a0e14'; mctx.lineWidth = 2 * dpr; mctx.beginPath(); mctx.arc(wx, wy - 8 * dpr, 6 * dpr, Math.PI * 0.85, Math.PI * 2.15); mctx.lineTo(wx, wy); mctx.closePath(); mctx.stroke(); mctx.fill(); mctx.fillStyle = '#0a0e14'; mctx.beginPath(); mctx.arc(wx, wy - 8 * dpr, 2.2 * dpr, 0, 7); mctx.fill(); }
+      mctx.restore();
+    }
+    mctx.save(); mctx.translate(s, s); mctx.shadowColor = 'rgba(255,176,46,.8)'; mctx.shadowBlur = 8 * dpr; mctx.fillStyle = '#ffb02e'; mctx.strokeStyle = '#0a0e14'; mctx.lineWidth = 2 * dpr;
+    mctx.beginPath(); mctx.moveTo(0, -10 * dpr); mctx.lineTo(7 * dpr, 8 * dpr); mctx.lineTo(0, 4 * dpr); mctx.lineTo(-7 * dpr, 8 * dpr); mctx.closePath(); mctx.stroke(); mctx.fill(); mctx.restore();
   }
   const el = { spd: $('spd'), unit: $('unit'), gear: $('gear'), rpm: $('rpmfill') }; let hudT = 0;
   function updateHud(dt) {
@@ -2424,12 +2596,21 @@ Radio.init();
     toast(isTouch ? 'Arraste a faixa para esterçar' : 'WASD ou setas · Espaço: freio de mão · C: câmera · G: câmbio auto/manual · R: desvirar', 4200); $('hint').classList.add('show'); setTimeout(() => $('hint').classList.remove('show'), 14000);
     try { if (isTouch && document.documentElement.requestFullscreen && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {}); } catch (e) {}
   }
+  function openMap() {
+    if (mapOpen || (mode !== 'play' && mode !== 'pause')) return; mapFrom = mode; mapOpen = true;
+    if (mode === 'play') { mode = 'pause'; Sound.update({ rpm: 900, throttle: 0, skidAmt: 0, speed: 0, onGround: 0 }, true); }
+    if (typeof BigMap !== 'undefined') BigMap.show(true);
+  }
+  function closeMap() {
+    if (!mapOpen) return; mapOpen = false; if (typeof BigMap !== 'undefined') BigMap.show(false);
+    if (mapFrom === 'play' && mode === 'pause') { mode = 'play'; last = performance.now(); }
+  }
   function setPause(p) {
     if (mode === 'play' && p) { mode = 'pause'; show('menu', true); show('p-start', false); show('p-pause', true); Sound.update({ rpm: 900, throttle: 0, skidAmt: 0, speed: 0, onGround: 0 }, true); }
     else if (mode === 'pause' && !p) { mode = 'play'; show('menu', false); last = performance.now(); }
   }
   $('start').addEventListener('click', startGame); $('resume').addEventListener('click', () => setPause(false)); $('b-pause').addEventListener('click', () => setPause(true));
-  document.addEventListener('visibilitychange', () => { if (document.hidden) setPause(true); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden && !mapOpen) setPause(true); });
   function sync() {
     for (const b of document.querySelectorAll('.seg-q button')) b.classList.toggle('on', b.dataset.v === cfg.quality);
     for (const b of document.querySelectorAll('.seg-u button')) b.classList.toggle('on', b.dataset.v === cfg.units);
@@ -2466,7 +2647,8 @@ Radio.init();
     if (Input.take('mute')) { cfg.sound = !cfg.sound; save(); Sound.setOn(cfg.sound); sync(); toast(cfg.sound ? 'Som ligado' : 'Som desligado', 1200); }
     if (Input.take('hud')) { hudOn = !hudOn; $('hud').style.visibility = hudOn ? '' : 'hidden'; }
     if (mode === 'menu') { if (Input.take('padA') || Input.take('pause')) { if (!$('start').disabled) startGame(); } }
-    else if (Input.take('pause')) setPause(mode === 'play');
+    else if (Input.take('pause')) { if (mapOpen) closeMap(); else setPause(mode === 'play'); }
+    if (Input.take('map')) { if (mapOpen) closeMap(); else if (mode === 'play') openMap(); }
     if (mode === 'play') {
       if (Input.take('cam')) { camMode = (camMode + 1) % CAMS.length; if (camMode < 2) { cfg.camStyle = camMode === 0 ? 'mlc' : 'simple'; save(); } sync(); toast('Câmera: ' + CAMS[camMode].n, 1100); }
       if (Input.take('reset')) { veh.respawn(false); toast('Carro desvirado', 1200); }
@@ -2479,7 +2661,7 @@ Radio.init();
       if (veh.impact > 3.5) { Sound.crash(veh.impact); Input.rumble(veh.impact / 20, 180); shake = Math.min(1.6, veh.impact / 9); if (veh.impact > 8) toast('Batida!', 700); }
       veh.impact = 0;
       let sk = 0; for (const w of veh.wheels) if (w.ground) sk = Math.max(sk, w.skid); skidAmt += (sk - skidAmt) * Math.min(1, 10 * dt);
-      if (veh.inWater > 1.6) { veh.respawn(true); toast('Caiu na água · voltando para a rua', 2200); }
+      if (veh.floatT > 3.4 || veh.p[1] < -4) { veh.respawn(true); toast('Caiu na água · voltando para a rua', 2200); }
       if (veh.p[1] < -60 || veh.p[0] < -300 || veh.p[0] > 2700 || veh.p[2] > 400 || veh.p[2] < -3500) { veh.respawn(true); toast('Fora do mapa · voltando para a rua', 2200); }
       if (veh.flipT > 3) { veh.respawn(false); toast('Carro desvirado', 1200); }
       if ((inp.throttle > 0.5 || inp.brake > 0.5) && veh.speed < 0.7 && veh.onGround) { stuckT += dt; if (stuckT > 5) { toast('Preso? R desvira o carro, T volta para a rua', 3500); stuckT = -6; } } else if (stuckT > 0) stuckT = 0;
@@ -2508,7 +2690,7 @@ Radio.init();
     }
     if (qs.get('debug')) $('dbg').textContent = ema.toFixed(1) + ' ms · ' + R.stats.calls + ' draws · ' + W + 'x' + H + ' · ' + qName + ' x' + dynScale.toFixed(2);
   }
-  window.__game = { paintReport() { const c = curCar(), m = c && c.man; return m ? { car: c.id, zonas: (m.paintZones || []).map((z) => ({ nome: z.name, materiais: z.mats.map((i) => m.mats[i].name) })), materiais: m.mats.map((x, i) => i + ': ' + x.name + (x.pz !== undefined ? '  <== PINTURA' : '')) } : null; }, save, selectCar, get cars() { return CARS; }, get veh() { return veh; }, get world() { return world; }, get R() { return R; }, get mode() { return mode; }, cfg, start: startGame, setCam(m) { camMode = m; }, get frames() { return frames; }, get cam() { return camOut; } };
+  window.__game = { paintReport() { const c = curCar(), m = c && c.man; return m ? { car: c.id, zonas: (m.paintZones || []).map((z) => ({ nome: z.name, materiais: z.mats.map((i) => m.mats[i].name) })), materiais: m.mats.map((x, i) => i + ': ' + x.name + (x.pz !== undefined ? '  <== PINTURA' : '')) } : null; }, save, selectCar, get cars() { return CARS; }, get veh() { return veh; }, get world() { return world; }, get R() { return R; }, get mode() { return mode; }, get city() { return city; }, get waypoint() { return waypoint; }, set waypoint(w) { waypoint = w; }, get mapOpen() { return mapOpen; }, openMap, closeMap, cfg, start: startGame, setCam(m) { camMode = m; }, get frames() { return frames; }, get cam() { return camOut; } };
   boot().catch((e) => { console.error(e); $('ptxt').textContent = 'Erro ao carregar: ' + e.message; $('bar').style.background = 'var(--hot)'; });
 })();
 

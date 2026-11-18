@@ -50,6 +50,13 @@ void main(){ vec3 p = u_pmin + a_pos.xyz * u_psize; gl_Position = u_vp * (u_proj
 const FS_SHAD = `#version 300 es
 precision mediump float; uniform float u_a; out vec4 o;
 void main(){ o = vec4(0., 0., 0.02, u_a); }`;
+// mar infinito: um quadrado que acompanha a camera (y = nivel do mar) ate sumir na neblina; usa a mesma textura/ondas do mar do mapa
+const VS_SEA = `#version 300 es
+precision highp float;
+uniform mat4 u_vp; uniform vec2 u_c; uniform float u_r, u_y;
+out vec3 v_wp; out vec3 v_n; out vec2 v_uv; out vec2 v_uv1;
+const vec2 Q[6] = vec2[6](vec2(-1.,-1.), vec2(1.,-1.), vec2(-1.,1.), vec2(-1.,1.), vec2(1.,-1.), vec2(1.,1.));
+void main(){ vec2 q = Q[gl_VertexID]; vec3 wp = vec3(u_c.x + q.x * u_r, u_y, u_c.y + q.y * u_r); v_wp = wp; v_n = vec3(0., 1., 0.); v_uv = vec2(wp.x * 0.01512, -wp.z * 0.01512); v_uv1 = v_uv; gl_Position = u_vp * vec4(wp, 1.); }`;
 const FS_WORLD = `#version 300 es
 precision highp float;
 in vec3 v_wp; in vec3 v_n; in vec2 v_uv; in vec2 v_uv1;
@@ -74,6 +81,7 @@ void main(){
   col = applyFog(col, v_wp);
   o = vec4(tonemap(col), t.a);
 }`;
+const FS_SEA = FS_WORLD.replace('in vec3 v_wp; in vec3 v_n; in vec2 v_uv; in vec2 v_uv1;', 'in vec3 v_wp; in vec3 v_n; in vec2 v_uv; in vec2 v_uv1;'); // mesmo fragmento do mundo, com u_water=1
 const FS_CAR = `#version 300 es
 precision highp float;
 in vec3 v_wp; in vec3 v_n; in vec2 v_uv; in vec2 v_uv1; in float v_lz; in vec3 v_lp;
@@ -156,6 +164,7 @@ class Renderer {
     this.progs.world = this.prog(VS_MESH, FS_WORLD, ['u_vp', 'u_model', 'u_pmin', 'u_psize', 'u_uvb0', 'u_uvb1', 'u_tex', 'u_ao', 'u_hasAo', 'u_alphaTest', 'u_water', 'u_time', 'u_aoStr']);
     this.progs.car = this.prog(VS_MESH, FS_CAR, ['u_vp', 'u_model', 'u_pmin', 'u_psize', 'u_uvb0', 'u_uvb1', 'u_tex', 'u_color', 'u_paint', 'u_paint2', 'u_pref', 'u_pref2', 'u_atest', 'u_hasTex', 'u_metal', 'u_rough', 'u_coat', 'u_emis', 'u_etint', 'u_lamp', 'u_headE', 'u_tailE', 'u_len', 'u_zh[0]', 'u_zt[0]', 'u_nzh', 'u_nzt', 'u_zhE', 'u_ztE']);
     this.progs.sky = this.prog(VS_SKY, FS_SKY, ['u_right', 'u_up', 'u_fwd', 'u_tanH', 'u_asp']);
+    this.progs.sea = this.prog(VS_SEA, FS_SEA, ['u_vp', 'u_c', 'u_r', 'u_y', 'u_tex', 'u_ao', 'u_hasAo', 'u_alphaTest', 'u_water', 'u_time', 'u_aoStr']);
     this.progs.shad = this.prog(VS_SHAD, FS_SHAD, ['u_vp', 'u_model', 'u_proj', 'u_pmin', 'u_psize', 'u_a']);
     this.progs.quad = this.prog(VS_QUAD, FS_QUAD, ['u_vp', 'u_c', 'u_r', 'u_f', 'u_s', 'u_a']);
     this.progs.part = this.prog(VS_PART, FS_PART, ['u_vp', 'u_px', 'u_col']);
@@ -387,7 +396,7 @@ class Renderer {
     let s = this.progs.sky; if (!F.studio) { gl.useProgram(s.p); this.setEnv(s); gl.uniform3fv(s.u_right, cam.right); gl.uniform3fv(s.u_up, cam.up); gl.uniform3fv(s.u_fwd, cam.fwd);
     gl.uniform1f(s.u_tanH, Math.tan(cam.fov / 2)); gl.uniform1f(s.u_asp, aspect); gl.depthMask(false); gl.bindVertexArray(this.emptyVao); gl.drawArrays(gl.TRIANGLES, 0, 3); gl.depthMask(true); }
     // cidade
-    if (this.city && !F.studio) this.drawCity(false);
+    if (this.city && !F.studio) { this.drawSea(); this.drawCity(false); }
     // sombra
     if (this.props && !F.studio) this.drawProps();
     if (F.car && !F.studio) this.drawShadow(F.car);
@@ -424,6 +433,13 @@ class Renderer {
     return c2.toDataURL('image/png');
   }
 
+  drawSea() {
+    const gl = this.gl, p = this.progs.sea, man = this.city, mt = man.mats.find((m) => m.name === 'sea'); if (!mt || !mt.glTex) return; const cp = this.camPos;
+    gl.useProgram(p.p); this.setEnv(p); gl.uniformMatrix4fv(p.u_vp, false, this.vp); gl.uniform2f(p.u_c, cp[0], cp[2]); gl.uniform1f(p.u_r, Math.min(3400, this.drawDist * 1.5)); gl.uniform1f(p.u_y, -0.03);
+    gl.uniform1f(p.u_time, this.time); gl.uniform1f(p.u_water, 1); gl.uniform1f(p.u_alphaTest, 0); gl.uniform1f(p.u_hasAo, 0); gl.uniform1f(p.u_aoStr, 0); gl.uniform1i(p.u_tex, 0); gl.uniform1i(p.u_ao, 1);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, mt.glTex); gl.disable(gl.BLEND); gl.depthMask(true); gl.disable(gl.CULL_FACE);
+    gl.bindVertexArray(null); gl.drawArrays(gl.TRIANGLES, 0, 6);
+  }
   drawCity(blendPass) {
     const gl = this.gl, p = this.progs.world, man = this.city, cp = this.camPos, dd = this.drawDist; gl.useProgram(p.p); this.setEnv(p);
     gl.uniformMatrix4fv(p.u_vp, false, this.vp); gl.uniformMatrix4fv(p.u_model, false, this.ident); gl.uniform1f(p.u_time, this.time); gl.uniform1f(p.u_aoStr, this.opt.ao === false ? 0 : 0.9);
