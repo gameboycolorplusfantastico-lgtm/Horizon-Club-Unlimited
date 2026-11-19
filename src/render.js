@@ -245,6 +245,45 @@ class Renderer {
     man.order = man.mats.map((m, i) => i).sort((a, b) => ({ opaque: 0, mask: 1, blend: 2 })[man.mats[a].mode] - ({ opaque: 0, mask: 1, blend: 2 })[man.mats[b].mode]);
   }
 
+  // ---- trafego de NPCs (assets/npc/npc.json): modelos simples (carroceria + rodas que giram em X), desenhados com o programa do carro ----
+  async loadNpc(man, buf, texScale) {
+    const vbo = this.uploadBin(buf); this.npc = man; const cache = {};
+    for (const md of man.models) {
+      for (const pr of md.body) this.prepPrim(vbo, pr);
+      for (const w of md.wheels) for (const pr of w.prims) this.prepPrim(vbo, pr);
+      for (const m of md.mats) if (m.tex) { if (!cache[m.tex]) cache[m.tex] = await this.loadTex('assets/' + m.tex, true, texScale); m.glTex = cache[m.tex]; }
+    }
+  }
+  drawNpcs(list, blendPass) {
+    if (!list || !list.length) return; const gl = this.gl;
+    if (!blendPass && this.npcShadow !== false) { // sombra suave (mancha) sob cada NPC
+      const q = this.progs.quad, cp0 = this.camPos; gl.useProgram(q.p); gl.uniformMatrix4fv(q.u_vp, false, this.vp); gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(-2, -2); gl.bindVertexArray(this.quadVao);
+      for (const n of list) {
+        const dx = n.M[12] - cp0[0], dz = n.M[14] - cp0[2]; if (dx * dx + dz * dz > 160 * 160 || !this.visible(n.M[12], n.M[13], n.M[14], n.r)) continue;
+        gl.uniform3f(q.u_c, n.M[12], n.gy + 0.06, n.M[14]); gl.uniform3f(q.u_r, n.fx * 0 + n.rx, 0, n.rz); gl.uniform3f(q.u_f, n.fx, 0, n.fz); gl.uniform2f(q.u_s, n.model.width * 0.62, n.model.length * 0.6); gl.uniform1f(q.u_a, 0.42); gl.drawArrays(gl.TRIANGLES, 0, 6);
+      }
+      gl.disable(gl.BLEND); gl.depthMask(true); gl.disable(gl.POLYGON_OFFSET_FILL);
+    }
+    const p = this.progs.car; gl.useProgram(p.p); this.setEnv(p); gl.uniformMatrix4fv(p.u_vp, false, this.vp); gl.uniform1i(p.u_tex, 0);
+    gl.uniform1f(p.u_lamp, 0); gl.uniform1f(p.u_coat, 0); gl.uniform4f(p.u_pref, 0, 0, 0, 0); gl.uniform1f(p.u_nzh, 0); gl.uniform1f(p.u_nzt, 0); gl.uniform3f(p.u_etint, 1, 1, 1);
+    if (blendPass) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); } else { gl.disable(gl.BLEND); gl.depthMask(true); }
+    const cp = this.camPos, lim = Math.min(this.drawDist, 420);
+    for (const n of list) {
+      const dx = n.M[12] - cp[0], dz = n.M[14] - cp[2]; if (dx * dx + dz * dz > lim * lim || !this.visible(n.M[12], n.M[13] + 0.8, n.M[14], n.r)) continue;
+      const md = n.model, grp = (prims, M) => {
+        gl.uniformMatrix4fv(p.u_model, false, M);
+        for (const pr of prims) {
+          const m = md.mats[pr.m]; if ((m.mode === 'blend') !== blendPass) continue;
+          gl.uniform4f(p.u_color, m.color[0], m.color[1], m.color[2], m.color[3]); gl.uniform1f(p.u_metal, m.metal); gl.uniform1f(p.u_rough, m.rough); gl.uniform1f(p.u_atest, m.mode === 'mask' ? 0.5 : 0);
+          gl.uniform1f(p.u_emis, n.brake && /tail|brake|rear|red/i.test(m.name) ? 0.9 : 0);
+          if (m.glTex) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, m.glTex); gl.uniform1f(p.u_hasTex, 1); } else gl.uniform1f(p.u_hasTex, 0);
+          this.drawPrim(p, pr);
+        }
+      };
+      grp(md.body, n.M); for (let i = 0; i < md.wheels.length; i++) grp(md.wheels[i].prims, n.W[i]);
+    }
+    gl.disable(gl.BLEND); gl.depthMask(true);
+  }
   // ---- postes de luz e sinaleiras (assets/props.json): modelos instanciados, desenhados com o programa do carro ----
   async loadProps(man, buf, texScale) {
     this.props = man; const vbo = this.uploadBin(buf);
@@ -402,11 +441,13 @@ class Renderer {
     if (F.car && !F.studio) this.drawShadow(F.car);
     // carro opaco
     if (F.car) this.drawCar(F.car, false);
+    if (F.npcs && !F.studio) this.drawNpcs(F.npcs, false);
     // partículas
     if (F.particles && F.particles.n) this.drawParticles(F.particles);
     // blend
     if (this.city && !F.studio) this.drawCity(true);
     if (F.car) this.drawCar(F.car, true);
+    if (F.npcs && !F.studio) this.drawNpcs(F.npcs, true);
     if (rectOn) { gl.disable(gl.SCISSOR_TEST); gl.viewport(0, 0, this.canvas.width, this.canvas.height); }
   }
   // foto 2D do carro com fundo transparente: renderiza sobre fundo preto e sobre fundo branco e calcula o alfa pela diferença

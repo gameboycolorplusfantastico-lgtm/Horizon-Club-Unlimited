@@ -12,7 +12,7 @@ for pi,p in enumerate(man['prims']):
     t=idx.reshape(-1,3)
     tris.append(q[t]); uvs.append(u[t]); cats.append(np.full(len(t),pi)); mats.append(np.full(len(t),p['m']))
 T=np.concatenate(tris);U=np.concatenate(uvs);PI=np.concatenate(cats);M=np.concatenate(mats)
-np.savez('/home/claude/city_tris.npz',T=T,U=U,PI=PI,M=M)
+np.savez('../city_tris.npz',T=T,U=U,PI=PI,M=M)
 print(T.shape, man['bounds'], man['spawn'])
 from collections import Counter
 print(Counter((p['c'],p['m']) for p in man['prims']))
