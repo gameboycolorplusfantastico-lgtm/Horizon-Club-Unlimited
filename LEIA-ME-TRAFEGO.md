@@ -10,3 +10,9 @@
 - Ruas com postes nos dois lados na mesma altura: agora **intercalados** (um lado, depois o outro).
 - Postes de viaduto: agora em cima da **mureta** (129 reposicionados). Onde só há guard-rail fino, ficaram como estavam.
 - props.json: 830 → 635 postes.
+
+# Menus estilo Forza Horizon 2 (`src/mods/hub.js`, `hub.css`, `preload.js`)
+- Tela inicial: carro sorteado na ponte sobre o mar, logo e "Pressione ENTER/START". Enquanto carrega, mostra o download de TODOS os arquivos (`assets/manifest.json`, gerado pelo `tools/build.py`; as músicas do rádio ficam de fora). Fica salvo no navegador: da 2ª vez abre na hora.
+- Hub com abas (Início, Social, Clube, Rivais, Carros, Comunidade, Progresso, Loja; LB/RB ou Q/E trocam). O que ainda não existe aparece como "EM BREVE".
+- "Mundo aberto" abre a tela de largada: Começar, Ponto de largada, Tráfego (desligado/baixo/médio/alto) e Opções.
+- Se o tráfego não carregar, aparece um aviso na tela ao começar (e `window.__trafficErr`).

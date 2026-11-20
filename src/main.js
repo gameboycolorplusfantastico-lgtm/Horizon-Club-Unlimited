@@ -3,19 +3,19 @@
   const $ = (id) => document.getElementById(id);
   const qs = new URLSearchParams(location.search);
   const isTouch = (matchMedia && matchMedia('(pointer:coarse)').matches) || 'ontouchstart' in window;
-  const cfg = { quality: 'auto', units: 'kmh', sound: true, camStyle: 'mlc', fx: 'on', mirror: 'on', shadows: 'on', traffic: 'on', trans: 'auto', paint: {} };
+  const cfg = { quality: 'auto', units: 'kmh', sound: true, camStyle: 'mlc', fx: 'on', mirror: 'on', shadows: 'on', traffic: 'on', trafficLvl: 'med', trans: 'auto', paint: {} };
   const KEY = 'horizon-club-unlimited'; // (migra as configurações do nome antigo, 'asfalto-livre')
   try { Object.assign(cfg, JSON.parse(localStorage.getItem(KEY) || localStorage.getItem('asfalto-livre') || '{}')); } catch (e) {}
   if (qs.get('q')) cfg.quality = qs.get('q');
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch (e) {} };
   const QUAL = { low: { scale: 0.62, dist: 420, aniso: 1, tex: 0.5, ao: false, dpr: 1 }, med: { scale: 0.85, dist: 760, aniso: 4, tex: 1, ao: true, dpr: 1.5 }, high: { scale: 1, dist: 1250, aniso: 8, tex: 1, ao: true, dpr: 2 } };
-  const canvas = $('c'); let R, world, veh, city, CARS = [], carBusy = false, mode = 'loading', hudOn = true, camMode = (cfg.camStyle === 'simple' ? 1 : 0), minimapImg = null;
+  const canvas = $('c'); let R, world, veh, city, scenic = false, CARS = [], carBusy = false, mode = 'loading', hudOn = true, camMode = (cfg.camStyle === 'simple' ? 1 : 0), minimapImg = null;
   document.body.classList.toggle('touch', isTouch);
   Input.init(); if (isTouch) Input.bindTouch();
   Sound.on = cfg.sound;
   const toastEl = $('toast'); let toastT = 0;
   function toast(msg, ms) { toastEl.textContent = msg; toastEl.classList.add('show'); toastT = (ms || 2200) / 1000; }
-  function setProg(f, txt) { $('bar').style.transform = 'scaleX(' + Math.max(0.02, Math.min(1, f)) + ')'; if (txt) $('ptxt').textContent = txt; }
+  function setProg(f, txt) { if (typeof Hub !== 'undefined') Hub.prep(f, txt); $('bar').style.transform = 'scaleX(' + Math.max(0.02, Math.min(1, f)) + ')'; if (txt) $('ptxt').textContent = txt; }
   async function fetchBuf(url, cb) {
     const r = await fetch(url); if (!r.ok) throw new Error(url + ' ' + r.status);
     if (!r.body || !cb) return r.arrayBuffer();
@@ -119,9 +119,12 @@
     try { R = new Renderer(canvas, { aa: !isTouch && pickQuality() === 'high', preserve: !!qs.get('shot') }); }
     catch (e) { console.error(e); $('ptxt').textContent = 'Seu navegador não suporta WebGL2. Tente Chrome, Edge, Firefox ou Safari recentes.'; $('bar').style.background = 'var(--hot)'; return; }
     const q0 = QUAL[pickQuality()]; setProg(0.02, 'Baixando mapa e carro…');
+    if (typeof Preload !== 'undefined') await Preload.init();
     const reg = await fetch('assets/cars/cars.json').then((r) => r.json()); CARS = reg.cars || [];
     if (!CARS.length) throw new Error('assets/cars/cars.json está vazio');
-    const first = CARS.find((c) => c.id === cfg.car) || CARS[0];
+    window.__savedCar = cfg.car; const dbg = qs.get('auto') || qs.get('at') || qs.get('shot'); // tela inicial: carro sorteado (o carro salvo volta ao entrar no hub)
+    const first = (qs.get('car') && CARS.find((c) => c.id === qs.get('car'))) || (dbg ? (CARS.find((c) => c.id === cfg.car) || CARS[0]) : CARS[Math.floor(Math.random() * CARS.length)]);
+    if (typeof Preload !== 'undefined' && typeof Hub !== 'undefined') await Preload.run((s) => Hub.dl(s), first.dir); // baixa TODOS os arquivos (fica salvo no navegador)
     let gotC = 0, gotK = 0; const upd = () => setProg(0.04 + 0.5 * Math.min(1, (gotC + gotK) / (6.93e6 + (first.bytes || 4e6))), 'Baixando mapa e carro…');
     const [cm, cb, kk] = await Promise.all([
       fetch('assets/city.json').then((r) => r.json()), fetchBuf('assets/city.wasm', (g) => { gotC = g; upd(); }),
@@ -130,16 +133,17 @@
     city = cm; setProg(0.56, 'Carregando texturas…'); await tick();
     await R.loadCar(kk.man, kk.buf, q0.tex, carBase(first), first.paint); first.man = kk.man; setProg(0.66); await R.loadCity(cm, cb, q0.tex, (f) => setProg(0.66 + 0.2 * f));
     try { const [pm, pb] = await Promise.all([fetch('assets/props.json').then((r) => r.json()), fetchBuf('assets/props.wasm')]); await R.loadProps(pm, pb, q0.tex); window.__props = pm; } catch (e) { console.warn('props indisponíveis', e); R.props = null; }
-    try { if (typeof Traffic !== 'undefined') { const [tj, nm, nb] = await Promise.all([fetch('assets/traffic.json').then((r) => r.json()), fetch('assets/npc/npc.json').then((r) => r.json()), fetchBuf('assets/npc/npc.wasm')]); await Traffic.init(R, tj, window.__props, nm, nb, q0.tex); } } catch (e) { console.warn('trafego indisponivel', e); }
+    try { if (typeof Traffic !== 'undefined') { const jf = (u) => fetch(u).then((r) => { if (!r.ok) throw new Error(u + ' ' + r.status); return r.json(); }); const [tj, nm, nb] = await Promise.all([jf('assets/traffic.json'), jf('assets/npc/npc.json'), fetchBuf('assets/npc/npc.wasm')]); await Traffic.init(R, tj, window.__props, nm, nb, q0.tex); } } catch (e) { console.warn('trafego indisponivel', e); window.__trafficErr = String(e && e.message || e); }
     setProg(0.88, 'Construindo colisão do mapa…'); await tick();
     const col = buildCollision(cm, cb, window.__props); world = new World(col.V, col.surf, 16);
-    const sp = cm.spawn; veh = makeVehicle(first); veh.place(sp.pos[0], sp.pos[1] + 0.8, sp.pos[2], sp.yaw); settle(veh);
+    const sp = cm.spawn; veh = makeVehicle(first); const sc0 = (!dbg && typeof Hub !== 'undefined') ? Hub.SCENE : null;
+    if (sc0) { veh.place(sc0.x, sc0.y + 0.8, sc0.z, sc0.yaw); } else veh.place(sp.pos[0], sp.pos[1] + 0.8, sp.pos[2], sp.yaw); settle(veh);
     veh.safe = { x: veh.p[0], y: veh.p[1], z: veh.p[2], yaw: sp.yaw }; cfg.car = first.id; applyPaint(first); renderCars(); if (typeof FH2 !== 'undefined') FH2.capture(R, veh, first);
     minimapImg = new Image(); minimapImg.src = 'assets/' + cm.minimap.img;
-    camYaw = sp.yaw; camPos = [veh.p[0] - Math.sin(sp.yaw) * 6, veh.p[1] + 2, veh.p[2] - Math.cos(sp.yaw) * 6]; camTgt = veh.p.slice();
+    camYaw = sp.yaw; camPos = [veh.p[0] - Math.sin(sp.yaw) * 6, veh.p[1] + 2, veh.p[2] - Math.cos(sp.yaw) * 6]; camTgt = veh.p.slice(); scenic = !!sc0; if (typeof Hub !== 'undefined') Hub.sceneOn = scenic;
     applyQuality(); setProg(1, 'Pronto');
     mode = 'menu'; $('start').disabled = false; $('start').textContent = isTouch ? 'Toque para começar' : 'Começar a dirigir'; $('ptxt').textContent = 'Mapa com ' + ((col.V.length / 9 / 1000) | 0) + ' mil triângulos de colisão';
-    last = performance.now(); requestAnimationFrame(frame);
+    last = performance.now(); requestAnimationFrame(frame); if (typeof Hub !== 'undefined') { Hub.ready(); if (window.__trafficErr && typeof Traffic !== 'undefined') console.warn('Tráfego não carregou:', window.__trafficErr); }
     if (qs.get('at')) { const a = qs.get('at').split(',').map(Number); veh.place(a[0], a[1] + 1, a[2], a[3] || 0); settle(veh); camYaw = a[3] || 0; camPos = [a[0] - Math.sin(camYaw) * 6, a[1] + 3, a[2] - Math.cos(camYaw) * 6]; } // depuração: ?at=x,y,z,yaw
     if (qs.get('auto')) startGame();
   }
@@ -156,7 +160,8 @@
     const c = CAMS[camMode], p = veh.p, sp = Math.hypot(veh.v[0], veh.v[2]), cs = veh.P.scale;
     const fovT = c.fov + Math.min(0.2, sp / 90 * 0.2); fovCur += (fovT - fovCur) * Math.min(1, 3 * dt);
     let pos, f = [0, 0, -1], up = [0, 1, 0];
-    if (mode === 'menu') {
+    if (mode === 'menu' && scenic && typeof Hub !== 'undefined') { const o = Hub.cam(dt, veh); pos = o.pos; f = o.f; fovCur = o.fov; }
+    else if (mode === 'menu') {
       menuAng += dt * 0.25; const d = 7.2 * cs, tg = [p[0], p[1] + 0.6 * cs, p[2]];
       pos = [tg[0] + Math.sin(menuAng) * d, tg[1] + 1.9 * cs, tg[2] + Math.cos(menuAng) * d]; f = nrm([tg[0] - pos[0], tg[1] - pos[1], tg[2] - pos[2]]);
     } else if (c.mlc) {
@@ -245,7 +250,12 @@
   // ---------- menu ----------
   const show = (id, on) => { $(id).hidden = !on; };
   function startGame() {
-    if (mode !== 'menu') return; Sound.start(); Sound.setOn(cfg.sound); mode = 'play'; show('menu', false); show('hud', true); if (isTouch) show('touch', true); Input.edge = {};
+    if (mode !== 'menu') return;
+    if (scenic) { // sai do cenário da tela inicial e vai para o ponto de largada escolhido (padrão: centro)
+      scenic = false; if (typeof Hub !== 'undefined') Hub.sceneOn = false; const sp = city.spawn, ch = typeof Hub !== 'undefined' ? Hub.spawn() : null, q = ch || { x: sp.pos[0], y: sp.pos[1], z: sp.pos[2], yaw: sp.yaw };
+      veh.v[0] = veh.v[1] = veh.v[2] = 0; veh.place(q.x, q.y + 0.8, q.z, q.yaw); settle(veh); veh.safe = { x: veh.p[0], y: veh.p[1], z: veh.p[2], yaw: q.yaw }; camYaw = q.yaw; camPos = [veh.p[0] - Math.sin(q.yaw) * 6, veh.p[1] + 2, veh.p[2] - Math.cos(q.yaw) * 6]; camTgt = veh.p.slice(); CamMLC.reset();
+    }
+    Sound.start(); Sound.setOn(cfg.sound); mode = 'play'; show('menu', false); show('hud', true); if (isTouch) show('touch', true); Input.edge = {}; if (window.__trafficErr && cfg.traffic !== 'off') setTimeout(() => toast('Tráfego indisponível: ' + window.__trafficErr, 6000), 800);
     toast(isTouch ? 'Arraste a faixa para esterçar' : 'WASD ou setas · Espaço: freio de mão · C: câmera · G: câmbio auto/manual · R: desvirar', 4200); $('hint').classList.add('show'); setTimeout(() => $('hint').classList.remove('show'), 14000);
     try { if (isTouch && document.documentElement.requestFullscreen && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {}); } catch (e) {}
   }
@@ -335,6 +345,7 @@
     if (cfg.shadows === 'off') shadow = null;
     R.npcShadow = cfg.shadows !== 'off'; const npcs = mode !== 'menu' && typeof Traffic !== 'undefined' && Traffic.ok && cfg.traffic !== 'off' ? Traffic.frame(veh) : null;
     R.render({ cam: camOut, time: now / 1000, npcs, particles: P, car: { R: veh.R, p: veh.p, wheels: veh.wheels, steerA: veh.steerA, hModel: veh.P.hCom, scale: veh.P.scale, anchorY: veh.P.anchorY, brake: mode === 'play' ? (veh.gear < 0 ? veh.throttle : veh.brake) : 0, shadow, hideBody: mode === 'play' && !!CAMS[camMode].drv } });
+    if (mode === 'menu' && typeof Hub !== 'undefined' && Hub.wantSnap) Hub.snap(canvas);
     if (mode === 'play' || mode === 'pause') {
       const rc = typeof HudBlur !== 'undefined' ? HudBlur.mirrorRect(cfg, mode) : null; if (rc && (qName !== 'low' || qs.get('mirror'))) { const dd = R.drawDist; R.drawDist = Math.min(dd, 380); R.render({ cam: HudBlur.mirrorCam(veh), time: now / 1000, rect: rc, flipX: true, npcs, car: Object.assign({}, { R: veh.R, p: veh.p, wheels: veh.wheels, steerA: veh.steerA, hModel: veh.P.hCom, scale: veh.P.scale, anchorY: veh.P.anchorY, brake: 0, shadow: null, hideBody: true }) }); R.drawDist = dd; }
     }

@@ -10,6 +10,7 @@
   const mode = () => (window.__game ? window.__game.mode : 'boot');
   const menuOn = () => !menu.hidden;
   const garageOpen = () => typeof FH2 !== 'undefined' && FH2.isOpen;
+  const hubOn = () => typeof Hub !== 'undefined' && Hub.isActive;
   const now = () => performance.now();
 
   // ---------------- tela cheia ----------------
@@ -99,6 +100,7 @@
     if (k === 'fs') { toggleFs(); return; }
     if (garageOpen()) { const c = GARAGE_KEY[k]; if (c) window.dispatchEvent(new KeyboardEvent('keydown', { code: c, key: c, bubbles: true, cancelable: true })); return; }
     if (!menuOn()) return;
+    if (hubOn()) { Hub.act(k); return; }
     body.classList.add('navmode');
     if (k === 'up' || k === 'down' || k === 'left' || k === 'right') { move(k); return; }
     if (k === 'back') { panelBack(); return; }
@@ -118,6 +120,7 @@
     setPad(false);
     const c = e.code;
     if (c === 'KeyF' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey) { toggleFs(); return; }
+    if (hubOn()) return; // o hub (hub.js) trata as próprias teclas
     if (!menuOn() || garageOpen()) return; // a garagem tem o próprio tratamento de teclas
     if (KDIR[c]) { e.preventDefault(); e.stopImmediatePropagation(); act(KDIR[c]); return; }
     if (c === 'Enter' || c === 'NumpadEnter') {
@@ -165,7 +168,7 @@
         if (dir !== hold.dir) { hold.dir = dir; hold.t = now(); hold.n = 0; if (dir) act(dir); }
         else if (dir && now() - hold.t > (hold.n === 0 ? 380 : 130)) { hold.t = now(); hold.n++; act(dir); }
         if (a) act('ok'); if (b) act('back'); if (y) act('fs'); if (start) act('start');
-        if (garageOpen()) { if (lb) act('left'); if (rb) act('right'); }
+        if (garageOpen()) { if (lb) act('left'); if (rb) act('right'); } else if (hubOn()) { if (lb) act('tabL'); if (rb) act('tabR'); }
       } else hold.dir = null;
     }
     if (on) {

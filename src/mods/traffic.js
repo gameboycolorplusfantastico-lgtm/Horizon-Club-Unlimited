@@ -6,7 +6,7 @@
 const Traffic = (() => {
   const TAU = Math.PI * 2;
   let ok = false, nodes = [], lanes = [], models = null, props = null, R = null, cars = [], nid = 1, conns = new Map(), spawnT = 0, lastLog = 0;
-  const cfgT = { count: 26, ring0: 70, ring1: 300, despawn: 360, enabled: true };
+  const cfgT = { count: 36, ring0: 70, ring1: 320, despawn: 360, enabled: true };
   const rnd = Math.random;
 
   // ---------- grafo ----------
@@ -79,12 +79,17 @@ const Traffic = (() => {
   function placeOnLane(c, lane, s) {
     c.lane = lane; c.conn = null; c.s = s; c.next = pickNext(lane); c.nextConn = c.next ? connector(lane, c.next) : null; c.node = nodes[lane.to];
   }
-  function spawn(px, pz, hx, hz) {
-    if (!lanes.length || cars.length >= cfgT.count) return false;
-    const L = lanes[Math.floor(rnd() * lanes.length)]; if (L.len < 14) return false;
+  let cand = [], candT = -9, burst = true;
+  function refreshCand(px, pz) { // faixas que tem algum trecho dentro do anel de nascimento (evita sortear faixas do mapa inteiro)
+    cand = []; const r1 = cfgT.ring1 + 30;
+    for (const L of lanes) { if (L.len < 14) continue; const mx = L.x[L.n >> 1], mz = L.z[L.n >> 1]; if (Math.abs(mx - px) < r1 + L.len * 0.5 && Math.abs(mz - pz) < r1 + L.len * 0.5) cand.push(L); }
+  }
+  function spawn(px, pz, hx, hz, first) {
+    if (!lanes.length || cars.length >= cfgT.count || !cand.length) return false;
+    const L = cand[Math.floor(rnd() * cand.length)];
     const s = rnd() * (L.len - 8) + 4, p = poseOn(L, s), dx = p.x - px, dz = p.z - pz, d = Math.hypot(dx, dz);
-    if (d < cfgT.ring0 || d > cfgT.ring1) return false;
-    if ((dx * hx + dz * hz) / d > 0.7 && d < 150) return false; // nao nasce na frente do jogador (aparecer do nada)
+    if (d < (first ? 45 : cfgT.ring0) || d > cfgT.ring1) return false;
+    if (!first && (dx * hx + dz * hz) / d > 0.7 && d < 130) return false; // nao nasce na frente do jogador, perto (aparecer do nada)
     const md = pickModel(); for (const o of cars) if (Math.hypot(o.x - p.x, o.z - p.z) < (md.length + o.model.length) * 0.5 + 6) return false;
     const c = { id: nid++, model: md, x: p.x, y: p.y, z: p.z, yaw: Math.atan2(p.hx, p.hz), pitch: 0, hx: p.hx, hz: p.hz, v: Math.min(L.lim * 0.8, 9), vd: L.lim * (0.82 + rnd() * 0.22), dist: 0, wait: 0, ghost: 0, hit: 0, kx: 0, kz: 0, brake: false, claimNode: null, age: 0, wmass: md.kind === 'truck' ? 6000 : 1400 };
     placeOnLane(c, L, s); cars.push(c); return true;
@@ -103,7 +108,10 @@ const Traffic = (() => {
 
   function step(dt, veh, T) {
     const px = veh.p[0], pz = veh.p[2], pvx = veh.v[0], pvz = veh.v[2], pf = Math.hypot(veh.R[2], veh.R[8]) || 1, phx = veh.R[2] / pf, phz = veh.R[8] / pf;
-    spawnT -= dt; if (spawnT <= 0) { spawnT = 0.12; for (let k = 0; k < 6 && cars.length < cfgT.count; k++) if (spawn(px, pz, phx, phz)) break; }
+    candT -= dt; if (candT <= 0 || !cand.length) { candT = 1.0; refreshCand(px, pz); }
+    if (cars.length === 0) burst = true;
+    if (burst) { for (let k = 0; k < 400 && cars.length < cfgT.count; k++) spawn(px, pz, phx, phz, true); burst = false; spawnT = 0; }
+    spawnT -= dt; if (spawnT <= 0) { spawnT = 0.1; for (let k = 0; k < 12 && cars.length < cfgT.count; k++) if (spawn(px, pz, phx, phz)) break; }
     for (let i = cars.length - 1; i >= 0; i--) {
       const c = cars[i], d = Math.hypot(c.x - px, c.z - pz); c.age += dt;
       if (d > cfgT.despawn || (c.hit > 0 && c.hitT > 14 && d > 30) || c.y < -5) { release(c); cars.splice(i, 1); continue; }
@@ -236,6 +244,6 @@ const Traffic = (() => {
     debugSpawn(id, x, y, z, yaw) { const md = models.models.find((m) => m.id === id); const c = { id: nid++, model: md, x, y, z, yaw, pitch: 0, hx: Math.sin(yaw), hz: Math.cos(yaw), v: 0, vd: 0, dist: 0, wait: 0, ghost: 0, hit: 1, hitT: -1e9, kx: 0, kz: 0, brake: false, claimNode: null, age: 0, wmass: 1400 }; cars.push(c); return c; },
     get ok() { return ok; }, get cars() { return cars; }, get lanes() { return lanes; }, get nodes() { return nodes; }, cfg: cfgT,
     setCount(n) { cfgT.count = n; while (cars.length > n) cars.pop(); },
-    clear() { cars.length = 0; for (const n of nodes) n.claim = null; },
+    clear() { cars.length = 0; burst = true; for (const n of nodes) n.claim = null; },
   };
 })();
