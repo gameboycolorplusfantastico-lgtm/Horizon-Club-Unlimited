@@ -2173,7 +2173,8 @@ const Hub = (() => {
     $('fx-rgrid').addEventListener('click', (e) => { const b = e.target.closest('.fx-tile'); if (b) { sel = +b.dataset.i; mark(); activate(b); } });
     $('fx-rgrid').addEventListener('pointermove', (e) => { if (e.pointerType !== 'mouse') return; const b = e.target.closest('.fx-tile'); if (b && +b.dataset.i !== sel) { sel = +b.dataset.i; mark(); } });
     $('fx-bottom').addEventListener('click', onBottom); $('fx-bottom2').addEventListener('click', onBottom);
-    root.addEventListener('pointerdown', (e) => { if (state === 'title' && !e.target.closest('button')) enterHub(); });
+    // o #fhx tem pointer-events:none (so os botoes recebem toque), entao o toque na tela inicial e ouvido no documento
+    document.addEventListener('pointerdown', (e) => { if (state === 'title' && (e.pointerType !== 'mouse' || e.button === 0) && !e.target.closest('button')) enterHub(); }, true);
     addEventListener('keydown', onKey, true);
     $('fx-corner').textContent = 'Horizon Club Unlimited';
     requestAnimationFrame(loop);
