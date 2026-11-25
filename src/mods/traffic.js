@@ -182,7 +182,8 @@ const Traffic = (() => {
     }
     const pth = c.conn || c.lane, q = poseOn(pth, c.s), tgt = Math.atan2(q.hx, q.hz); let dy = tgt - c.yaw; while (dy > Math.PI) dy -= TAU; while (dy < -Math.PI) dy += TAU;
     const kd = Math.exp(-3 * dt); c.kx *= kd; c.kz *= kd;
-    c.yaw += dy * Math.min(1, 12 * dt); c.x = q.x + c.kx; c.z = q.z + c.kz; const sy = q.y, dyv = sy - c.y; if (Math.abs(dyv) > 3) c.y = sy; else c.y += dyv * Math.min(1, 14 * dt);
+    /* cola no chao real do mapa (rampas, pontes, degraus) */
+    c.yaw += dy * Math.min(1, 12 * dt); c.x = q.x + c.kx; c.z = q.z + c.kz; let sy = q.y; if (Traffic.world && Traffic.world.raycast(q.x, sy + 1.2, q.z, 0, -1, 0, 3, 0.35)) { const gy = sy + 1.2 - Traffic.world.hit.t; if (Math.abs(gy - sy) < 1.0) sy = gy; } const dyv = sy - c.y; if (Math.abs(dyv) > 3) c.y = sy; else c.y += dyv * Math.min(1, 14 * dt);
     const q2 = poseOn(pth, c.s + 2.5); c.pitch += (Math.max(-0.3, Math.min(0.3, Math.atan2(q2.y - q.y, 2.5))) - c.pitch) * Math.min(1, 6 * dt);
     c.hx = Math.sin(c.yaw); c.hz = Math.cos(c.yaw); c.dist += c.v * dt;
   }
@@ -240,7 +241,7 @@ const Traffic = (() => {
     console.log('Trafego: ' + lanes.length + ' faixas, ' + nodes.length + ' nos, ' + nm.models.length + ' modelos');
   }
   return {
-    init, step, collide, frame, build,
+    init, step, collide, frame, build, world: null,
     debugSpawn(id, x, y, z, yaw) { const md = models.models.find((m) => m.id === id); const c = { id: nid++, model: md, x, y, z, yaw, pitch: 0, hx: Math.sin(yaw), hz: Math.cos(yaw), v: 0, vd: 0, dist: 0, wait: 0, ghost: 0, hit: 1, hitT: -1e9, kx: 0, kz: 0, brake: false, claimNode: null, age: 0, wmass: 1400 }; cars.push(c); return c; },
     get ok() { return ok; }, get cars() { return cars; }, get lanes() { return lanes; }, get nodes() { return nodes; }, cfg: cfgT,
     setCount(n) { cfgT.count = n; while (cars.length > n) cars.pop(); },

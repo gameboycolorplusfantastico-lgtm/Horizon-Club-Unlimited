@@ -1,18 +1,103 @@
 {
   "esportivo": {
     "_descricao": "Valores padrao do jogo (BMW M3 GTR). Sem alteracoes de fisica.",
-    "params": {},
+    "params": {
+      "susp": "sport"
+    },
     "cyl": 6
   },
   "pickup": {
     "_descricao": "Pickup/SUV pesado 4x4: V8 torquudo, 6 marchas, suspensao de longo curso, pneus off-road.",
     "params": {
-      "mass": 2650, "awd": true, "L0": 0.62, "k": 73000, "cBump": 4600, "cReb": 6800, "kArb": 24000,
-      "mu": 1.12, "offroad": 1.18, "cdA": 1.5, "clA": 0.05, "eff": 0.85, "steerMax": 0.55, "vMax": 50,
-      "gears": [0, 4.17, 2.34, 1.52, 1.14, 0.87, 0.69], "rev": 3.4, "final": 4.10,
-      "idle": 700, "rpmMax": 6300, "rpmCut": 6100, "launch": 2600, "launchEnd": 2200,
-      "shiftUp": [3600, 2200], "shiftDn": [1500, 1400],
-      "torque": [[0,0],[700,150],[1000,230],[1500,330],[2500,470],[3500,545],[4500,588],[5000,570],[5500,530],[5900,470],[6200,300],[6500,0]]
+      "mass": 2650,
+      "awd": true,
+      "L0": 0.62,
+      "k": 73000,
+      "cBump": 4600,
+      "cReb": 6800,
+      "kArb": 24000,
+      "mu": 1.12,
+      "offroad": 1.18,
+      "cdA": 1.5,
+      "clA": 0.05,
+      "eff": 0.85,
+      "steerMax": 0.55,
+      "vMax": 50,
+      "gears": [
+        0,
+        4.17,
+        2.34,
+        1.52,
+        1.14,
+        0.87,
+        0.69
+      ],
+      "rev": 3.4,
+      "final": 4.1,
+      "idle": 700,
+      "rpmMax": 6300,
+      "rpmCut": 6100,
+      "launch": 2600,
+      "launchEnd": 2200,
+      "shiftUp": [
+        3600,
+        2200
+      ],
+      "shiftDn": [
+        1500,
+        1400
+      ],
+      "torque": [
+        [
+          0,
+          0
+        ],
+        [
+          700,
+          150
+        ],
+        [
+          1000,
+          230
+        ],
+        [
+          1500,
+          330
+        ],
+        [
+          2500,
+          470
+        ],
+        [
+          3500,
+          545
+        ],
+        [
+          4500,
+          588
+        ],
+        [
+          5000,
+          570
+        ],
+        [
+          5500,
+          530
+        ],
+        [
+          5900,
+          470
+        ],
+        [
+          6200,
+          300
+        ],
+        [
+          6500,
+          0
+        ]
+      ],
+      "susp": "offroad"
     },
     "cyl": 8
   }

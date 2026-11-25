@@ -136,7 +136,19 @@ const WATER_Y = 0; // nivel do mar (y do jogo)
 const SURF_GRIP = [1.0, 1.0, 0.62, 0.72]; // 0 outro, 1 asfalto, 2 grama, 3 terra/areia/rocha
 const GEARS = [0, 3.55, 2.30, 1.66, 1.28, 1.00, 0.80], FINAL = 3.46, REV = 3.4;
 // Escala do carro em relação ao modelo original (4,49 m). 1 = tamanho original. Tudo (render, rodas, colisão, câmera) deriva deste valor.
-const CAR_SCALE = 1.2;
+const CAR_SCALE = 1.3;
+// Perfis de suspensao (params.susp em cars.json). f = frequencia da carroceria (Hz), zb/zr = amortecimento na compressao/extensao (fracao do critico),
+// L0 = curso (m, antes da escala), arb = barra estabilizadora (rigidez relativa a k), off = aderencia fora do asfalto, bump = fim de curso.
+// Mola e amortecedor saem da massa do carro: k = (m/4)(2*pi*f)^2, c = 2*zeta*sqrt(k*m/4).
+const SUSP = {
+  sport:   { f: 1.80, zb: 0.34, zr: 0.55, L0: 0.40, arb: 0.37, off: 1.00 },
+  super:   { f: 2.25, zb: 0.40, zr: 0.62, L0: 0.34, arb: 0.50, off: 0.92 },
+  muscle:  { f: 1.50, zb: 0.30, zr: 0.50, L0: 0.43, arb: 0.30, off: 1.00 },
+  gt:      { f: 1.60, zb: 0.32, zr: 0.52, L0: 0.43, arb: 0.32, off: 1.02 },
+  rally:   { f: 1.55, zb: 0.38, zr: 0.60, L0: 0.52, arb: 0.28, off: 1.18 },
+  suv:     { f: 1.35, zb: 0.33, zr: 0.55, L0: 0.55, arb: 0.30, off: 1.12 },
+  offroad: { f: 1.20, zb: 0.30, zr: 0.50, L0: 0.64, arb: 0.22, off: 1.25 },
+};
 function torqueCurve(rpm) { // N·m (motor ~ 3,2 L aspirado, ~ 340 cv)
   const x = rpm / 1000; if (x < 1) return 150 * x; // idle
   const t = x < 4.8 ? 250 + 120 * Math.sin((x - 1) / 3.8 * PI * 0.5) : 370 - Math.max(0, (x - 6.2)) * 90;
@@ -147,20 +159,25 @@ class Vehicle {
     opt = opt || {}; this.world = world;
     const S = opt.scale || CAR_SCALE, op = opt.params || {}, mk = (op.mass || 1500) / 1500; this.mk = mk;
     // Dimensões em metros escaladas por S. Marchas/freios/inércia são ajustados para o desempenho continuar igual ao do carro original.
+    let su = null;
+    if (SUSP[op.susp]) { const T = SUSP[op.susp], m = op.mass || 1500, mq = m / 4, w = 2 * PI * T.f, kk = mq * w * w, cc = 2 * Math.sqrt(kk * mq);
+      su = { k: kk, cBump: cc * T.zb, cReb: cc * T.zr, kArb: kk * T.arb * 1.8, L0: T.L0 * S, offroad: T.off, bumpK: kk * 2.0, bumpZ: 0.12 * S, dMin: 0.05 * S }; }
     const P = this.P = Object.assign({
       scale: S, mass: 1500, Ix: 2736 * S * S * mk, Iy: 2944 * S * S * mk, Iz: 900 * S * S * mk, hCom: null, anchorY: 0.09 * S, L0: 0.40 * S, dMin: 0.05 * S, bumpZ: 0.12 * S, stepH: 0.36 * S, stepUpMin: 1.0, stepUpMax: 2.6,
       k: 46000 * mk, cBump: 2900 * mk, cReb: 4300 * mk, kArb: 17000 * mk, wr: 0.321 * S, Iw: 1.5 * S * S * mk, mu: 1.3, brakeT: 3200 * S * mk, hbT: 4200 * S * mk, steerMax: 0.58,
       cdA: 0.68, clA: 0.35, tx: 0.749 * S, tz: 1.311 * S, eff: 0.88, B: 11.0, C: 1.45, E: 0.0, final: FINAL * S,
       // trem de força e extras por carro (tudo pode ser sobrescrito em assets/cars/cars.json -> params)
       awd: false, offroad: 1, vMax: 0, gears: GEARS, rev: REV, idle: 950, rpmMax: 8200, rpmCut: 7900, launch: 3600, launchEnd: 3200, shiftUp: [4600, 2300], shiftDn: [2300, 1900], torque: null, bumpK: 90000 * mk,
-    }, op);
-    if (op.hCom === undefined) P.hCom = P.wr - P.anchorY + P.L0 - 0.082; // roda encostando no chão com a mola em repouso
+    }, su || {}, op);
+    { // compressao estatica da mola com o carro parado: k*c*(1+0.35*c/L0) = m*g/4 (resolvido por iteracao)
+      const tgt = P.mass * 9.81 / 4; let c = tgt / P.k; for (let it = 0; it < 12; it++) c = tgt / (P.k * (1 + 0.35 * Math.min(1.5, c / P.L0))); P.sc = clamp(c, 0.03, P.L0 * 0.6); }
+    if (op.hCom === undefined) P.hCom = P.wr - P.anchorY + P.L0 - P.sc; // roda encostando no chão com a mola em repouso
     if (P.torque) { const T = P.torque; P.torqueFn = (rpm) => { if (rpm <= T[0][0]) return T[0][1]; for (let i = 1; i < T.length; i++) if (rpm <= T[i][0]) { const a = T[i - 1], b = T[i]; return a[1] + (b[1] - a[1]) * (rpm - a[0]) / (b[0] - a[0]); } return 0; }; } else P.torqueFn = torqueCurve;
     this.p = [0, 5, 0]; this.q = [0, 0, 0, 1]; this.R = new Float64Array(9); this.v = [0, 0, 0]; this.w = [0, 0, 0];
     this.wheels = [];
     const tx = P.tx, tz = P.tz;
     [[tx, tz, 1, 0], [-tx, tz, 1, 0], [tx, -tz, 0, 1], [-tx, -tz, 0, 1]].forEach((a, i) => this.wheels.push({
-      ax: a[0], ay: P.anchorY, az: a[1], steer: !!a[2], drive: P.awd ? true : !!a[3], d: P.L0 - 0.082, dPrev: P.L0 - 0.082, c: 0, ground: false, om: 0, spin: 0, steerA: 0,
+      ax: a[0], ay: P.anchorY, az: a[1], steer: !!a[2], drive: P.awd ? true : !!a[3], d: P.L0 - P.sc, dPrev: P.L0 - P.sc, c: 0, ground: false, om: 0, spin: 0, steerA: 0,
       nx: 0, ny: 1, nz: 0, Fz: 0, slip: 0, slipRatio: 0, surf: 0, px: 0, py: 0, pz: 0, sprF: 0, skid: 0,
     }));
     // esferas de colisão do chassi (x,y,z locais, raio) e esferas das rodas (só paredes)
@@ -192,7 +209,7 @@ class Vehicle {
   }
   place(x, y, z, yaw) {
     this.p = [x, y, z]; this.q = [0, Math.sin(yaw / 2), 0, Math.cos(yaw / 2)]; this.v = [0, 0, 0]; this.w = [0, 0, 0];
-    this.updateR(); this.gear = 1; this.rpm = 900; for (const W of this.wheels) { W.om = 0; W.d = this.P.L0 - 0.082; W.dPrev = W.d; } this.safe = { x, y, z, yaw };
+    this.updateR(); this.gear = 1; this.rpm = 900; for (const W of this.wheels) { W.om = 0; W.d = this.P.L0 - this.P.sc; W.dPrev = W.d; } this.safe = { x, y, z, yaw };
   }
   get yaw() { return Math.atan2(this.R[2], this.R[8]); }
   // vetor local -> mundo
@@ -315,7 +332,7 @@ class Vehicle {
       const vref = Math.max(Math.abs(vlong), 2.8);
       let sx = wh.om * P.wr - vlong, sy = -vlat;
       const sigx = sx / vref, sigy = sy / vref * 0.92;
-      let sig = Math.hypot(sigx, sigy); const B = P.B, C = P.C;
+      let sig = Math.hypot(sigx, sigy); const B = P.B * (wh.surf >= 2 ? 0.8 : 1), C = P.C;
       const f = Math.sin(C * Math.atan(B * sig));
       const fm = grip * sf * f; let Fl = 0, Ft = 0, cth2 = 1;
       if (sig > 1e-6) { Fl = fm * sigx / sig; Ft = fm * sigy / sig; cth2 = sigx * sigx / (sig * sig); }

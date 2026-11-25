@@ -135,7 +135,7 @@
     try { const [pm, pb] = await Promise.all([fetch('assets/props.json').then((r) => r.json()), fetchBuf('assets/props.wasm')]); await R.loadProps(pm, pb, q0.tex); window.__props = pm; } catch (e) { console.warn('props indisponíveis', e); R.props = null; }
     try { if (typeof Traffic !== 'undefined') { const jf = (u) => fetch(u).then((r) => { if (!r.ok) throw new Error(u + ' ' + r.status); return r.json(); }); const [tj, nm, nb] = await Promise.all([jf('assets/traffic.json'), jf('assets/npc/npc.json'), fetchBuf('assets/npc/npc.wasm')]); await Traffic.init(R, tj, window.__props, nm, nb, q0.tex); } } catch (e) { console.warn('trafego indisponivel', e); window.__trafficErr = String(e && e.message || e); }
     setProg(0.88, 'Construindo colisão do mapa…'); await tick();
-    const col = buildCollision(cm, cb, window.__props); world = new World(col.V, col.surf, 16);
+    const col = buildCollision(cm, cb, window.__props); world = new World(col.V, col.surf, 16); if (typeof Traffic !== 'undefined') Traffic.world = world;
     const sp = cm.spawn; veh = makeVehicle(first); const sc0 = (!dbg && typeof Hub !== 'undefined') ? Hub.SCENE : null;
     if (sc0) { veh.place(sc0.x, sc0.y + 0.8, sc0.z, sc0.yaw); } else veh.place(sp.pos[0], sp.pos[1] + 0.8, sp.pos[2], sp.yaw); settle(veh);
     veh.safe = { x: veh.p[0], y: veh.p[1], z: veh.p[2], yaw: sp.yaw }; cfg.car = first.id; applyPaint(first); renderCars(); if (typeof FH2 !== 'undefined') FH2.capture(R, veh, first);
@@ -219,23 +219,50 @@
   const mm = $('mm'), mctx = mm.getContext('2d');
   // destino marcado no mapa grande (aparece no minimapa); { x, z } em metros do jogo, ou null
   let waypoint = null, mapOpen = false, mapFrom = 'play';
+  let mmSpan = 420, mmPrev = null;
   function drawMinimap() {
     const dpr = Math.min(2, window.devicePixelRatio || 1), css = mm.clientWidth || 150, px = Math.round(css * dpr); if (mm.width !== px) mm.width = mm.height = px;
-    const s = px / 2; mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.clearRect(0, 0, px, px); mctx.fillStyle = '#0e2c4c'; mctx.fillRect(0, 0, px, px);
-    const spdK = Math.hypot(veh.v[0], veh.v[2]) * 3.6, span = 420 + Math.min(300, spdK * 1.5), kpm = px / span, rot = veh.yaw - Math.PI; // o mapa afasta com a velocidade
+    const s = px / 2, u = dpr; mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.clearRect(0, 0, px, px); mctx.fillStyle = '#0e2c4c'; mctx.fillRect(0, 0, px, px);
+    // o mapa afasta com a velocidade (suave, sem pulos) e gira com o carro (frente para cima)
+    const spdK = Math.hypot(veh.v[0], veh.v[2]) * 3.6, spanT = 360 + Math.min(340, spdK * 1.6); mmSpan += (spanT - mmSpan) * 0.06;
+    const kpm = px / mmSpan, rot = veh.yaw - Math.PI, cR = Math.cos(rot), sR = Math.sin(rot);
+    const toM = (x, z) => { const dx = (x - veh.p[0]) * kpm, dz = (z - veh.p[2]) * kpm; return [dx * cR - dz * sR, dx * sR + dz * cR]; };
     if (minimapImg && minimapImg.complete && city) {
       const mi = city.minimap, res = mi.res, ox = mi.ox !== undefined ? mi.ox : city.bounds[0], oz = mi.oz !== undefined ? mi.oz : city.bounds[2], mx = (veh.p[0] - ox) / res, my = (veh.p[2] - oz) / res, scale = kpm * res;
       mctx.save(); mctx.imageSmoothingQuality = 'high'; mctx.translate(s, s); mctx.rotate(rot); mctx.scale(scale, scale); mctx.translate(-mx, -my); mctx.drawImage(minimapImg, 0, 0); mctx.restore();
     }
-    if (waypoint) { // marcador de destino: pino sobre o mapa ou seta na borda quando fora de alcance
-      const dx = (waypoint.x - veh.p[0]) * kpm, dz = (waypoint.z - veh.p[2]) * kpm, c = Math.cos(rot), sn = Math.sin(rot); let wx = dx * c - dz * sn, wy = dx * sn + dz * c; const d = Math.hypot(wx, wy), Rm = s - 12 * dpr;
-      mctx.save(); mctx.translate(s, s);
-      if (d > Rm) { const a = Math.atan2(wy, wx); mctx.rotate(a); mctx.fillStyle = '#ffe21a'; mctx.strokeStyle = '#0a0e14'; mctx.lineWidth = 2 * dpr; mctx.beginPath(); mctx.moveTo(Rm + 6 * dpr, 0); mctx.lineTo(Rm - 6 * dpr, -6 * dpr); mctx.lineTo(Rm - 6 * dpr, 6 * dpr); mctx.closePath(); mctx.stroke(); mctx.fill(); }
-      else { mctx.fillStyle = '#ffe21a'; mctx.strokeStyle = '#0a0e14'; mctx.lineWidth = 2 * dpr; mctx.beginPath(); mctx.arc(wx, wy - 8 * dpr, 6 * dpr, Math.PI * 0.85, Math.PI * 2.15); mctx.lineTo(wx, wy); mctx.closePath(); mctx.stroke(); mctx.fill(); mctx.fillStyle = '#0a0e14'; mctx.beginPath(); mctx.arc(wx, wy - 8 * dpr, 2.2 * dpr, 0, 7); mctx.fill(); }
-      mctx.restore();
+    // aneis de distancia (100 m e 250 m) e cone de visao
+    mctx.save(); mctx.translate(s, s); mctx.strokeStyle = 'rgba(255,255,255,.16)'; mctx.lineWidth = 1 * u; mctx.setLineDash([3 * u, 5 * u]);
+    for (const rm of [100, 250]) { const rr = rm * kpm; if (rr < s - 4 * u) { mctx.beginPath(); mctx.arc(0, 0, rr, 0, 6.2832); mctx.stroke(); } }
+    mctx.setLineDash([]); const cone = mctx.createRadialGradient(0, 0, 0, 0, 0, s * 0.8); cone.addColorStop(0, 'rgba(255,176,46,.30)'); cone.addColorStop(1, 'rgba(255,176,46,0)');
+    mctx.fillStyle = cone; mctx.beginPath(); mctx.moveTo(0, 0); mctx.arc(0, 0, s * 0.8, -Math.PI / 2 - 0.5, -Math.PI / 2 + 0.5); mctx.closePath(); mctx.fill(); mctx.restore();
+    // trafego: pontos dos NPCs proximos (viaturas piscam vermelho/azul)
+    if (typeof Traffic !== 'undefined' && Traffic.ok && cfg.traffic !== 'off') {
+      const tt = performance.now() / 180 | 0;
+      for (const c of Traffic.cars) {
+        if (c.hit > 0 && c.hitT > 3) continue; const [qx, qy] = toM(c.x, c.z); if (Math.hypot(qx, qy) > s - 6 * u) continue;
+        const pol = c.model && c.model.kind === 'police', big = c.model && (c.model.kind === 'truck');
+        mctx.fillStyle = pol ? (tt & 1 ? '#ff4040' : '#4aa8ff') : (big ? '#c9b27a' : 'rgba(230,238,250,.85)'); mctx.strokeStyle = 'rgba(8,12,20,.8)'; mctx.lineWidth = 1 * u;
+        mctx.save(); mctx.translate(s + qx, s + qy); mctx.rotate(Math.atan2(c.hx * cR - c.hz * sR, -(c.hx * sR + c.hz * cR))); const L = (big ? 3.4 : 2.6) * u, Wd = 1.6 * u; mctx.beginPath(); mctx.rect(-Wd, -L, Wd * 2, L * 2); mctx.fill(); mctx.stroke(); mctx.restore();
+      }
     }
-    mctx.save(); mctx.translate(s, s); mctx.shadowColor = 'rgba(255,176,46,.8)'; mctx.shadowBlur = 8 * dpr; mctx.fillStyle = '#ffb02e'; mctx.strokeStyle = '#0a0e14'; mctx.lineWidth = 2 * dpr;
-    mctx.beginPath(); mctx.moveTo(0, -10 * dpr); mctx.lineTo(7 * dpr, 8 * dpr); mctx.lineTo(0, 4 * dpr); mctx.lineTo(-7 * dpr, 8 * dpr); mctx.closePath(); mctx.stroke(); mctx.fill(); mctx.restore();
+    if (waypoint) { // marcador de destino: pino sobre o mapa ou seta na borda quando fora de alcance
+      const [wx, wy] = toM(waypoint.x, waypoint.z), d = Math.hypot(wx, wy), Rm = s - 12 * u, dm = Math.hypot(waypoint.x - veh.p[0], waypoint.z - veh.p[2]);
+      mctx.save(); mctx.translate(s, s);
+      if (d > Rm) { const a = Math.atan2(wy, wx); mctx.rotate(a); mctx.fillStyle = '#ffe21a'; mctx.strokeStyle = '#0a0e14'; mctx.lineWidth = 2 * u; mctx.beginPath(); mctx.moveTo(Rm + 6 * u, 0); mctx.lineTo(Rm - 6 * u, -6 * u); mctx.lineTo(Rm - 6 * u, 6 * u); mctx.closePath(); mctx.stroke(); mctx.fill(); }
+      else { mctx.fillStyle = '#ffe21a'; mctx.strokeStyle = '#0a0e14'; mctx.lineWidth = 2 * u; mctx.beginPath(); mctx.arc(wx, wy - 8 * u, 6 * u, Math.PI * 0.85, Math.PI * 2.15); mctx.lineTo(wx, wy); mctx.closePath(); mctx.stroke(); mctx.fill(); mctx.fillStyle = '#0a0e14'; mctx.beginPath(); mctx.arc(wx, wy - 8 * u, 2.2 * u, 0, 6.2832); mctx.fill(); }
+      mctx.restore();
+      mctx.save(); mctx.font = '700 ' + Math.round(9 * u) + 'px system-ui,sans-serif'; mctx.textAlign = 'center'; mctx.fillStyle = '#ffe21a'; mctx.strokeStyle = 'rgba(8,12,20,.9)'; mctx.lineWidth = 3 * u;
+      const lab = dm >= 1000 ? (dm / 1000).toFixed(1) + ' km' : Math.round(dm / 10) * 10 + ' m'; mctx.strokeText(lab, s, px - 8 * u); mctx.fillText(lab, s, px - 8 * u); mctx.restore();
+    }
+    // jogador
+    mctx.save(); mctx.translate(s, s); mctx.shadowColor = 'rgba(255,176,46,.8)'; mctx.shadowBlur = 8 * u; mctx.fillStyle = '#ffb02e'; mctx.strokeStyle = '#0a0e14'; mctx.lineWidth = 2 * u;
+    mctx.beginPath(); mctx.moveTo(0, -10 * u); mctx.lineTo(7 * u, 8 * u); mctx.lineTo(0, 4 * u); mctx.lineTo(-7 * u, 8 * u); mctx.closePath(); mctx.stroke(); mctx.fill(); mctx.restore();
+    // bussola: o "N" gira com o mapa; marcas a cada 45 graus; sombra nas bordas
+    mctx.save(); mctx.translate(s, s); const nA = Math.atan2(-cR, sR); /* direcao do norte (-z) do mapa em tela */
+    for (let k = 0; k < 8; k++) { const a = nA + k * Math.PI / 4, r0 = s - (k % 2 ? 4 : 7) * u; mctx.strokeStyle = k === 0 ? '#ff5a4a' : 'rgba(255,255,255,.45)'; mctx.lineWidth = (k % 2 ? 1 : 1.6) * u; mctx.beginPath(); mctx.moveTo(Math.cos(a) * r0, Math.sin(a) * r0); mctx.lineTo(Math.cos(a) * (s - 1.5 * u), Math.sin(a) * (s - 1.5 * u)); mctx.stroke(); }
+    mctx.font = '800 ' + Math.round(10 * u) + 'px system-ui,sans-serif'; mctx.textAlign = 'center'; mctx.textBaseline = 'middle'; mctx.fillStyle = '#ff5a4a'; mctx.strokeStyle = 'rgba(8,12,20,.9)'; mctx.lineWidth = 3 * u; const nr = s - 17 * u; mctx.strokeText('N', Math.cos(nA) * nr, Math.sin(nA) * nr); mctx.fillText('N', Math.cos(nA) * nr, Math.sin(nA) * nr);
+    const vg = mctx.createRadialGradient(0, 0, s * 0.62, 0, 0, s); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.45)'); mctx.fillStyle = vg; mctx.globalCompositeOperation = 'source-over'; mctx.beginPath(); mctx.arc(0, 0, s, 0, 6.2832); mctx.fill(); mctx.restore();
   }
   const el = { spd: $('spd'), unit: $('unit'), gear: $('gear'), rpm: $('rpmfill') }; let hudT = 0;
   function updateHud(dt) {
@@ -357,6 +384,8 @@
     }
     if (qs.get('debug')) $('dbg').textContent = ema.toFixed(1) + ' ms · ' + R.stats.calls + ' draws · ' + W + 'x' + H + ' · ' + qName + ' x' + dynScale.toFixed(2);
   }
+  // informacoes do carro atual para o menu de pausa (src/mods/pause_fh.js)
+  window.__carInfo = () => { const c = curCar(); return c ? { name: c.name, brand: c.brand, cls: c['class'], specs: c.specs, susp: (c.params || {}).susp, scale: c.scale, mass: (c.params || {}).mass, awd: (c.params || {}).awd } : null; };
   window.__game = { paintReport() { const c = curCar(), m = c && c.man; return m ? { car: c.id, zonas: (m.paintZones || []).map((z) => ({ nome: z.name, materiais: z.mats.map((i) => m.mats[i].name) })), materiais: m.mats.map((x, i) => i + ': ' + x.name + (x.pz !== undefined ? '  <== PINTURA' : '')) } : null; }, save, selectCar, get cars() { return CARS; }, get veh() { return veh; }, get world() { return world; }, get R() { return R; }, get mode() { return mode; }, get city() { return city; }, get waypoint() { return waypoint; }, set waypoint(w) { waypoint = w; }, get mapOpen() { return mapOpen; }, openMap, closeMap, cfg, start: startGame, setCam(m) { camMode = m; }, get frames() { return frames; }, get cam() { return camOut; } };
   boot().catch((e) => { console.error(e); $('ptxt').textContent = 'Erro ao carregar: ' + e.message; $('bar').style.background = 'var(--hot)'; });
 })();

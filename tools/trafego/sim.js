@@ -1,7 +1,7 @@
 const fs=require('fs'),vm=require('vm');
-const code=fs.readFileSync('repo/src/mods/traffic.js','utf8')+'\n;this.Traffic=Traffic;';
+const code=fs.readFileSync('./src/mods/traffic.js','utf8')+'\n;this.Traffic=Traffic;';
 const ctx={console,Math,Float64Array,Float32Array,Map,Object,Array,Number,String,JSON}; vm.createContext(ctx); vm.runInContext(code,ctx);
-const T=ctx.Traffic; const tj=JSON.parse(fs.readFileSync('repo/assets/traffic.json')), props=JSON.parse(fs.readFileSync('repo/assets/props.json')), npc=JSON.parse(fs.readFileSync('repo/assets/npc/npc.json'));
+const T=ctx.Traffic; const tj=JSON.parse(fs.readFileSync('./assets/traffic.json')), props=JSON.parse(fs.readFileSync('./assets/props.json')), npc=JSON.parse(fs.readFileSync('./assets/npc/npc.json'));
 const R={sigState(j,axis,t){const p=(t+j*7.3+axis*13)%26;return p<10?2:(p<12?1:0);}, async loadNpc(){}};
 (async()=>{
 await T.init(R,tj,props,npc,null,1);

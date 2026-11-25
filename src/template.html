@@ -165,20 +165,46 @@ body.touch #toast { top: 74px; }
       <div class="mlist"><button class="cta mitem" id="opts-back">Voltar</button></div>
     </div>
     <div class="card" id="p-pause" hidden>
-      <h2 class="brand" style="font-size:clamp(30px,7vw,44px)">Pausado</h2>
-      <div class="cars" id="cars-pause" role="radiogroup" aria-label="Trocar de carro" hidden></div>
-      <div class="paintbox" id="paint-pause" hidden></div>
-      <div class="row"><span>Qualidade gráfica</span><div class="seg seg-q"><button data-v="auto">Auto</button><button data-v="low">Baixa</button><button data-v="med">Média</button><button data-v="high">Alta</button></div></div>
-      <div class="row"><span>Unidade de velocidade</span><div class="seg seg-u"><button data-v="kmh">km/h</button><button data-v="mph">mph</button></div></div>
-      <div class="row"><span>Som</span><div class="seg seg-s"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
-      <div class="row"><span>Estilo da câmera</span><div class="seg seg-cs"><button data-v="mlc">Midnight Club</button><button data-v="simple">Simples</button></div></div>
-      <div class="row"><span>Efeito de velocidade</span><div class="seg seg-fx"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
-      <div class="row"><span>Retrovisor</span><div class="seg seg-mr"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
-      <div class="row"><span>Sombras</span><div class="seg seg-sh"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
-      <div class="row"><span>Tráfego</span><div class="seg seg-tf"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
-      <div class="row"><span>Câmbio</span><div class="seg seg-tr"><button data-v="auto">Automático</button><button data-v="manual">Manual</button></div></div>
-      <div class="row"><span>Câmera atual: <b id="camname"></b></span><button class="ghost" id="cam-btn">Trocar câmera</button></div>
-      <div class="grid2"><button class="ghost" id="garage-btn">Garagem</button><button class="ghost" id="map-btn">Mapa</button><button class="ghost" id="reset-btn">Desvirar o carro</button><button class="ghost" id="home-btn">Voltar ao ponto inicial</button><button class="ghost" id="fs-btn" data-fs>Tela cheia</button><button class="cta" id="resume">Continuar</button></div>
+      <header class="pz-top"><div class="pz-title"><small>Horizon Club Unlimited</small><h2>Pausado</h2></div><div class="pz-car" id="pz-car"></div></header>
+      <nav class="pz-tabs" role="tablist" aria-label="Menu de pausa"><i class="pz-key">Q</i><button class="pz-tab on" data-tab="pausa" role="tab">Pausa</button><button class="pz-tab" data-tab="carro" role="tab">Carro</button><button class="pz-tab" data-tab="opcoes" role="tab">Opções</button><button class="pz-tab" data-tab="controles" role="tab">Controles</button><i class="pz-key">E</i></nav>
+      <div class="pz-body">
+      <section class="pz-pane" data-pane="pausa">
+        <div class="pz-grid">
+          <button class="pz-tile pz-hero" id="resume"><span class="pz-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span><b>Continuar</b><small>Voltar para a pista</small></button>
+          <button class="pz-tile" id="garage-btn"><span class="pz-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9h-5v-6H8v6H3z"/></svg></span><b>Garagem</b><small>Trocar de carro</small></button>
+          <button class="pz-tile" id="map-btn"><span class="pz-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4l6 2 5-2v14l-5 2-6-2-5 2V6zM9 4v14M15 6v14"/></svg></span><b>Mapa</b><small>Marcar destino</small></button>
+          <button class="pz-tile" id="reset-btn"><span class="pz-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a7 7 0 1 1-6.7 9h2.2A5 5 0 1 0 12 7v3L7 6l5-4z"/></svg></span><b>Desvirar</b><small>Recolocar o carro</small></button>
+          <button class="pz-tile" id="home-btn"><span class="pz-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v18M6 4h12l-2.5 4 2.5 4H6"/></svg></span><b>Ponto inicial</b><small>Voltar ao começo</small></button>
+          <button class="pz-tile" id="cam-btn"><span class="pz-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l2-3h6l2 3h3v12H4zm8 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg></span><b>Câmera</b><small id="camname-wrap"><span id="camname"></span></small></button>
+          <button class="pz-tile" id="fs-btn"><span class="pz-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5v2H6v3zm10-5h5v5h-2V6h-3zM4 15h2v3h3v2H4zm13 3v-3h2v5h-5v-2z"/></svg></span><b>Tela cheia</b><small>Ligar / desligar</small></button>
+        </div>
+      </section>
+      <section class="pz-pane" data-pane="carro" hidden>
+        <div class="pz-carinfo" id="pz-carinfo"></div>
+        <div class="cars" id="cars-pause" role="radiogroup" aria-label="Trocar de carro" hidden></div>
+        <div class="paintbox" id="paint-pause" hidden></div>
+      </section>
+      <section class="pz-pane" data-pane="opcoes" hidden>
+        <div class="pz-rows">
+          <div class="row"><span>Qualidade gráfica</span><div class="seg seg-q"><button data-v="auto">Auto</button><button data-v="low">Baixa</button><button data-v="med">Média</button><button data-v="high">Alta</button></div></div>
+          <div class="row"><span>Unidade de velocidade</span><div class="seg seg-u"><button data-v="kmh">km/h</button><button data-v="mph">mph</button></div></div>
+          <div class="row"><span>Som</span><div class="seg seg-s"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
+          <div class="row"><span>Estilo da câmera</span><div class="seg seg-cs"><button data-v="mlc">Midnight Club</button><button data-v="simple">Simples</button></div></div>
+          <div class="row"><span>Efeito de velocidade</span><div class="seg seg-fx"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
+          <div class="row"><span>Retrovisor</span><div class="seg seg-mr"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
+          <div class="row"><span>Sombras</span><div class="seg seg-sh"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
+          <div class="row"><span>Tráfego</span><div class="seg seg-tf"><button data-v="on">Ligado</button><button data-v="off">Desligado</button></div></div>
+          <div class="row"><span>Câmbio</span><div class="seg seg-tr"><button data-v="auto">Automático</button><button data-v="manual">Manual</button></div></div>
+        </div>
+      </section>
+      <section class="pz-pane" data-pane="controles" hidden>
+        <div class="pz-ctl">
+          <div><h3>Teclado</h3><p><kbd>W A S D</kbd> / setas — acelerar, frear, esterçar</p><p><kbd>Espaço</kbd> freio de mão · <kbd>C</kbd> câmera · <kbd>G</kbd> câmbio</p><p><kbd>R</kbd> desvirar · <kbd>M</kbd> mapa · <kbd>Esc</kbd> pausa</p></div>
+          <div><h3>Controle</h3><p><b>RT / LT</b> acelerar / frear · <b>Analógico</b> esterçar</p><p><b>A</b> freio de mão · <b>Y</b> câmera · <b>LB / RB</b> marchas</p><p><b>Start</b> pausa · <b>LB / RB</b> trocam de aba aqui</p></div>
+          <div><h3>Toque</h3><p>Arraste a faixa inferior para esterçar</p><p>Botões na direita: acelerar, frear, freio de mão</p><p>Botão ‖ no canto: pausa</p></div>
+        </div>
+      </section>
+      </div>
     </div>
     <button class="fs-float" id="fs-float" data-fs-icon aria-label="Tela cheia" title="Tela cheia (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="fs-in" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><path class="fs-out" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button>
     <div class="mhints" id="mhints" aria-hidden="true"></div>
